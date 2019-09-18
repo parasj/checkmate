@@ -6,8 +6,6 @@ from typing import Tuple, Iterable, Dict, List, Set
 
 import numpy as np
 
-from remat.core.utils.graph_utils import edge_to_adj_list, adj_to_edge_list
-
 Vertex = int
 EdgeList = Iterable[Tuple[Vertex, Vertex]]
 AdjList = Dict[Vertex, List[Vertex]]
@@ -75,14 +73,14 @@ class Graph:
 
         return np.gcd.reduce(intvalues)
 
-    def write_graphviz(self, directory, format='pdf', quiet=True):
+    def write_graphviz(self, directory, format='pdf', quiet=True, name=""):
         """
         Generate Graphviz-formatted edge list for visualization
         :param directory: str -- where to write source and rendered graph
         :param format: str -- file format for output
         :param quiet: bool -- whether or not to print debug information
         """
-        dot = Digraph("!ExtractedGraph")
+        dot = Digraph("!ExtractedGraph" + str(name))
         dot.attr('graph', rankdir='LR')
         for u in self.vfwd:
             with dot.subgraph() as s:
@@ -169,15 +167,7 @@ class Graph:
     @property
     @lru_cache(maxsize=None)
     def topological_order_fwd(self):
-        return self._topological_order(True)
-
-    @property
-    @lru_cache(maxsize=None)
-    def topological_order(self):
-        return self._topological_order(False)
-
-    def _topological_order(self, forward_only: bool):
-        E = self.edge_list_fwd if forward_only else self.edge_list
+        E = self.edge_list_fwd
 
         def helper(adj_list_, v, visited_, stack_):
             visited_[v] = True
@@ -253,3 +243,50 @@ class Graph:
     def max_degree_ram(self):
         """compute minimum memory needed for any single node (ie inputs and outputs)"""
         return max([sum([self.cost_ram[u] for u in self.predecessors(v)]) + self.cost_ram[v] for v in self.vfwd])
+
+
+def gen_linear_graph(forward_node_count, **kwargs):
+    """
+    gen_linear_graph will generate linear-style graphs like VGG and AlexNet.
+    Method returns forward and backward graphs. Pass cost_ram and cost_cpu as kwargs.
+    :param forward_node_count: number of forward (not backward nodes)
+    :return: Graph object containing linear graph
+    """
+    args = defaultdict(list)
+    vfwd_map = {}
+    loss_node_idx = forward_node_count
+    for i in range(forward_node_count * 2):
+        args[i + 1].append(i)
+        if i < forward_node_count:
+            corresponding_bwd = (forward_node_count * 2) - i
+            args[corresponding_bwd].append(i)
+            vfwd_map[i] = corresponding_bwd
+    v = list(vfwd_map.keys()) + list(vfwd_map.values()) + [loss_node_idx]
+    return Graph(args=args, v=v, vfwd_map=vfwd_map, vloss=loss_node_idx, **kwargs)
+
+
+def edge_to_adj_list(E: EdgeList, convert_undirected=False):
+    """Returns an (undirected / bidirectional) adjacency list"""
+    adj_list = defaultdict(set)
+    for (i, j) in list(E):
+        adj_list[i].add(j)
+        if convert_undirected:
+            adj_list[j].add(i)
+    return adj_list
+
+
+def adj_to_edge_list(E: AdjList, convert_undirected=False, reverse_edge=False):
+    """Returns an edge list
+    :param E: AdjList -- input graph
+    :param convert_undirected: bool -- if true, add u -> v and v -> u to output graph
+    :param reverse_edge: bool -- if true, reverse edge direction prior to conversion
+    :return:
+    """
+    edge_list = []
+    for u, deps in E.items():
+        for v in deps:
+            edge = (u, v) if not reverse_edge else (v, u)
+            edge_list.append(edge)
+            if convert_undirected:
+                edge_list.append(tuple(reversed(edge)))
+    return edge_list
