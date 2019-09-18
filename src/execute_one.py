@@ -10,7 +10,7 @@ import dotenv
 
 from evaluation.util.solve_strategy import SolveStrategy
 from integration.tf2.extraction import MODEL_NAMES
-from evaluation.test_execution import execute_one
+from evaluation.eval_execution import execute_one
 from utils.setup_logger import setup_logger
 
 
@@ -91,7 +91,7 @@ def run_single_model(args):
 
 
 def get_allstrat_ram(args):
-    from evaluation.test_execution import get_solution_to_evaluate
+    from evaluation.eval_execution import get_solution_to_evaluate
 
     log_base = os.path.join("data", "get_allstrat_ram",
                             f"{args.platform}_{args.model_name}_{args.model_version}_{args.batch_size}_{args.input_shape}_{args.strategy}_{args.buffer_mem_mb}_gradless_eagerfalse")

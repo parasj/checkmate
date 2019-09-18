@@ -6,6 +6,7 @@
 $  git clone https://github.com/parasj/tensor-remat.git
 $  cd tensor-remat
 $  pip install -e .
+$  py.test
 ```
 
 If you are evaluating on a GPU instance, you can install `tensorflow-gpu` as a dependency in order to enable GPU support.
