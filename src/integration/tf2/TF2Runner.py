@@ -1,11 +1,10 @@
-import itertools
 import os
 
 import tensorflow as tf
 
 from integration.tf2.misc import categorical_cross_entropy
-from solvers.scheduler import AllocateRegister, DeallocateRegister, OperatorEvaluation, Schedule
-from utils.graph import Graph
+from remat.core.schedule import OperatorEvaluation, AllocateRegister, DeallocateRegister, Schedule
+from remat.core.graph import Graph
 from utils.setup_logger import setup_logger
 
 

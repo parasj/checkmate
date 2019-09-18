@@ -6,8 +6,9 @@ import numpy as np
 import ray
 
 from evaluation.util.solve_strategy import SolveStrategy
-from solvers.scheduler import Schedule, ScheduleBuilder
-from utils.graph import Graph
+from solvers.scheduler import ScheduleBuilder
+from remat.core.schedule import Schedule
+from remat.core.graph import Graph
 
 
 class PartialRSResult(NamedTuple):

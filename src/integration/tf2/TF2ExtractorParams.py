@@ -6,7 +6,7 @@ import numpy as np
 import tensorflow as tf
 
 from integration.tf2.extraction import extract_graph_from_keras
-from utils.graph import Graph
+from remat.core.graph import Graph
 from utils.setup_logger import setup_logger
 
 

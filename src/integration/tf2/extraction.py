@@ -5,7 +5,7 @@ import keras_segmentation
 import numpy as np
 import tensorflow.compat.v2 as tf
 
-from utils import graph
+from remat.core import graph
 from utils.setup_logger import setup_logger
 
 try:

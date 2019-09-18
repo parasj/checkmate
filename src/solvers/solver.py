@@ -9,7 +9,7 @@ import ray
 
 from solvers.solver_ilp import ILPSolver
 from solvers.util import gen_s_matrix_fixed_checkpoints, setup_implied_s_backwards
-from utils.graph import Graph
+from remat.core.graph import Graph
 from utils.setup_logger import setup_logger
 
 SOLVER_DTYPE = np.int

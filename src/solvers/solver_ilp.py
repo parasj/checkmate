@@ -6,7 +6,7 @@ import ray
 from gurobi import GRB as GRB
 
 import solvers.solver
-from utils.graph import Graph
+from remat.core.graph import Graph
 from utils.setup_logger import setup_logger
 from utils.timer import Timer
 

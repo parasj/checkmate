@@ -1,7 +1,7 @@
 from typing import Set
 
 from solvers import solver
-from utils.graph import Graph
+from remat.core.graph import Graph
 import numpy as np
 
 
