@@ -1,0 +1,42 @@
+# Python
+.ipynb_checkpoints/
+__pycache__/
+*.py[cod]
+*$py.class
+profile_default/
+ipython_config.py
+*.un~
+env/
+*.swp
+.vscode/
+.idea/
+.envrc
+
+# Gurobi
+*.lp
+*.mps
+gurobi.log
+
+# Project specific
+graph.gv
+logs/
+fig/
+sol/
+keras-segmentation/
+.env
+
+notes.md
+scratch.py
+vim_prof.log
+environment.yml
+
+.DS_Store
+*.log
+profiles/vgg_unet/is1-416-608-3_ajaymbp.npy
+profiles/VGG16/is4-224-224-3_ajaymbp.npy
+profiles/VGG16/is2-224-224-3_ajaymbp.npy
+profiles/VGG16/is1-224-224-3_ajaymbp.npy
+*.gv
+*.pdf
+*.png
+data/
