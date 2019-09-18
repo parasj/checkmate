@@ -5,6 +5,7 @@ import numpy as np
 import ray
 from gurobi import GRB as GRB
 
+import remat.core.solvers.common
 import solvers.solver
 from remat.core.graph import Graph
 from utils.setup_logger import setup_logger
@@ -150,10 +151,10 @@ class ILPSolver:
         if self.m.solCount < 1:
             raise ValueError(f"Model status is {self.m.status} (not infeasible), but solCount is {self.m.solCount}")
 
-        Rout = np.zeros((T, T), dtype=solvers.solver.SOLVER_DTYPE)
-        Sout = np.zeros((T, T), dtype=solvers.solver.SOLVER_DTYPE)
-        Uout = np.zeros((T, T), dtype=solvers.solver.SOLVER_DTYPE)
-        Free_Eout = np.zeros((T, len(self.g.edge_list)), dtype=solvers.solver.SOLVER_DTYPE)
+        Rout = np.zeros((T, T), dtype=remat.core.solvers.common.SOLVER_DTYPE)
+        Sout = np.zeros((T, T), dtype=remat.core.solvers.common.SOLVER_DTYPE)
+        Uout = np.zeros((T, T), dtype=remat.core.solvers.common.SOLVER_DTYPE)
+        Free_Eout = np.zeros((T, len(self.g.edge_list)), dtype=remat.core.solvers.common.SOLVER_DTYPE)
         try:
             for t in range(T):
                 for i in range(T):

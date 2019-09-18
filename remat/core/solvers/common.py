@@ -1,8 +1,11 @@
 from typing import Set
 
-from solvers import solver
-from remat.core.graph import Graph
 import numpy as np
+
+import remat.core
+from remat.core.graph import Graph
+
+SOLVER_DTYPE = np.int
 
 
 def setup_implied_s_backwards(g: Graph, S: np.ndarray = None):
@@ -10,7 +13,7 @@ def setup_implied_s_backwards(g: Graph, S: np.ndarray = None):
     Given a backward graph, this function will set the appropriate items in S to 1 in order
     to satisfy no-recompute rules during backwards optimization.
     """
-    S = S if S is not None else np.zeros((g.size, g.size), dtype=solver.SOLVER_DTYPE)
+    S = S if S is not None else np.zeros((g.size, g.size), dtype=remat.core.solvers.common.SOLVER_DTYPE)
     Vbwd = set(g.v) - set(g.vfwd)
     for (start, end) in g.induce_subgraph(Vbwd):
         for t in range(start + 1, end + 1):
@@ -63,3 +66,33 @@ def gen_s_matrix_fixed_checkpoints(g: Graph, segment_set: Set[int]):
                     S[back_t, back_i] = 1
 
     return S
+
+
+def solve_r_opt(G: Graph, S: np.ndarray):
+    """Find the optimal recomputation pattern given caching decisions.
+    Given S, E = [(i, j)] where node j depends on the result of node i,
+    find R that minimizes cost, satisfies constraints. Assumes recomputation
+    costs are nonnegative.
+
+    NOTE: Does NOT check if memory limits are exceeded.
+    Enforcing R[t,i] != S[t,i] does not seem to be necessary.
+    """
+    T = S.shape[0]
+    assert S.shape[1] == T
+
+    R = np.eye(T, dtype=S.dtype)  # Enforce R_t,t = 1
+    # Enforce S_{t+1,v} <= S_{t,v} + R_{t,v},
+    # i.e. R_{t,v} >= S_{t+1,v} - S_{t,v}
+    S_diff = S[1:] - S[:-1]
+    R[:-1] = R[:-1] | (R[:-1] < S_diff)
+    # Create reverse adjacency list (child -> parents, i.e. node -> dependencies)
+    adj = [[] for v in range(T)]
+    for (u, v) in G.edge_list:
+        adj[v].append(u)
+    # Enforce R_{t,v} <= R_{t,u} + S_{t,u} for all (u, v) \in E
+    for t in range(T):
+        for v in range(t, -1, -1):
+            for u in adj[v]:
+                if R[t, v] > R[t, u] + S[t, u]:
+                    R[t, u] = 1
+    return R

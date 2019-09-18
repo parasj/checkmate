@@ -6,6 +6,7 @@ from gurobipy import quicksum
 import numpy as np
 from gurobi import GRB as GRB
 
+import remat.core.solvers.common
 import solvers.solver
 from remat.core.graph import Graph
 from utils.setup_logger import setup_logger
@@ -158,10 +159,10 @@ class MaxBatchILPSolver:
         if infeasible:
             raise ValueError("Infeasible model, check constraints carefully. Insufficient memory?")
 
-        Rout = np.zeros((T, T), dtype=solvers.solver.SOLVER_DTYPE)
-        Sout = np.zeros((T, T), dtype=solvers.solver.SOLVER_DTYPE)
-        Uout = np.zeros((T, T), dtype=solvers.solver.SOLVER_DTYPE)
-        Free_Eout = np.zeros((T, len(self.g.edge_list)), dtype=solvers.solver.SOLVER_DTYPE)
+        Rout = np.zeros((T, T), dtype=remat.core.solvers.common.SOLVER_DTYPE)
+        Sout = np.zeros((T, T), dtype=remat.core.solvers.common.SOLVER_DTYPE)
+        Uout = np.zeros((T, T), dtype=remat.core.solvers.common.SOLVER_DTYPE)
+        Free_Eout = np.zeros((T, len(self.g.edge_list)), dtype=remat.core.solvers.common.SOLVER_DTYPE)
         batch_size = self.batch_size.X
         try:
             for t in range(T):
