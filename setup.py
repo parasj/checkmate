@@ -23,5 +23,6 @@ setup(
         "aiohttp",
         "psutil",
         "setproctitle",
+        "pytest"
     ]
 )
