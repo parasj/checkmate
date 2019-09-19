@@ -3,7 +3,7 @@ import onnx
 import torch
 from onnx import shape_inference
 
-from integration.tf2.hooks import op_hook
+from remat.tensorflow2.extraction_hooks import op_hook
 
 double = ["Gemm", "Conv"]
 need_input = ["Gemm", "Conv", "Relu", "BatchNormalization",

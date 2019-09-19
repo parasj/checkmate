@@ -5,7 +5,7 @@ from typing import Optional
 import numpy as np
 import tensorflow as tf
 
-from integration.tf2.hooks import op_hook, MEMORY_MULTIPLIER
+from remat.tensorflow2.extraction_hooks import op_hook, MEMORY_MULTIPLIER
 from remat.core import dfgraph
 
 try:
