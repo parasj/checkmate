@@ -92,6 +92,7 @@ def dfgraph_from_keras(mod: tf.keras.models.Model, include_prev_node=True, batch
                            cost_ram_parameters=total_mem_params)
 
 
+# noinspection PyProtectedMember
 def count_params_keras(model: tf.keras.models.Model):
     model._check_trainable_weights_consistency()
     if hasattr(model, '_collected_trainable_weights'):
