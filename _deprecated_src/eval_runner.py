@@ -11,7 +11,7 @@ import ray
 from evaluation.budget_sweep import eval_budget_sweep
 from evaluation.maximize_batch_size import eval_maximize_batch_size
 from evaluation.solve_time_plot import eval_solve_time
-from remat.core.solvers.strategy_enum import SolveStrategy
+from remat.core.solvers.enum_strategy import SolveStrategy
 from integration.tf2.extraction import MODEL_NAMES
 from utils.redis import RedisCache
 from utils.setup_logger import setup_logger

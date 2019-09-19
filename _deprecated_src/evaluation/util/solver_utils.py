@@ -4,7 +4,7 @@ import graphviz
 import ray
 
 import utils.redis
-from remat.core.solvers.strategy_enum import SolveStrategy
+from remat.core.solvers.enum_strategy import SolveStrategy
 from integration.tf2.TF2ExtractorParams import TF2ExtractorParams
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
 from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
