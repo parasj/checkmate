@@ -97,18 +97,3 @@ def get_input_shape(model_name: str, batch_size: Optional[int] = None):
     return shape
 
 
-def count_params_keras(model: tf.keras.models.Model):
-    model._check_trainable_weights_consistency()
-    if hasattr(model, '_collected_trainable_weights'):
-        trainable_count = count_params(model._collected_trainable_weights)
-    elif hasattr(model, '_unique_trainable_weights'):
-        trainable_count = count_params(model._unique_trainable_weights)  # TF r2.0
-    else:
-        trainable_count = count_params(model.trainable_weights)  # TF r1.14
-    # print("Trainable params:", trainable_count)
-
-    non_trainable_count = count_params(model.non_trainable_weights)
-    # print("Non-trainable params:", non_trainable_count)
-    return trainable_count, non_trainable_count
-
-

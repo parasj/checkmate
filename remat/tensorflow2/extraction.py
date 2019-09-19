@@ -5,9 +5,13 @@ from typing import Optional
 import numpy as np
 import tensorflow as tf
 
-from integration.tf2.extraction import count_params_keras
 from integration.tf2.hooks import op_hook, MEMORY_MULTIPLIER
 from remat.core import dfgraph
+
+try:
+    from tensorflow.python.keras.utils.layer_utils import count_params  # TF r2.0
+except ImportError as e:
+    from tensorflow.keras.backend import count_params  # TF r1.14
 
 
 def dfgraph_from_keras(mod: tf.keras.models.Model, include_prev_node=True, batch_size=1, loss_cpu_cost=0,
@@ -36,7 +40,8 @@ def dfgraph_from_keras(mod: tf.keras.models.Model, include_prev_node=True, batch
     dep_list_bwd = defaultdict(list)  # joined with dep_list_fwd in order to ensure backward nodes are last
     for layer_idx, layer in enumerate(layers):
         name_to_idx[layer.name] = layer_idx
-        inbound_idx = [name_to_idx[t[0].name] for node in layer._inbound_nodes for t in node.iterate_inbound() if node in relevant_nodes]
+        inbound_idx = [name_to_idx[t[0].name] for node in layer._inbound_nodes for t in node.iterate_inbound() if
+                       node in relevant_nodes]
         for inbound_position, inbound_node in enumerate(filter(lambda x: x != -1, inbound_idx)):
             dep_list_fwd[layer_idx].append(inbound_node)
             dep_list_bwd[fwd_to_bwd(inbound_node)].append(fwd_to_bwd(layer_idx))
@@ -85,3 +90,16 @@ def dfgraph_from_keras(mod: tf.keras.models.Model, include_prev_node=True, batch
     return dfgraph.DFGraph(args=args, v=vfwd + [loss_node_idx] + vback, vfwd_map=vfwd_map,
                            vloss=loss_node_idx, cost_cpu=costs, cost_ram=mems, node_names=names,
                            cost_ram_parameters=total_mem_params)
+
+
+def count_params_keras(model: tf.keras.models.Model):
+    model._check_trainable_weights_consistency()
+    if hasattr(model, '_collected_trainable_weights'):
+        trainable_count = count_params(model._collected_trainable_weights)
+    elif hasattr(model, '_unique_trainable_weights'):
+        trainable_count = count_params(model._unique_trainable_weights)  # TF r2.0
+    else:
+        trainable_count = count_params(model.trainable_weights)  # TF r1.14
+
+    non_trainable_count = count_params(model.non_trainable_weights)
+    return trainable_count, non_trainable_count
