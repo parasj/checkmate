@@ -3,6 +3,7 @@ import logging
 from remat.core.dfgraph import gen_linear_graph
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
 from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
+from remat.core.solvers.strategy_chen import solve_chen_greedy, solve_chen_sqrtn
 from remat.core.solvers.strategy_griewank import solve_griewank
 
 
@@ -32,6 +33,36 @@ def test_checkpoint_all_ap():
         assert scheduler_result.feasible
 
 
+def test_chen_sqrtn():
+    for graph_length in [2, 4, 5, 7, 8]:
+        for budget in range(1, min(graph_length, 4)):
+            g = gen_linear_graph(graph_length)
+            assert g.size_fwd == graph_length
+            total_cost = sum(g.cost_ram.values())
+            scheduler_result = solve_chen_sqrtn(g, total_cost)
+            assert scheduler_result.feasible
+
+
+def test_chen_greedy():
+    for graph_length in [2, 4, 5, 7, 8]:
+        for budget in range(1, min(graph_length, 4)):
+            g = gen_linear_graph(graph_length)
+            assert g.size_fwd == graph_length
+            total_cost = sum(g.cost_ram.values())
+            scheduler_result = solve_chen_greedy(g, total_cost, False)
+            assert scheduler_result.feasible
+
+
+def test_chen_greedy_ap():
+    for graph_length in [2, 4, 5, 7, 8]:
+        for budget in range(1, min(graph_length, 4)):
+            g = gen_linear_graph(graph_length)
+            assert g.size_fwd == graph_length
+            total_cost = sum(g.cost_ram.values())
+            scheduler_result = solve_chen_greedy(g, total_cost, True)
+            assert scheduler_result.feasible
+
+
 def test_ilp():
     try:
         import gurobipy as _
@@ -49,7 +80,7 @@ def test_ilp():
 
 
 def test_griewank():
-    for graph_length in [2 ** i for i in range(1, 8)]:
+    for graph_length in [2 ** i for i in range(1, 6)]:
         g = gen_linear_graph(graph_length)
         assert g.size_fwd == graph_length
         total_cost = sum(g.cost_ram.values())
