@@ -28,6 +28,7 @@ class SolveStrategy(Enum):
             cls.GRIEWANK_LOGN: "Griewank et al. $\\log~n$" if is_linear else "AP $\\log~n$",
         }[val]
 
+    # todo move this to experiments codebase
     @classmethod
     def get_plot_params(cls, val):
         from matplotlib import rcParams
