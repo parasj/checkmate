@@ -2,7 +2,6 @@ from typing import Set
 
 import numpy as np
 
-import remat.core
 from remat.core.dfgraph import DFGraph
 
 SOLVER_DTYPE = np.int
@@ -13,7 +12,7 @@ def setup_implied_s_backwards(g: DFGraph, s: np.ndarray = None):
     Given a backward graph, this function will set the appropriate items in S to 1 in order
     to satisfy no-recompute rules during backwards optimization.
     """
-    s = s if s is not None else np.zeros((g.size, g.size), dtype=remat.core.solvers.common.SOLVER_DTYPE)
+    s = s if s is not None else np.zeros((g.size, g.size), dtype=SOLVER_DTYPE)
     vbwd = list(set(g.v) - set(g.vfwd))
     for (start, end) in g.induce_subgraph(vbwd):
         for t in range(start + 1, end + 1):
