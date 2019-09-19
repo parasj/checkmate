@@ -19,10 +19,11 @@ setup(
         "graphviz",
         "python-dotenv",
         # "colorlog",
-        # "tensorflow==2.0.0rc0",
+        "tensorflow==2.0.0rc0",
         # "aiohttp",
         # "psutil",
         # "setproctitle",
-        "pytest"
+        "pytest",
+        "keras_segmentation @ https://github.com/ajayjain/image-segmentation-keras/archive/master.zip#egg=keras_segmentation-0.2.0remat"
     ]
 )
