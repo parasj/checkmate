@@ -1,14 +1,11 @@
 import functools
 from typing import Dict, Any
 
-import gurobipy
-from gurobipy import quicksum
+from gurobipy import quicksum, GRB, Model
 import numpy as np
-from gurobi import GRB as GRB
 
-import remat.core.solvers.common
-import solvers.solver
 from remat.core.dfgraph import DFGraph
+from remat.core.solvers.common import SOLVER_DTYPE, solve_r_opt
 from utils.setup_logger import setup_logger
 from remat.core.utils.timer import Timer
 
@@ -28,7 +25,7 @@ class MaxBatchILPSolver:
         self.solve_time = None
         self.init_constraints = []  # used for seeding the model
 
-        self.m = gurobipy.Model(f"checkpointmip_gc_maxbs_{self.g.size}_{self.budget}")
+        self.m = Model(f"checkpointmip_gc_maxbs_{self.g.size}_{self.budget}")
         if gurobi_params is not None:
             for k, v in gurobi_params.items():
                 setattr(self.m.Params, k, v)
@@ -159,10 +156,10 @@ class MaxBatchILPSolver:
         if infeasible:
             raise ValueError("Infeasible model, check constraints carefully. Insufficient memory?")
 
-        Rout = np.zeros((T, T), dtype=remat.core.solvers.common.SOLVER_DTYPE)
-        Sout = np.zeros((T, T), dtype=remat.core.solvers.common.SOLVER_DTYPE)
-        Uout = np.zeros((T, T), dtype=remat.core.solvers.common.SOLVER_DTYPE)
-        Free_Eout = np.zeros((T, len(self.g.edge_list)), dtype=remat.core.solvers.common.SOLVER_DTYPE)
+        Rout = np.zeros((T, T), dtype=SOLVER_DTYPE)
+        Sout = np.zeros((T, T), dtype=SOLVER_DTYPE)
+        Uout = np.zeros((T, T), dtype=SOLVER_DTYPE)
+        Free_Eout = np.zeros((T, len(self.g.edge_list)), dtype=SOLVER_DTYPE)
         batch_size = self.batch_size.X
         try:
             for t in range(T):
@@ -177,5 +174,5 @@ class MaxBatchILPSolver:
             logger.exception(e)
             return None, None, None, None
 
-        Rout = solvers.solver.CheckpointSolver.solve_r_opt(self.g, Sout)  # prune R using optimal recomputation solver
+        Rout = solve_r_opt(self.g, Sout)  # prune R using optimal recomputation solver
         return Rout, Sout, Uout, Free_Eout, batch_size
