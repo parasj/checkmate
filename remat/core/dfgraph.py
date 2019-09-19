@@ -3,7 +3,6 @@ from functools import lru_cache
 from typing import Tuple, Iterable, Dict, List, Set
 
 import numpy as np
-from graphviz import Digraph
 
 Vertex = int
 EdgeList = Iterable[Tuple[Vertex, Vertex]]
@@ -53,11 +52,8 @@ class DFGraph:
         values.extend(othervals)
         values = np.array(values)
         intvalues = np.array(values, dtype=int)
-
-        # GCD is 1 if values are not integral
-        if not np.allclose(intvalues, values):
+        if not np.allclose(intvalues, values):  # GCD is 1 if values are not integral
             return 1
-
         return np.gcd.reduce(intvalues)
 
     def cpu_gcd(self, *othervals):
@@ -65,50 +61,9 @@ class DFGraph:
         values.extend(othervals)
         values = np.array(values)
         intvalues = np.array(values, dtype=int)
-
-        # GCD is 1 if values are not integral
-        if not np.allclose(intvalues, values):
+        if not np.allclose(intvalues, values):  # GCD is 1 if values are not integral
             return 1
-
         return np.gcd.reduce(intvalues)
-
-    def write_graphviz(self, directory, format='pdf', quiet=True, name=""):
-        """
-        Generate Graphviz-formatted edge list for visualization
-        :param directory: str -- where to write source and rendered graph
-        :param format: str -- file format for output
-        :param quiet: bool -- whether or not to print debug information
-        """
-        dot = Digraph("!ExtractedGraph" + str(name))
-        dot.attr('graph', rankdir='LR')
-        for u in self.vfwd:
-            with dot.subgraph() as s:
-                s.attr(rank='same')
-                node_name = self.node_names.get(u)
-                node_name = node_name if node_name is None else "{} ({})".format(node_name, str(u))
-                s.node(str(u), node_name)
-
-                v = self.forward_to_backward(u)
-                node_name = "&nabla;{}".format(self.node_names.get(u, u))
-                node_name = node_name if node_name is None else "{} ({})".format(node_name, str(v))
-                s.node(str(v), node_name, style='filled')
-
-        for u in self.v:
-            if u not in self.vfwd_map.values() and u not in self.vfwd_map.keys():
-                node_name = self.node_names.get(u)
-                node_name = node_name if node_name is None else "{} ({})".format(node_name, str(u))
-                dot.node(str(u), node_name)
-
-        for edge in self.edge_list:
-            dep_order = str(self.args[edge[-1]].index(edge[0]))
-            if edge not in self.edge_list_fwd and self.vloss not in edge:
-                dot.edge(*map(str, edge), constraint='false', label=dep_order)
-            else:
-                dot.edge(*map(str, edge), label=dep_order)
-        try:
-            dot.render(directory=directory, format=format, quiet=quiet)
-        except TypeError:
-            dot.render(directory=directory, format=format)
 
     @property
     @lru_cache(maxsize=None)
