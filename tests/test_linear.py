@@ -3,7 +3,7 @@ from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, sol
 from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
 
 
-def test_checkpointall():
+def test_checkpoint_all():
     for graph_length in range(2, 32):
         g = gen_linear_graph(graph_length)
         assert g.size_fwd == graph_length
@@ -13,7 +13,7 @@ def test_checkpointall():
         # todo check memory cost, need closed form for this for linear graphs
 
 
-def test_checkpointlast():
+def test_checkpoint_last():
     for graph_length in range(2, 32):
         g = gen_linear_graph(graph_length)
         assert g.size_fwd == graph_length
@@ -21,7 +21,7 @@ def test_checkpointlast():
         assert scheduler_result.feasible
 
 
-def test_checkpointall_ap():
+def test_checkpoint_all_ap():
     for graph_length in range(2, 32):
         g = gen_linear_graph(graph_length)
         assert g.size_fwd == graph_length
