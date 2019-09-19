@@ -2,7 +2,7 @@ from remat.core.dfgraph import DFGraph
 from remat.core.schedule import ScheduledResult
 from remat.core.solvers.common import gen_s_matrix_fixed_checkpoints, solve_r_opt
 from remat.core.solvers.scheduler import schedule_rs_matrix
-from remat.core.solvers.strategy_enum import SolveStrategy
+from remat.core.solvers.enum_strategy import SolveStrategy
 from remat.core.utils.timer import Timer
 
 

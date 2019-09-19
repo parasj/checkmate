@@ -7,7 +7,7 @@ import tensorflow as tf
 import tensorflow.compat.v1 as tf1
 import numpy as np
 
-from remat.core.solvers.strategy_enum import SolveStrategy
+from remat.core.solvers.enum_strategy import SolveStrategy
 from integration.tf2.TF2ExtractorParams import TF2ExtractorParams
 from integration.tf2.extraction import get_keras_model, platform_memory
 from integration.tf2.TF2Runner import TF2Runner

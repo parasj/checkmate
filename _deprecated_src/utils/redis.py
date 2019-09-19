@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 
 from redis import StrictRedis
 
-from remat.core.solvers.strategy_enum import SolveStrategy
+from remat.core.solvers.enum_strategy import SolveStrategy
 from global_version import GLOBAL_PROJECT_VERSION
 from solvers.result import RSResult
 
