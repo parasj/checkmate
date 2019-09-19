@@ -1,7 +1,8 @@
 from graphviz import Digraph
+import numpy as np
 
 from remat.core.dfgraph import DFGraph
-from remat.core.schedule import Schedule, OperatorEvaluation
+from remat.core.schedule import Schedule, OperatorEvaluation, ScheduledResult
 
 
 # deprecated
@@ -69,3 +70,48 @@ def write_graphviz(g: DFGraph, directory, format='pdf', quiet=True, name=""):
         dot.render(directory=directory, format=format, quiet=quiet)
     except TypeError:
         dot.render(directory=directory, format=format)
+
+
+# deprecated
+def plot(sched_result: ScheduledResult, plot_mem_usage: bool = False, save_file: str = None, show: bool = False, plt=None):
+    assert sched_result.feasible
+    R = sched_result.schedule_aux_data.R
+    S = sched_result.schedule_aux_data.S
+
+    if plt is None:
+        import matplotlib.pyplot as plt
+    if plot_mem_usage:
+        U = sched_result.ilp_aux_data.U if sched_result.ilp_aux_data is not None else None
+        fig, axs = plt.subplots(1, 4)
+        vmax = sched_result.schedule_aux_data.mem_grid
+        vmax = max(vmax, np.max(U)) if U is not None else vmax
+
+        # Plot slow verifier memory usage
+        axs[2].invert_yaxis()
+        axs[2].pcolormesh(sched_result.schedule_aux_data.mem_grid, cmap="Greys", vmin=0, vmax=vmax)
+        axs[2].set_title("Memory usage (verifier)")
+
+        # Plot solver memory usage variables
+        axs[3].invert_yaxis()
+        axs[3].set_title("Memory usage (solved)")
+        if U is not None:
+            axs[3].pcolormesh(U, cmap="Greys", vmin=0, vmax=vmax)
+
+        fig.set_size_inches(28, 6)
+    else:
+        fig, axs = plt.subplots(1, 2)
+        fig.set_size_inches(18, 6)
+
+    axs[0].invert_yaxis()
+    axs[0].pcolormesh(R, cmap="Greys")
+    axs[0].set_title("R")
+
+    axs[1].invert_yaxis()
+    axs[1].pcolormesh(S, cmap="Greys")
+    axs[1].set_title("S")
+
+    if show:
+        plt.show()
+    if save_file:
+        fig.savefig(save_file)
+        plt.close(fig)
