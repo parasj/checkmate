@@ -1,9 +1,10 @@
-from remat.core.dfgraph import DFGraph
-from remat.core.solvers.common import SOLVER_DTYPE, solve_r_opt
 import numpy as np
 
+from remat.core.dfgraph import DFGraph
+from remat.core.solvers.common import SOLVER_DTYPE, solve_r_opt
 
-def schedule_checkpoint_last_node(g: DFGraph):
+
+def solve_checkpoint_last_node(g: DFGraph):
     """Checkpoint only one node between stages"""
     S = np.zeros((g.size, g.size), dtype=SOLVER_DTYPE)
     np.fill_diagonal(S[1:], 1)

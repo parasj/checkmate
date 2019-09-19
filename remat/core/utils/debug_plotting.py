@@ -31,4 +31,3 @@ def tensor_plot(g: DFGraph, sched: Schedule, directory, tag=None, format='pdf', 
         dot.render(directory=directory, format=format, quiet=quiet)
     except TypeError:
         dot.render(directory=directory, format=format)
-

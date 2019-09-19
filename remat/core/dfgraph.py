@@ -1,10 +1,9 @@
 from collections import defaultdict
 from functools import lru_cache
-
-from graphviz import Digraph
 from typing import Tuple, Iterable, Dict, List, Set
 
 import numpy as np
+from graphviz import Digraph
 
 Vertex = int
 EdgeList = Iterable[Tuple[Vertex, Vertex]]

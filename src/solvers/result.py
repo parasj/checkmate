@@ -6,7 +6,7 @@ import numpy as np
 import ray
 
 from remat.core.solvers.strategy import SolveStrategy
-from solvers.scheduler import ScheduleBuilder
+from remat.core.solvers.scheduler import ScheduleBuilder
 from remat.core.schedule import Schedule
 from remat.core.dfgraph import DFGraph
 
