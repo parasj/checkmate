@@ -1,4 +1,6 @@
 # Optimal tensor rematerialization
+[![Actions Status](https://github.com/parasj/tensor-remat/workflows/Python%20package%20testsuite%20(remat)/badge.svg)](https://github.com/parasj/tensor-remat/actions)
+
 `remat` is a package to compute schedules for rematerializing tensors in DFGraphs (tensor dataflow graphs).
 
 # Installation
