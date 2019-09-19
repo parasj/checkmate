@@ -48,9 +48,8 @@ def test_ilp():
         assert scheduler_result.feasible
 
 
-
 def test_griewank():
-    for graph_length in [2, 4, 8]:
+    for graph_length in [2 ** i for i in range(1, 8)]:
         g = gen_linear_graph(graph_length)
         assert g.size_fwd == graph_length
         total_cost = sum(g.cost_ram.values())
