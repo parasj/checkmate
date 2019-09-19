@@ -34,8 +34,8 @@ class DFGraph:
             self.node_names[self.vloss] = "Loss"
         self.size_fwd = len(self.vfwd)
         self.edge_list_fwd = self.induce_subgraph(self.vfwd)
-        self.cost_cpu = cost_cpu if cost_cpu else {v: 1 for v in self.v}
-        self.cost_ram = cost_ram if cost_ram else {v: 1 for v in self.v}
+        self.cost_cpu = cost_cpu if cost_cpu else {v: 1 for v in set(self.v + [self.vloss])}
+        self.cost_ram = cost_ram if cost_ram else {v: 1 for v in set(self.v + [self.vloss])}
         self.cost_cpu_np = np.array([cost for _v, cost in sorted(self.cost_cpu.items())])
         self.cost_ram_np = np.array([ram for _v, ram in sorted(self.cost_ram.items())])
         self.cost_cpu_fwd = {v: cost_cpu[v] for v in self.vfwd} if cost_cpu else {v: 1 for v in self.vfwd}

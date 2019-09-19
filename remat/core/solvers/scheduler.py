@@ -71,27 +71,26 @@ class ScheduleBuilder:
 def schedule_rs_matrix(g: DFGraph, r: np.ndarray, s: np.ndarray) -> Tuple[Schedule, SchedulerAuxData]:
     assert r is not None
     assert s is not None
-    t = g.size
+    T = g.size
 
     def _used_after(t_, u_, i_):
         """Returns True if v_u is used after v_i in stage t"""
-        is_retained_snapshot = t_ < t - 1 and s[t_ + 1, u_] == 1
+        is_retained_snapshot = t_ < T - 1 and s[t_ + 1, u_] == 1
         is_used_by_successor = not all([r[t_, v] == 0 or v <= i_ for v in g.successors(u_)])
         return is_retained_snapshot or is_used_by_successor
 
     with Timer('schedule_rs_matrix') as schedule_timer:
         # compute last usage to determine whether to update auxiliary variables
-        last_used = {i: max([t for t in range(t) if r[t, i] == 1]) for i in range(t)}
-        mem_usage = np.zeros((t, t), dtype=np.int)
-        # Schedule builder accounts for all memory, including fixed memory
+        last_used = {i: max([t for t in range(T) if r[t, i] == 1]) for i in range(T)}
+        mem_usage = np.zeros((T, T), dtype=np.int)
         sb = ScheduleBuilder(g, verbosity=1)
-        for t in range(t):
+        for t in range(T):
             # Free unused checkpoints
-            for i in filter(lambda x: sb.is_op_cached(x), range(t)):
+            for i in filter(lambda x: sb.is_op_cached(x), range(T)):
                 if not _used_after(t, i, i):
                     sb.deallocate_register(i)
 
-            for i in range(t):
+            for i in range(T):
                 if r[t, i] == 1:
                     sb.run_operator(i, last_used[i] == t)
                 mem_usage[t, i] = sb.current_mem() + g.cost_ram_fixed
@@ -103,7 +102,6 @@ def schedule_rs_matrix(g: DFGraph, r: np.ndarray, s: np.ndarray) -> Tuple[Schedu
         total_ram = sb.max_ram + g.cost_ram_fixed
         ram_timeline = [mem + g.cost_ram_fixed for mem in sb.ram_timeline]
 
-    aux_data = SchedulerAuxData(R=r, S=s, cpu=sb.total_cpu, peak_ram=total_ram,
-                                activation_ram=sb.max_ram, mem_grid=mem_usage,
-                                mem_timeline=ram_timeline, schedule_time_s=schedule_timer.elapsed)
-    return sb.schedule, aux_data
+    return sb.schedule, SchedulerAuxData(R=r, S=s, cpu=sb.total_cpu, peak_ram=total_ram,
+                                         activation_ram=sb.max_ram, mem_grid=mem_usage,
+                                         mem_timeline=ram_timeline, schedule_time_s=schedule_timer.elapsed)
