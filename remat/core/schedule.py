@@ -41,10 +41,13 @@ class SchedulerAuxData(NamedTuple):
 
 
 class ILPAuxData(NamedTuple):
+    ilp_num_variables: int
+    ilp_num_constraints: int
+    ilp_approx: bool
+    ilp_eps_noise: float
     U: Optional[np.ndarray] = None
     Free_E: Optional[np.ndarray] = None
-    ilp_num_variables: Optional[int] = None
-    ilp_num_constraints: Optional[int] = None
+    ilp_time_limit: Optional[int] = None
 
 
 class ScheduledResult(NamedTuple):

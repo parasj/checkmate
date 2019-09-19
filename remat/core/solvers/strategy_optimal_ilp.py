@@ -1,25 +1,26 @@
-from typing import Dict, Any
+import logging
+import math
+import os
+from typing import Dict, Any, Optional
 
-import gurobipy
 import numpy as np
-import ray
-from gurobi import GRB as GRB
+from gurobipy import GRB, Model, quicksum
 
-import remat.core.solvers.common
-import solvers.solver
+import remat.core
 from remat.core.dfgraph import DFGraph
-from utils.setup_logger import setup_logger
+from remat.core.schedule import ScheduledResult, ILPAuxData
+from remat.core.solvers.common import solve_r_opt
+from remat.core.solvers.scheduler import schedule_from_rs
+from remat.core.solvers.strategy_enum import SolveStrategy
 from remat.core.utils.timer import Timer
 
 
 class ILPSolver:
-    def __init__(self, g: DFGraph, budget: int, eps_noise=None, seed_s=None, model_file=None, remote=True,
+    def __init__(self, g: DFGraph, budget: int, eps_noise=None, seed_s=None, write_model_file=None,
                  gurobi_params: Dict[str, Any] = None):
-        self.remote = remote
-        self.profiler = Timer if not self.remote else ray.profile
         self.gurobi_params = gurobi_params
         self.num_threads = self.gurobi_params.get('Threads', 1)
-        self.model_file = model_file
+        self.model_file = write_model_file
         self.seed_s = seed_s
         self.eps_noise = eps_noise
         self.budget = budget
@@ -28,7 +29,7 @@ class ILPSolver:
 
         self.init_constraints = []  # used for seeding the model
 
-        self.m = gurobipy.Model("checkpointmip_gc_{}_{}".format(self.g.size, self.budget))
+        self.m = Model("checkpointmip_gc_{}_{}".format(self.g.size, self.budget))
         if gurobi_params is not None:
             for k, v in gurobi_params.items():
                 setattr(self.m.Params, k, v)
@@ -55,8 +56,8 @@ class ILPSolver:
         if self.eps_noise:
             permute_cpu = permute_eps(permute_cpu, self.eps_noise)
 
-        with self.profiler("Gurobi model construction", extra_data={'T': str(T), 'budget': str(budget)}):
-            with self.profiler("Objective construction", extra_data={'T': str(T), 'budget': str(budget)}):
+        with Timer("Gurobi model construction", extra_data={'T': str(T), 'budget': str(budget)}):
+            with Timer("Objective construction", extra_data={'T': str(T), 'budget': str(budget)}):
                 # seed solver with a baseline strategy
                 if self.seed_s is not None:
                     for x in range(T):
@@ -66,17 +67,17 @@ class ILPSolver:
                     self.m.update()
 
                 # define objective function
-                self.m.setObjective(gurobipy.quicksum(
+                self.m.setObjective(quicksum(
                     self.R[t, i] * permute_cpu[i] for t in range(T) for i in range(T)),
                     GRB.MINIMIZE)
 
-            with self.profiler("Variable initialization", extra_data={'T': str(T), 'budget': str(budget)}):
-                self.m.addLConstr(gurobipy.quicksum(self.R[t, i] for t in range(T) for i in range(t + 1, T)), GRB.EQUAL,
+            with Timer("Variable initialization", extra_data={'T': str(T), 'budget': str(budget)}):
+                self.m.addLConstr(quicksum(self.R[t, i] for t in range(T) for i in range(t + 1, T)), GRB.EQUAL,
                                   0)
-                self.m.addLConstr(gurobipy.quicksum(self.S[t, i] for t in range(T) for i in range(t, T)), GRB.EQUAL, 0)
-                self.m.addLConstr(gurobipy.quicksum(self.R[t, t] for t in range(T)), GRB.EQUAL, T)
+                self.m.addLConstr(quicksum(self.S[t, i] for t in range(T) for i in range(t, T)), GRB.EQUAL, 0)
+                self.m.addLConstr(quicksum(self.R[t, t] for t in range(T)), GRB.EQUAL, T)
 
-            with self.profiler("Correctness constraints", extra_data={'T': str(T), 'budget': str(budget)}):
+            with Timer("Correctness constraints", extra_data={'T': str(T), 'budget': str(budget)}):
                 # ensure all checkpoints are in memory
                 for t in range(T - 1):
                     for i in range(T):
@@ -89,9 +90,9 @@ class ILPSolver:
             # define memory constraints
             def _num_hazards(t, i, k):
                 if t + 1 < T:
-                    return 1 - self.R[t, k] + self.S[t + 1, i] + gurobipy.quicksum(
+                    return 1 - self.R[t, k] + self.S[t + 1, i] + quicksum(
                         self.R[t, j] for j in self.g.successors(i) if j > k)
-                return 1 - self.R[t, k] + gurobipy.quicksum(self.R[t, j] for j in self.g.successors(i) if j > k)
+                return 1 - self.R[t, k] + quicksum(self.R[t, j] for j in self.g.successors(i) if j > k)
 
             def _max_num_hazards(t, i, k):
                 num_uses_after_k = sum(1 for j in self.g.successors(i) if j > k)
@@ -99,46 +100,47 @@ class ILPSolver:
                     return 2 + num_uses_after_k
                 return 1 + num_uses_after_k
 
-            with self.profiler("Constraint: upper bound for 1 - Free_E",
-                               extra_data={'T': str(T), 'budget': str(budget)}):
+            with Timer("Constraint: upper bound for 1 - Free_E",
+                       extra_data={'T': str(T), 'budget': str(budget)}):
                 for t in range(T):
                     for eidx, (i, k) in enumerate(self.g.edge_list):
                         self.m.addLConstr(1 - self.Free_E[t, eidx], GRB.LESS_EQUAL, _num_hazards(t, i, k))
-            with self.profiler("Constraint: lower bound for 1 - Free_E",
-                               extra_data={'T': str(T), 'budget': str(budget)}):
+            with Timer("Constraint: lower bound for 1 - Free_E",
+                       extra_data={'T': str(T), 'budget': str(budget)}):
                 for t in range(T):
                     for eidx, (i, k) in enumerate(self.g.edge_list):
                         self.m.addLConstr(_max_num_hazards(t, i, k) * (1 - self.Free_E[t, eidx]),
                                           GRB.GREATER_EQUAL, _num_hazards(t, i, k))
-            with self.profiler("Constraint: initialize memory usage (includes spurious checkpoints)",
-                               extra_data={'T': str(T), 'budget': str(budget)}):
+            with Timer("Constraint: initialize memory usage (includes spurious checkpoints)",
+                       extra_data={'T': str(T), 'budget': str(budget)}):
                 for t in range(T):
                     self.m.addLConstr(self.U[t, 0], GRB.EQUAL,
-                                      self.R[t, 0] * permute_ram[0] + gurobipy.quicksum(
+                                      self.R[t, 0] * permute_ram[0] + quicksum(
                                           self.S[t, i] * permute_ram[i] for i in range(T)))
-            with self.profiler("Constraint: memory recurrence", extra_data={'T': str(T), 'budget': str(budget)}):
+            with Timer("Constraint: memory recurrence", extra_data={'T': str(T), 'budget': str(budget)}):
                 for t in range(T):
                     for k in range(T - 1):
-                        mem_freed = gurobipy.quicksum(
+                        mem_freed = quicksum(
                             permute_ram[i] * self.Free_E[t, eidx] for (eidx, i) in self.g.predecessors_indexed(k))
                         self.m.addLConstr(self.U[t, k + 1], GRB.EQUAL,
                                           self.U[t, k] + self.R[t, k + 1] * permute_ram[k + 1] - mem_freed)
 
         if self.model_file is not None and self.g.size < 200:  # skip for big models to save runtime
-            with self.profiler("Saving model", extra_data={'T': str(T), 'budget': str(budget)}):
+            with Timer("Saving model", extra_data={'T': str(T), 'budget': str(budget)}):
                 self.m.write(self.model_file)
         return None  # return value ensures ray remote call can be chained
 
     def solve(self):
         T = self.g.size
-        with self.profiler('Gurobi model optimization', extra_data={'T': str(T), 'budget': str(self.budget)}):
+        with Timer('Gurobi model optimization', extra_data={'T': str(T), 'budget': str(self.budget)}):
             if self.seed_s is not None:
                 self.m.Params.TimeLimit = 300
                 self.m.optimize()
                 if self.m.status == GRB.INFEASIBLE:
                     print(f"Infeasible ILP seed at budget {self.budget:.2E}")
                 self.m.remove(self.init_constraints)
-            self.m.Params.TimeLimit = self.gurobi_params.get('TimeLimit', 3600)  # todo remove this check, and default to np.inf
+            self.m.Params.TimeLimit = self.gurobi_params.get('TimeLimit',
+                                                             3600)  # todo remove this check, and default to np.inf
             self.m.message("\n\nRestarting solve\n\n")
             with Timer("ILPSolve") as solve_ilp:
                 self.m.optimize()
@@ -147,7 +149,7 @@ class ILPSolver:
         infeasible = (self.m.status == GRB.INFEASIBLE)
         if infeasible:
             raise ValueError("Infeasible model, check constraints carefully. Insufficient memory?")
-        
+
         if self.m.solCount < 1:
             raise ValueError(f"Model status is {self.m.status} (not infeasible), but solCount is {self.m.solCount}")
 
@@ -178,9 +180,55 @@ class ILPSolver:
                     except (AttributeError, TypeError) as e:
                         Free_Eout[t][e] = int(self.Free_E[t, e])
         except AttributeError as e:
-            logger = setup_logger("ILPSolver", self.gurobi_params.get('LogFile'))
-            logger.exception(e)
+            logging.exception(e)
             return None, None, None, None
 
-        Rout = solvers.solver.CheckpointSolver.solve_r_opt(self.g, Sout)  # prune R using optimal recomputation solver
+        Rout = solve_r_opt(self.g, Sout)  # prune R using optimal recomputation solver
         return Rout, Sout, Uout, Free_Eout
+
+
+def solve_ilp_gurobi(g: DFGraph, budget: int, seed_s: Optional[np.ndarray] = None, approx: bool = True,
+                     time_limit: Optional[int] = None, write_log_file: Optional[str] = None, print_to_console=True,
+                     write_model_file: Optional[str] = None, eps_noise=0.01, solver_cores=os.cpu_count()):
+    """
+    Memory-accurate solver with garbage collection.
+    :param budget: int -- budget constraint for solving
+    :param seed_s: np.ndarray -- optional parameter to set warm-start for solver, defaults to empty S
+    :param approx: bool -- set true to return as soon as a solution is found that is within 1% of optimal
+    :param time_limit: int -- time limit for solving in seconds
+    :param write_log_file: if set, log gurobi to this file
+    :param print_to_console: if set, print gurobi logs to the console
+    :param write_model_file: if set, write output model file to this location
+    :param eps_noise: float -- if set, inject epsilon noise into objective weights, default 0.5%
+    :param solver_cores: int -- if set, use this number of cores for ILP solving
+    """
+    param_dict = {'LogToConsole': 1 if print_to_console else 0,
+                  'LogFile': write_log_file if write_log_file is not None else "",
+                  'Threads': solver_cores,
+                  'TimeLimit': math.inf if time_limit is None else time_limit,
+                  'OptimalityTol': 1e-2 if approx else 1e-4,
+                  'IntFeasTol': 1e-3 if approx else 1e-5,
+                  'Presolve': 2,
+                  'StartNodeLimit': 10000000}
+    ilpsolver = ILPSolver(g, budget, gurobi_params=param_dict, seed_s=seed_s,
+                          eps_noise=eps_noise, write_model_file=write_model_file)
+    ilpsolver.build_model()
+    try:
+        r, s, u, free_e = ilpsolver.solve()
+        ilp_feasible = True
+    except ValueError as e:
+        logging.exception(e)
+        r, s, u, free_e = (None, None, None, None)
+        ilp_feasible = False
+    ilp_aux_data = ILPAuxData(U=u, Free_E=free_e, ilp_approx=approx, ilp_time_limit=time_limit, ilp_eps_noise=eps_noise,
+                              ilp_num_constraints=ilpsolver.m.numConstrs, ilp_num_variables=ilpsolver.m.numVars)
+    schedule, aux_data = schedule_from_rs(g, r, s)
+    return ScheduledResult(
+        solve_strategy=SolveStrategy.OPTIMAL_ILP_GC,
+        solver_budget=budget,
+        feasible=ilp_feasible,
+        schedule=schedule,
+        schedule_aux_data=aux_data,
+        solve_time_s=ilpsolver.solve_time,
+        ilp_aux_data=ilp_aux_data
+    )

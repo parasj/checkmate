@@ -3,8 +3,8 @@ import math
 from remat.core.dfgraph import DFGraph
 from remat.core.schedule import ScheduledResult
 from remat.core.solvers.common import gen_s_matrix_fixed_checkpoints, solve_r_opt
-from remat.core.solvers.scheduler import schedule_rs_matrix
 from remat.core.solvers.enum_strategy import SolveStrategy
+from remat.core.solvers.scheduler import schedule_from_rs
 from remat.core.utils.timer import Timer
 
 
@@ -22,7 +22,7 @@ def solve_chen_greedy(g: DFGraph, segment_mem_B: int, use_actuation_points: bool
                 checkpoints.add(v)
         S = gen_s_matrix_fixed_checkpoints(g, checkpoints)
         R = solve_r_opt(g, S)
-    schedule, aux_data = schedule_rs_matrix(g, R, S)
+    schedule, aux_data = schedule_from_rs(g, R, S)
     return ScheduledResult(
         solve_strategy=SolveStrategy.CHEN_GREEDY if use_actuation_points else SolveStrategy.CHEN_GREEDY_NOAP,
         solver_budget=segment_mem_B,
@@ -40,7 +40,7 @@ def solve_chen_sqrtn(g: DFGraph, use_actuation_points: bool):
         checkpoints = [v for idx, v in enumerate(C) if (idx + 1) % k == 0]
         S = gen_s_matrix_fixed_checkpoints(g, set(checkpoints))
         R = solve_r_opt(g, S)
-    schedule, aux_data = schedule_rs_matrix(g, R, S)
+    schedule, aux_data = schedule_from_rs(g, R, S)
     return ScheduledResult(
         solve_strategy=SolveStrategy.CHEN_SQRTN if use_actuation_points else SolveStrategy.CHEN_SQRTN_NOAP,
         solver_budget=0,
