@@ -11,7 +11,7 @@ EdgeList = Iterable[Tuple[Vertex, Vertex]]
 AdjList = Dict[Vertex, List[Vertex]]
 
 
-class Graph:
+class DFGraph:
     def __init__(self, args: AdjList, v: Iterable[Vertex], vfwd_map: Dict[Vertex, Vertex], vloss: Vertex,
                  cost_cpu: Dict[Vertex, int] = None, cost_ram: Dict[Vertex, int] = None,
                  node_names: Dict[Vertex, str] = None, cost_ram_parameters: int = 0):
@@ -262,7 +262,7 @@ def gen_linear_graph(forward_node_count, **kwargs):
             args[corresponding_bwd].append(i)
             vfwd_map[i] = corresponding_bwd
     v = list(vfwd_map.keys()) + list(vfwd_map.values()) + [loss_node_idx]
-    return Graph(args=args, v=v, vfwd_map=vfwd_map, vloss=loss_node_idx, **kwargs)
+    return DFGraph(args=args, v=v, vfwd_map=vfwd_map, vloss=loss_node_idx, **kwargs)
 
 
 def edge_to_adj_list(E: EdgeList, convert_undirected=False):

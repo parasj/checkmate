@@ -4,9 +4,10 @@ import graphviz
 import ray
 
 import utils.redis
-from evaluation.util.solve_strategy import SolveStrategy
+from remat.core.solvers.strategy import SolveStrategy
 from integration.tf2.TF2ExtractorParams import TF2ExtractorParams
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
+from remat.core.solvers.strategy_checkpoint_last import schedule_checkpoint_last_node
 from solvers.result import PartialRSResult, RSResult
 from solvers.solver import CheckpointSolver
 from utils.setup_logger import setup_logger
@@ -25,7 +26,7 @@ def tf2_solve(solve_params: TF2ExtractorParams, solve_strategy: SolveStrategy, b
         elif solve_strategy == SolveStrategy.CHEN_SQRTN_NOAP:
             sol = CheckpointSolver.schedule_sqrtn_chen16(solve_params.g, use_actuation_points=False)
         elif solve_strategy == SolveStrategy.CHECKPOINT_LAST_NODE:
-            sol = CheckpointSolver.schedule_checkpoint_last_node(solve_params.g)
+            sol = schedule_checkpoint_last_node(solve_params.g)
         elif solve_strategy == SolveStrategy.CHECKPOINT_ALL:
             sol = solve_checkpoint_all(solve_params.g)
         elif solve_strategy == SolveStrategy.CHECKPOINT_ALL_AP:

@@ -4,12 +4,12 @@ import tensorflow as tf
 
 from integration.tf2.misc import categorical_cross_entropy
 from remat.core.schedule import OperatorEvaluation, AllocateRegister, DeallocateRegister, Schedule
-from remat.core.graph import Graph
+from remat.core.dfgraph import DFGraph
 from utils.setup_logger import setup_logger
 
 
 class TF2Runner:
-    def __init__(self, keras_model: tf.keras.models.Model, g: Graph, schedule: Schedule,
+    def __init__(self, keras_model: tf.keras.models.Model, g: DFGraph, schedule: Schedule,
                  loss_fn=categorical_cross_entropy, eager: bool = True, log_base: str = None, debug=False, batch_size=None):
         self.log_base = log_base
         self.logger = setup_logger("TF2Runner", os.path.join(log_base, 'TF2Runner.log'))

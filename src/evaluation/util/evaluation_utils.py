@@ -1,13 +1,13 @@
 import math
 import sys
-from typing import List, Dict, Iterable
+from typing import List, Dict
 
 import numpy as np
 import pandas
 import ray
 from tqdm import tqdm
 
-from evaluation.util.solve_strategy import SolveStrategy
+from remat.core.solvers.strategy import SolveStrategy
 from solvers.result import RSResult
 
 RSResultDict = Dict[SolveStrategy, List[RSResult]]

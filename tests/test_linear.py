@@ -1,4 +1,4 @@
-from remat.core.graph import gen_linear_graph
+from remat.core.dfgraph import gen_linear_graph
 
 
 def test_checkpointall():

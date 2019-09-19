@@ -5,10 +5,10 @@ from typing import NamedTuple, List, Optional
 import numpy as np
 import ray
 
-from evaluation.util.solve_strategy import SolveStrategy
+from remat.core.solvers.strategy import SolveStrategy
 from solvers.scheduler import ScheduleBuilder
 from remat.core.schedule import Schedule
-from remat.core.graph import Graph
+from remat.core.dfgraph import DFGraph
 
 
 class PartialRSResult(NamedTuple):
@@ -55,7 +55,7 @@ class RSResult(NamedTuple):
         return pickle.loads(serialized_result)
 
     @staticmethod
-    def verify_solution(G: Graph, R: np.ndarray, S: np.ndarray):
+    def verify_solution(G: DFGraph, R: np.ndarray, S: np.ndarray):
         if R is None or S is None:
             return None, None, None, None, None, None
         T = G.size
@@ -93,11 +93,11 @@ class RSResult(NamedTuple):
 
     @staticmethod
     @ray.remote(num_cpus=1, num_return_vals=5)
-    def remote_verify_solution(G: Graph, R: np.ndarray, S: np.ndarray):
+    def remote_verify_solution(G: DFGraph, R: np.ndarray, S: np.ndarray):
         return RSResult.verify_solution(G, R, S)
 
     @staticmethod
-    def verify_memory(G: Graph, R: np.ndarray, S: np.ndarray):
+    def verify_memory(G: DFGraph, R: np.ndarray, S: np.ndarray):
         """
         Lightweight version of verify_solution that only computes maximum memory usage
         """
@@ -135,7 +135,7 @@ class RSResult(NamedTuple):
         return mem_usage.max(), mem_usage
 
     @staticmethod
-    def test_verify_memory(G: Graph, R: np.ndarray, S: np.ndarray,
+    def test_verify_memory(G: DFGraph, R: np.ndarray, S: np.ndarray,
                            U: np.ndarray = None, tol: float = 1e-6):
         _, mem_usage = RSResult.verify_memory(G, R, S)
         _, __, ___, mem_usage_verify, ____ = RSResult.verify_solution(G, R, S)
@@ -163,7 +163,7 @@ class RSResult(NamedTuple):
                         print("  Lack of domination at t={}".format(t))
 
     @staticmethod
-    def plot(G: Graph, R: np.ndarray, S: np.ndarray, U: np.ndarray = None, plot_mem_usage: bool = False,
+    def plot(G: DFGraph, R: np.ndarray, S: np.ndarray, U: np.ndarray = None, plot_mem_usage: bool = False,
              timeline: np.ndarray = None, save_file: str = None, show: bool = False, plt=None):
         if plt is None:
             import matplotlib.pyplot as plt

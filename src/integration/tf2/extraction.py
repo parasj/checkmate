@@ -5,7 +5,7 @@ import keras_segmentation
 import numpy as np
 import tensorflow.compat.v2 as tf
 
-from remat.core import graph
+from remat.core import dfgraph
 from utils.setup_logger import setup_logger
 
 try:
@@ -199,6 +199,6 @@ def extract_graph_from_keras(mod: tf.keras.models.Model,
     total_params = sum(count_params_keras(mod))
     total_mem_params = total_params * MEMORY_MULTIPLIER
 
-    return graph.Graph(args=args, v=vfwd + [loss_node_idx] + vback, vfwd_map=vfwd_map,
-                       vloss=loss_node_idx, cost_cpu=costs, cost_ram=mems, node_names=names,
-                       cost_ram_parameters=total_mem_params)
+    return dfgraph.DFGraph(args=args, v=vfwd + [loss_node_idx] + vback, vfwd_map=vfwd_map,
+                           vloss=loss_node_idx, cost_cpu=costs, cost_ram=mems, node_names=names,
+                           cost_ram_parameters=total_mem_params)

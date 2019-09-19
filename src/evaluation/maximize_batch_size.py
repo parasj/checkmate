@@ -1,28 +1,12 @@
 from __future__ import division
 
-import functools
 import math
 import os
-from typing import List, Dict, Iterable
 
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-import numpy as np
-import ray
-import seaborn as sns
-from tqdm import tqdm
-
-from evaluation.util.cost_model import CostModel
-from evaluation.util.evaluation_utils import prefix_min_np, result_dict_to_dataframe, RSResultDict
-from evaluation.util.solver_utils import remote_evaluation_iteration
-from evaluation.util.solve_strategy import SolveStrategy
 from integration.tf2.TF2ExtractorParams import TF2ExtractorParams
-from integration.tf2.extraction import get_keras_model, pretty_model_name, pretty_platform_name, platform_memory, \
-    CHAIN_GRAPH_MODELS
-from integration.tf2.misc import categorical_cross_entropy
+from integration.tf2.extraction import get_keras_model
 from solvers.result import RSResult
 from solvers.solver_ilp_maxbs import MaxBatchILPSolver
-from utils.redis import RedisCache
 from utils.setup_logger import setup_logger
 
 GB = 1000 * 1000 * 1000

@@ -8,7 +8,7 @@ import pickle
 
 import dotenv
 
-from evaluation.util.solve_strategy import SolveStrategy
+from remat.core.solvers.strategy import SolveStrategy
 from integration.tf2.extraction import MODEL_NAMES
 from evaluation.eval_execution import execute_one
 from utils.setup_logger import setup_logger

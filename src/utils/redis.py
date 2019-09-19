@@ -1,9 +1,9 @@
 import os
-from typing import List, Optional, Iterable, Tuple
+from typing import List, Optional, Tuple
 
 from redis import StrictRedis
 
-from evaluation.util.solve_strategy import SolveStrategy
+from remat.core.solvers.strategy import SolveStrategy
 from global_version import GLOBAL_PROJECT_VERSION
 from solvers.result import RSResult
 

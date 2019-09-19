@@ -3,12 +3,12 @@ from typing import Set
 import numpy as np
 
 import remat.core
-from remat.core.graph import Graph
+from remat.core.dfgraph import DFGraph
 
 SOLVER_DTYPE = np.int
 
 
-def setup_implied_s_backwards(g: Graph, S: np.ndarray = None):
+def setup_implied_s_backwards(g: DFGraph, S: np.ndarray = None):
     """
     Given a backward graph, this function will set the appropriate items in S to 1 in order
     to satisfy no-recompute rules during backwards optimization.
@@ -21,7 +21,7 @@ def setup_implied_s_backwards(g: Graph, S: np.ndarray = None):
     return S
 
 
-def gen_s_matrix_fixed_checkpoints(g: Graph, segment_set: Set[int]):
+def gen_s_matrix_fixed_checkpoints(g: DFGraph, segment_set: Set[int]):
     """
     Given a list of checkpoint locations, this function will generate
     as output S matrices denoting checkpoint schedule, given a set of
@@ -68,7 +68,7 @@ def gen_s_matrix_fixed_checkpoints(g: Graph, segment_set: Set[int]):
     return S
 
 
-def solve_r_opt(G: Graph, S: np.ndarray):
+def solve_r_opt(G: DFGraph, S: np.ndarray):
     """Find the optimal recomputation pattern given caching decisions.
     Given S, E = [(i, j)] where node j depends on the result of node i,
     find R that minimizes cost, satisfies constraints. Assumes recomputation

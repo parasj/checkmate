@@ -10,25 +10,17 @@ import ray
 from remat.core.solvers.common import SOLVER_DTYPE, setup_implied_s_backwards, gen_s_matrix_fixed_checkpoints, \
     solve_r_opt
 from solvers.solver_ilp import ILPSolver
-from remat.core.graph import Graph
+from remat.core.dfgraph import DFGraph
 from utils.setup_logger import setup_logger
 
 
 class CheckpointSolver:
     @staticmethod
-    def solve_r_opt(G: Graph, S: np.ndarray):
+    def solve_r_opt(G: DFGraph, S: np.ndarray):
         return solve_r_opt(G, S)
 
     @staticmethod
-    def schedule_checkpoint_last_node(g: Graph):
-        """Checkpoint only one node between stages"""
-        S = np.zeros((g.size, g.size), dtype=SOLVER_DTYPE)
-        np.fill_diagonal(S[1:], 1)
-        R = CheckpointSolver.solve_r_opt(g, S)
-        return R, S
-
-    @staticmethod
-    def schedule_greedy_chen16(g: Graph, segment_mem_B: int, use_actuation_points: bool):
+    def schedule_greedy_chen16(g: DFGraph, segment_mem_B: int, use_actuation_points: bool):
         C = g.checkpoint_set if use_actuation_points else g.checkpoint_set_all
         temp = 0
         x = 0
@@ -47,11 +39,11 @@ class CheckpointSolver:
 
     @staticmethod
     @ray.remote(num_cpus=1, num_return_vals=2)
-    def remote_schedule_greedy_chen16(g: Graph, segment_mem_B: int, use_actuation_points: bool):
+    def remote_schedule_greedy_chen16(g: DFGraph, segment_mem_B: int, use_actuation_points: bool):
         return CheckpointSolver.schedule_greedy_chen16(g, segment_mem_B, use_actuation_points)
 
     @staticmethod
-    def schedule_sqrtn_chen16(g: Graph, use_actuation_points: bool):
+    def schedule_sqrtn_chen16(g: DFGraph, use_actuation_points: bool):
         C = g.checkpoint_set if use_actuation_points else g.checkpoint_set_all
         k = int(math.sqrt(len(C)))
         checkpoints = [v for idx, v in enumerate(C) if (idx + 1) % k == 0]
@@ -61,17 +53,17 @@ class CheckpointSolver:
 
     @staticmethod
     @ray.remote(num_cpus=1, num_return_vals=2)
-    def remote_schedule_sqrtn_chen16(g: Graph, use_actuation_points: bool):
+    def remote_schedule_sqrtn_chen16(g: DFGraph, use_actuation_points: bool):
         return CheckpointSolver.schedule_sqrtn_chen16(g, use_actuation_points)
 
     @staticmethod
-    def schedule_checkpoint_all_ap(g: Graph):
+    def schedule_checkpoint_all_ap(g: DFGraph):
         S = gen_s_matrix_fixed_checkpoints(g, g.checkpoint_set)
         R = CheckpointSolver.solve_r_opt(g, S)
         return R, S
 
     @staticmethod
-    def schedule_ilp_gurobi(g: Graph, budget: int, seed_s: np.ndarray = None, approx: bool = True, time_limit=None,
+    def schedule_ilp_gurobi(g: DFGraph, budget: int, seed_s: np.ndarray = None, approx: bool = True, time_limit=None,
                             log_file=None, print_to_console=True, model_file=None,
                             remote=False, eps_noise=0.01, solver_cores=1):
         """
@@ -112,7 +104,7 @@ class CheckpointSolver:
         return sol, return_vals
 
     @staticmethod
-    def schedule_griewank(g: Graph, budget: int):
+    def schedule_griewank(g: DFGraph, budget: int):
         S = np.zeros((g.size, g.size), dtype=np.int32)
         S = setup_implied_s_backwards(g, S)
         np.fill_diagonal(S[1:], 1)

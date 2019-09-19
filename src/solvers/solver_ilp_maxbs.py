@@ -8,13 +8,13 @@ from gurobi import GRB as GRB
 
 import remat.core.solvers.common
 import solvers.solver
-from remat.core.graph import Graph
+from remat.core.dfgraph import DFGraph
 from utils.setup_logger import setup_logger
 from utils.timer import Timer
 
 
 class MaxBatchILPSolver:
-    def __init__(self, g: Graph, budget: int, eps_noise=None,model_file=None, remote=False, gurobi_params: Dict[str, Any] = None, cpu_fwd_factor: int = 2):
+    def __init__(self, g: DFGraph, budget: int, eps_noise=None, model_file=None, remote=False, gurobi_params: Dict[str, Any] = None, cpu_fwd_factor: int = 2):
         self.cpu_fwd_factor = cpu_fwd_factor
         self.logger = setup_logger("MaxBatchILPSolve")
         self.remote = remote
@@ -24,7 +24,7 @@ class MaxBatchILPSolver:
         self.model_file = model_file
         self.eps_noise = eps_noise
         self.budget = budget
-        self.g: Graph = g
+        self.g: DFGraph = g
         self.solve_time = None
         self.init_constraints = []  # used for seeding the model
 

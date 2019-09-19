@@ -1,10 +1,10 @@
 from graphviz import Digraph
 
-from remat.core.graph import Graph
+from remat.core.dfgraph import DFGraph
 from remat.core.schedule import Schedule, OperatorEvaluation
 
 
-def tensor_plot(g: Graph, sched: Schedule, directory, tag=None, format='pdf', quiet=True):
+def tensor_plot(g: DFGraph, sched: Schedule, directory, tag=None, format='pdf', quiet=True):
     dot = Digraph(f"!TensorPlot_{tag}", engine="dot")
     if sched is None:
         return

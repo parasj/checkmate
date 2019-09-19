@@ -7,13 +7,13 @@ from gurobi import GRB as GRB
 
 import remat.core.solvers.common
 import solvers.solver
-from remat.core.graph import Graph
+from remat.core.dfgraph import DFGraph
 from utils.setup_logger import setup_logger
 from utils.timer import Timer
 
 
 class ILPSolver:
-    def __init__(self, g: Graph, budget: int, eps_noise=None, seed_s=None, model_file=None, remote=True,
+    def __init__(self, g: DFGraph, budget: int, eps_noise=None, seed_s=None, model_file=None, remote=True,
                  gurobi_params: Dict[str, Any] = None):
         self.remote = remote
         self.profiler = Timer if not self.remote else ray.profile
@@ -23,7 +23,7 @@ class ILPSolver:
         self.seed_s = seed_s
         self.eps_noise = eps_noise
         self.budget = budget
-        self.g: Graph = g
+        self.g: DFGraph = g
         self.solve_time = None
 
         self.init_constraints = []  # used for seeding the model
