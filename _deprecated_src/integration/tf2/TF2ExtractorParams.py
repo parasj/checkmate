@@ -5,7 +5,7 @@ import graphviz
 import numpy as np
 import tensorflow as tf
 
-from integration.tf2.extraction import extract_graph_from_keras
+from remat.tensorflow2.extraction import dfgraph_from_keras
 from remat.core.dfgraph import DFGraph
 from utils.setup_logger import setup_logger
 
@@ -24,8 +24,8 @@ class TF2ExtractorParams:
         self.output_shape = list(keras_model.output_shape)
         self.output_shape[0] = batch_size
 
-        self.g: DFGraph = extract_graph_from_keras(keras_model, batch_size=batch_size, loss_cpu_cost=loss_cpu_cost,
-                                                   loss_ram_cost=loss_ram_cost, costs_np=costs_np)
+        self.g: DFGraph = dfgraph_from_keras(keras_model, batch_size=batch_size, loss_cpu_cost=loss_cpu_cost,
+                                             loss_ram_cost=loss_ram_cost, costs_np=costs_np)
         self.logger.info(f"Extracted graph {keras_model.name} with {self.g.size} nodes")
 
         if self.log_base is not None:
