@@ -15,7 +15,6 @@ def solve_checkpoint_last_node(g: DFGraph):
         np.fill_diagonal(s[1:], 1)
         r = solve_r_opt(g, s)
     schedule, aux_data = schedule_rs_matrix(g, r, s)
-
     return ScheduledResult(
         solve_strategy=SolveStrategy.CHECKPOINT_LAST_NODE,
         solver_budget=0,
