@@ -15,7 +15,7 @@ except ImportError as e:
 
 
 def dfgraph_from_keras(mod: tf.keras.models.Model, include_prev_node=True, batch_size=1, loss_cpu_cost=0,
-                       loss_ram_cost=0, costs_np=Optional[np.ndarray]):
+                       loss_ram_cost=0, costs_np: Optional[np.ndarray] = None):
     """
     Given a Keras model, this method extracts a graph to be utilized by the solver
     :param mod: tf.keras.models.Model -- A Keras model
