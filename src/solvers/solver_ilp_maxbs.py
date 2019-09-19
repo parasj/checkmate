@@ -10,7 +10,7 @@ import remat.core.solvers.common
 import solvers.solver
 from remat.core.dfgraph import DFGraph
 from utils.setup_logger import setup_logger
-from utils.timer import Timer
+from remat.core.utils.timer import Timer
 
 
 class MaxBatchILPSolver:

@@ -3,7 +3,7 @@ from typing import NamedTuple, Dict, List, Union, Optional
 
 import numpy as np
 
-from remat.core.solvers.strategy import SolveStrategy
+from remat.core.solvers.strategy_enum import SolveStrategy
 
 
 class OperatorEvaluation(NamedTuple):
@@ -29,32 +29,33 @@ class DeallocateRegister(NamedTuple):
 Schedule = List[Union[OperatorEvaluation, AllocateRegister, DeallocateRegister]]
 
 
-class ScheduledResult(NamedTuple):
-    solve_strategy: SolveStrategy
-    cost_file: str
-    input_shape: List[int]  # input_shape[0] is batch size
+class SchedulerAuxData(NamedTuple):
     R: np.ndarray
     S: np.ndarray
-    solver_budget: float
-
-    schedule: Schedule
-    peak_ram: int
-    activation_ram: int
     cpu: int
-
+    peak_ram: int  # includes memory for params
+    activation_ram: int
     mem_grid: np.ndarray
     mem_timeline: List[int]
+    schedule_time_s: Optional[float] = None
 
-    # ILP-only data
+
+class ILPAuxData(NamedTuple):
     U: Optional[np.ndarray] = None
     Free_E: Optional[np.ndarray] = None
-    ilp_feasible: Optional[bool] = None
     ilp_num_variables: Optional[int] = None
     ilp_num_constraints: Optional[int] = None
 
-    # Profiling data
+
+class ScheduledResult(NamedTuple):
+    solve_strategy: SolveStrategy
+    solver_budget: float
+    feasible: bool
+
+    schedule: Optional[Schedule] = None
+    schedule_aux_data: Optional[SchedulerAuxData] = None
+    ilp_aux_data: Optional[ILPAuxData] = None
     solve_time_s: Optional[float] = None
-    schedule_time_s: Optional[float] = None
 
     def dumps(self) -> bytes:
         return pickle.dumps(self, protocol=pickle.HIGHEST_PROTOCOL)

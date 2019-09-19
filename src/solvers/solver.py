@@ -57,10 +57,6 @@ class CheckpointSolver:
         return CheckpointSolver.schedule_sqrtn_chen16(g, use_actuation_points)
 
     @staticmethod
-    def schedule_checkpoint_all_ap(g: DFGraph):
-        S = gen_s_matrix_fixed_checkpoints(g, g.checkpoint_set)
-        R = CheckpointSolver.solve_r_opt(g, S)
-        return R, S
 
     @staticmethod
     def schedule_ilp_gurobi(g: DFGraph, budget: int, seed_s: np.ndarray = None, approx: bool = True, time_limit=None,

@@ -5,7 +5,7 @@ from glob import glob
 
 import pandas as pd
 
-from remat.core.solvers.strategy import SolveStrategy
+from remat.core.solvers.strategy_enum import SolveStrategy
 
 
 def extract_params():

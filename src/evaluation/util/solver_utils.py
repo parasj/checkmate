@@ -4,14 +4,14 @@ import graphviz
 import ray
 
 import utils.redis
-from remat.core.solvers.strategy import SolveStrategy
+from remat.core.solvers.strategy_enum import SolveStrategy
 from integration.tf2.TF2ExtractorParams import TF2ExtractorParams
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
 from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
 from solvers.result import PartialRSResult, RSResult
 from solvers.solver import CheckpointSolver
 from utils.setup_logger import setup_logger
-from utils.timer import Timer
+from remat.core.utils.timer import Timer
 
 RAY_OVERPROVISON_PCT = 0.75
 

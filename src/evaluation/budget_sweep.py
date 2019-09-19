@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 from evaluation.util.cost_model import CostModel
 from evaluation.util.evaluation_utils import prefix_min_np, result_dict_to_dataframe, RSResultDict, get_futures
-from remat.core.solvers.strategy import SolveStrategy
+from remat.core.solvers.strategy_enum import SolveStrategy
 from evaluation.util.solver_utils import remote_evaluation_iteration
 from integration.tf2.TF2ExtractorParams import TF2ExtractorParams
 from integration.tf2.extraction import get_keras_model, pretty_platform_name, platform_memory, \

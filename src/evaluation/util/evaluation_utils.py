@@ -7,7 +7,7 @@ import pandas
 import ray
 from tqdm import tqdm
 
-from remat.core.solvers.strategy import SolveStrategy
+from remat.core.solvers.strategy_enum import SolveStrategy
 from solvers.result import RSResult
 
 RSResultDict = Dict[SolveStrategy, List[RSResult]]

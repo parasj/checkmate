@@ -5,7 +5,7 @@ from typing import NamedTuple, List, Optional
 import numpy as np
 import ray
 
-from remat.core.solvers.strategy import SolveStrategy
+from remat.core.solvers.strategy_enum import SolveStrategy
 from remat.core.solvers.scheduler import ScheduleBuilder
 from remat.core.schedule import Schedule
 from remat.core.dfgraph import DFGraph

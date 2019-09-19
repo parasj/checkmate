@@ -7,7 +7,7 @@ import tensorflow as tf
 import tensorflow.compat.v1 as tf1
 import numpy as np
 
-from remat.core.solvers.strategy import SolveStrategy
+from remat.core.solvers.strategy_enum import SolveStrategy
 from integration.tf2.TF2ExtractorParams import TF2ExtractorParams
 from integration.tf2.extraction import get_keras_model, platform_memory
 from integration.tf2.TF2Runner import TF2Runner
@@ -15,7 +15,7 @@ from integration.tf2.misc import categorical_cross_entropy, random_batch
 from solvers.result import RSResult
 from utils.redis import RedisCache
 from utils.setup_logger import setup_logger
-from utils.timer import Timer
+from remat.core.utils.timer import Timer
 
 
 def plot_solver_result(results: pandas.DataFrame, plot_file: str):

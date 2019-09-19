@@ -1,10 +1,11 @@
 import itertools
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 import numpy as np
 
 from remat.core.dfgraph import DFGraph
-from remat.core.schedule import OperatorEvaluation, AllocateRegister, DeallocateRegister, Schedule
+from remat.core.schedule import OperatorEvaluation, AllocateRegister, DeallocateRegister, Schedule, SchedulerAuxData
+from remat.core.utils.timer import Timer
 
 
 class ScheduleBuilder:
@@ -17,7 +18,6 @@ class ScheduleBuilder:
         self.next_free_register_id = 0
         self.verbosity = verbosity
         self.ram_timeline: List[int] = []
-        # todo live ranges and garbage collection
 
     def is_op_cached(self, op_id: int):
         return op_id in self.live_registers.keys()
@@ -68,9 +68,9 @@ class ScheduleBuilder:
         return sum(map(self.g.cost_ram.get, self.live_registers.keys()))
 
 
-def schedule_rs_matrix(g: DFGraph, r: np.ndarray, s: np.ndarray):
-    if r is None or s is None:
-        return None, None, None, None, None, None
+def schedule_rs_matrix(g: DFGraph, r: np.ndarray, s: np.ndarray) -> Tuple[Schedule, SchedulerAuxData]:
+    assert r is not None
+    assert s is not None
     t = g.size
 
     def _used_after(t_, u_, i_):
@@ -79,27 +79,31 @@ def schedule_rs_matrix(g: DFGraph, r: np.ndarray, s: np.ndarray):
         is_used_by_successor = not all([r[t_, v] == 0 or v <= i_ for v in g.successors(u_)])
         return is_retained_snapshot or is_used_by_successor
 
-    # compute last usage to determine whether to update auxiliary variables
-    last_used = {i: max([t for t in range(t) if r[t, i] == 1]) for i in range(t)}
+    with Timer('schedule_rs_matrix') as schedule_timer:
+        # compute last usage to determine whether to update auxiliary variables
+        last_used = {i: max([t for t in range(t) if r[t, i] == 1]) for i in range(t)}
+        mem_usage = np.zeros((t, t), dtype=np.int)
+        # Schedule builder accounts for all memory, including fixed memory
+        sb = ScheduleBuilder(g, verbosity=1)
+        for t in range(t):
+            # Free unused checkpoints
+            for i in filter(lambda x: sb.is_op_cached(x), range(t)):
+                if not _used_after(t, i, i):
+                    sb.deallocate_register(i)
 
-    mem_usage = np.zeros((t, t), dtype=np.int)
-    # Schedule builder accounts for all memory, including fixed memory
-    sb = ScheduleBuilder(g, verbosity=1)
-    for t in range(t):
-        # Free unused checkpoints
-        for i in filter(lambda x: sb.is_op_cached(x), range(t)):
-            if not _used_after(t, i, i):
-                sb.deallocate_register(i)
+            for i in range(t):
+                if r[t, i] == 1:
+                    sb.run_operator(i, last_used[i] == t)
+                mem_usage[t, i] = sb.current_mem() + g.cost_ram_fixed
 
-        for i in range(t):
-            if r[t, i] == 1:
-                sb.run_operator(i, last_used[i] == t)
-            mem_usage[t, i] = sb.current_mem() + g.cost_ram_fixed
+                # Free memory
+                for u in filter(lambda x: sb.is_op_cached(x), itertools.chain(g.predecessors(i), [i])):
+                    if not _used_after(t, u, i):
+                        sb.deallocate_register(u)
+        total_ram = sb.max_ram + g.cost_ram_fixed
+        ram_timeline = [mem + g.cost_ram_fixed for mem in sb.ram_timeline]
 
-            # Free memory
-            for u in filter(lambda x: sb.is_op_cached(x), itertools.chain(g.predecessors(i), [i])):
-                if not _used_after(t, u, i):
-                    sb.deallocate_register(u)
-    max_ram = sb.max_ram + g.cost_ram_fixed
-    ram_timeline = [mem + g.cost_ram_fixed for mem in sb.ram_timeline]
-    return sb.schedule, max_ram, max_ram - g.cost_ram_fixed, sb.total_cpu, mem_usage, ram_timeline
+    aux_data = SchedulerAuxData(R=r, S=s, cpu=sb.total_cpu, peak_ram=total_ram,
+                                activation_ram=sb.max_ram, mem_grid=mem_usage,
+                                mem_timeline=ram_timeline, schedule_time_s=schedule_timer.elapsed)
+    return sb.schedule, aux_data
