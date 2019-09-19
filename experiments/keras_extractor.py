@@ -59,7 +59,7 @@ def simple_model():
 
 
 def get_keras_model(model_name: str, input_shape: Optional[List[int]] = None):
-    if model_name is "test":
+    if model_name == "test":
         model = simple_model()
     elif model_name in KERAS_APPLICATION_MODEL_NAMES:
         model = eval("tf.keras.applications.{}".format(model_name))
