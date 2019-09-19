@@ -60,5 +60,6 @@ class Timer:
                 result += '\n' + indent + line
         return result
 
-    def _get_time(self):
+    @staticmethod
+    def _get_time():
         return Decimal(default_timer())

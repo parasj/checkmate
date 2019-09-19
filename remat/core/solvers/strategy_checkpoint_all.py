@@ -36,4 +36,3 @@ def solve_checkpoint_all_ap(g: DFGraph):
         schedule_aux_data=aux_data,
         solve_time_s=timer_solve.elapsed
     )
-
