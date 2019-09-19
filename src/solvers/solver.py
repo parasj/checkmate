@@ -5,7 +5,6 @@ import urllib.request
 
 import numpy as np
 import pandas as pd
-import ray
 
 from remat.core.dfgraph import DFGraph
 from remat.core.solvers.common import setup_implied_s_backwards, gen_s_matrix_fixed_checkpoints, solve_r_opt
