@@ -7,7 +7,7 @@ import tensorflow.compat.v2 as tf
 from tensorflow.python.client import timeline
 import tensorflow.compat.v1 as tf1
 
-from integration.tf2.extraction import MODEL_NAMES, get_keras_model
+from experiments.keras_extractor import MODEL_NAMES, get_keras_model
 
 
 def get_names(timeline):

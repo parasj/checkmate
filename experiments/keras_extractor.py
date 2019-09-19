@@ -1,12 +1,7 @@
 from typing import Optional, List
 
 import keras_segmentation
-import tensorflow.compat.v2 as tf
-
-try:
-    from tensorflow.python.keras.utils.layer_utils import count_params  # TF r2.0
-except ImportError as e:
-    from tensorflow.keras.backend import count_params  # TF r1.14
+import tensorflow as tf
 
 KERAS_APPLICATION_MODEL_NAMES = ['InceptionV3', 'VGG16', 'VGG19', 'ResNet50',
                                  'Xception', 'MobileNet', 'MobileNetV2', 'DenseNet121',
@@ -15,9 +10,7 @@ KERAS_APPLICATION_MODEL_NAMES = ['InceptionV3', 'VGG16', 'VGG19', 'ResNet50',
                                  'ResNet152V2']
 SEGMENTATION_MODEL_NAMES = list(keras_segmentation.models.model_from_name.keys())
 MODEL_NAMES = KERAS_APPLICATION_MODEL_NAMES + SEGMENTATION_MODEL_NAMES + ["test"]
-
 CHAIN_GRAPH_MODELS = ["VGG16", "VGG19", "MobileNet"]
-
 NUM_SEGMENTATION_CLASSES = 19  # Cityscapes has 19 evaluation classes
 
 
@@ -69,18 +62,13 @@ def get_keras_model(model_name: str, input_shape: Optional[List[int]] = None):
     if model_name is "test":
         model = simple_model()
     elif model_name in KERAS_APPLICATION_MODEL_NAMES:
-        # Pre-trained Keras applications
         model = eval("tf.keras.applications.{}".format(model_name))
         model = model(input_shape=input_shape)
     elif model_name in SEGMENTATION_MODEL_NAMES:
-        # Segmentation models
         model = keras_segmentation.models.model_from_name[model_name]
         if input_shape is not None:
             assert input_shape[2] == 3, "Can only segment 3-channel, channel-last images"
-
-            model = model(n_classes=NUM_SEGMENTATION_CLASSES,
-                          input_height=input_shape[0],
-                          input_width=input_shape[1])
+            model = model(n_classes=NUM_SEGMENTATION_CLASSES, input_height=input_shape[0], input_width=input_shape[1])
         else:
             model = model(n_classes=NUM_SEGMENTATION_CLASSES)
     else:
@@ -95,5 +83,3 @@ def get_input_shape(model_name: str, batch_size: Optional[int] = None):
     if batch_size is not None:
         shape[0] = batch_size
     return shape
-
-
