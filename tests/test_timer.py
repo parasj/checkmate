@@ -10,5 +10,5 @@ def test_timer():
         with Timer("test") as timer:
             time.sleep(t)
         measured_time_err = abs(float(timer.elapsed) - t) / t
-        assert measured_time_err <= 0.05
+        assert measured_time_err <= 0.25  # 25% error is generous, but else this test is flaky
         assert float(timer.elapsed) >= t
