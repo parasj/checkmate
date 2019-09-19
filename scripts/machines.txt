@@ -1,5 +1,0 @@
-watson.millennium.berkeley.edu
-havoc.millennium.berkeley.edu
-c76.millennium.berkeley.edu
-c77.millennium.berkeley.edu
-c78.millennium.berkeley.edu
