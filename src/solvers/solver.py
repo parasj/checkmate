@@ -57,8 +57,6 @@ class CheckpointSolver:
         return CheckpointSolver.schedule_sqrtn_chen16(g, use_actuation_points)
 
     @staticmethod
-
-    @staticmethod
     def schedule_ilp_gurobi(g: DFGraph, budget: int, seed_s: np.ndarray = None, approx: bool = True, time_limit=None,
                             log_file=None, print_to_console=True, model_file=None,
                             remote=False, eps_noise=0.01, solver_cores=1):
