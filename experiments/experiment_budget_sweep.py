@@ -34,6 +34,8 @@ def extract_params():
     parser.add_argument('--hide-points', action="store_true")
 
     _args = parser.parse_args()
+    if _args.skip_ilp and len(_args.ilp_eval_points) > 0:
+        parser.error("--skip-ilp and --ilp-eval-points cannot both be set")
     _args.input_shape = _args.input_shape if _args.input_shape else None
     return _args
 
@@ -107,6 +109,14 @@ if __name__ == "__main__":
     result_dict[SolveStrategy.GRIEWANK_LOGN] = get_futures(list(futures), desc="Griewank (APs only)")
 
     # sweep optimal ilp baseline
+    if not args.skip_ilp:
+        # todo load any ILP results from cache
+        if len(args.ilp_eval_points) > 0:
+            local_ilp_eval_points = [p * 1000 * 1000 - g.cost_ram_fixed for p in args.ilp_eval_points]
+        else:  # run global search routine
+            pass
+
+        # run local search routine
 
     ####
     # Plot result_dict
