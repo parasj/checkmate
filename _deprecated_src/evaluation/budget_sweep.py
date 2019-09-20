@@ -12,7 +12,8 @@ from matplotlib.lines import Line2D
 from tqdm import tqdm
 
 from experiments.common.cost_model import CostModel
-from evaluation.util.evaluation_utils import prefix_min_np, result_dict_to_dataframe, RSResultDict, get_futures
+from evaluation.util.evaluation_utils import prefix_min_np, result_dict_to_dataframe, RSResultDict
+from experiments.common.utils import get_futures
 from remat.core.solvers.enum_strategy import SolveStrategy
 from evaluation.util.solver_utils import remote_evaluation_iteration
 from integration.tf2.TF2ExtractorParams import TF2ExtractorParams

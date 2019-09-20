@@ -4,16 +4,19 @@ import os
 import uuid
 from typing import Dict, List
 
+import numpy as np
 import ray
 
 from experiments.common.cost_model import CostModel
-from experiments.common.keras_extractor import MODEL_NAMES, get_keras_model
+from experiments.common.keras_extractor import MODEL_NAMES, get_keras_model, CHAIN_GRAPH_MODELS
 from experiments.common.platforms import PLATFORM_CHOICES
+from experiments.common.utils import get_futures
 from remat.core.schedule import ScheduledResult
 from remat.core.solvers.enum_strategy import SolveStrategy
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
 from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
-from remat.core.solvers.strategy_chen import solve_chen_sqrtn
+from remat.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
+from remat.core.solvers.strategy_griewank import solve_griewank
 from remat.tensorflow2.extraction import dfgraph_from_keras
 
 
@@ -86,8 +89,22 @@ if __name__ == "__main__":
     result_dict[SolveStrategy.CHEN_SQRTN] = [solve_chen_sqrtn(g, True)]
 
     # sweep chen's greedy baseline
+    logger.info(f"Running Chen's greedy baseline (APs only)")
+    greedy_eval_points = result_dict[SolveStrategy.CHEN_SQRTN_NOAP][0].schedule_aux_data.activation_ram * (1. + np.arange(-1, 2, 0.01))
+    remote_solve_chen_greedy = ray.remote(num_cpus=1)(solve_chen_greedy).remote
+    futures = [remote_solve_chen_greedy(g, float(b), False) for b in greedy_eval_points]
+    result_dict[SolveStrategy.CHEN_GREEDY] = get_futures(list(futures), desc="Greedy (APs only)")
+    if model_name not in CHAIN_GRAPH_MODELS:
+        logger.info(f"Running Chen's greedy baseline (no AP) as model is non-linear")
+        futures = [remote_solve_chen_greedy(g, float(b), True) for b in greedy_eval_points]
+        result_dict[SolveStrategy.CHEN_SQRTN_NOAP] = get_futures(list(futures), desc="Greedy (No AP)")
 
     # sweep griewank baselines
+    logger.info(f"Running Griewank baseline (APs only)")
+    griewank_eval_points = range(1, g.size + 1)
+    remote_solve_griewank = ray.remote(num_cpus=1)(solve_griewank).remote
+    futures = [remote_solve_griewank(g, float(b)) for b in griewank_eval_points]
+    result_dict[SolveStrategy.GRIEWANK_LOGN] = get_futures(list(futures), desc="Griewank (APs only)")
 
     # sweep optimal ilp baseline
 
