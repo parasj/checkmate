@@ -68,7 +68,7 @@ def test_ilp():
         import gurobipy as _
     except ImportError as e:
         logging.exception(e)
-        print("Continuing with tests, gurobi not installed")
+        logging.warning("Continuing with tests, gurobi not installed")
         return
     from remat.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
     for graph_length in [2, 4, 8]:

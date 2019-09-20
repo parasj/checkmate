@@ -1,6 +1,6 @@
 import sys
 
-from integration.tf2.extraction import get_keras_model, MODEL_NAMES
+from experiments.keras_extractor import MODEL_NAMES, get_keras_model
 
 # MODEL_NAMES = ['VGG16', 'VGG19', 'MobileNet', 'fcn_8', 'pspnet', 'vgg_unet', 'unet', 'segnet', 'resnet50_segnet']
 

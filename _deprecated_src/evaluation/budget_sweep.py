@@ -16,8 +16,7 @@ from evaluation.util.evaluation_utils import prefix_min_np, result_dict_to_dataf
 from remat.core.solvers.enum_strategy import SolveStrategy
 from evaluation.util.solver_utils import remote_evaluation_iteration
 from integration.tf2.TF2ExtractorParams import TF2ExtractorParams
-from integration.tf2.extraction import get_keras_model, pretty_platform_name, platform_memory, \
-    CHAIN_GRAPH_MODELS
+from experiments.keras_extractor import CHAIN_GRAPH_MODELS, pretty_platform_name, platform_memory, get_keras_model
 from solvers.result import RSResult
 from utils.redis import RedisCache
 from utils.setup_logger import setup_logger

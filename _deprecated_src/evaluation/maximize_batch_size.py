@@ -4,7 +4,7 @@ import math
 import os
 
 from integration.tf2.TF2ExtractorParams import TF2ExtractorParams
-from integration.tf2.extraction import get_keras_model
+from experiments.keras_extractor import get_keras_model
 from solvers.result import RSResult
 from solvers.solver_ilp_maxbs import MaxBatchILPSolver
 from utils.setup_logger import setup_logger

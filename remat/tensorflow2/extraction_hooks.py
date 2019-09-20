@@ -134,7 +134,7 @@ def upsample_hook(node, inputs, outputs):
     elif node.interpolation == "bilinear":
         # 5x cost heuristic from
         # http://web.pdx.edu/~jduh/courses/Archive/geog481w07/Students/Craver_Resampling.pdf
-        ops = ops * 5
+        ops = np.prod(outputs) * 5
     else:
         raise NotImplementedError("Unsupported interpolation method")
     return ops, mem_cost
@@ -216,6 +216,8 @@ def op_hook(layer, batch_size=1):
         inputs = []
         for input_shape in input_shapes:
             inputs.append(add_batch(input_shape, batch_size))
+    else:
+        raise ValueError("layer.input_shapes must be tuple or list")
 
     if type(output_shapes) == tuple:
         outputs = add_batch(output_shapes, batch_size)
@@ -223,6 +225,8 @@ def op_hook(layer, batch_size=1):
         outputs = []
         for output_shape in output_shapes:
             outputs.append(add_batch(output_shape, batch_size))
+    else:
+        raise ValueError("layer.output_shape must be tuple or list")
 
     # Shape checks
     if len(inputs) == 0 or len(outputs) == 0:
@@ -233,7 +237,5 @@ def op_hook(layer, batch_size=1):
         print("WARN: Layer of type {} has None in shape".format(type(layer)),
               "input shape:", inputs, "output shape:", outputs)
 
-    # print("Layer {}, hook {}, inputs {}, outputs {}".format(
-    #     layer.__class__.__name__, hooks[layer.__class__.__name__], inputs, outputs))
     ops, mem_cost = hooks[layer.__class__.__name__](layer, inputs, outputs)
     return ops, mem_cost
