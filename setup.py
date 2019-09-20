@@ -14,7 +14,7 @@ setup(
         "seaborn",
         # "tqdm",
         # "ray[debug]",
-        # "opencv-python",
+        "opencv-python",
         # "pydot",
         "graphviz",
         "python-dotenv",
