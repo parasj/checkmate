@@ -11,12 +11,13 @@ import seaborn as sns
 from matplotlib.lines import Line2D
 from tqdm import tqdm
 
-from evaluation.util.cost_model import CostModel
+from experiments.common.cost_model import CostModel
 from evaluation.util.evaluation_utils import prefix_min_np, result_dict_to_dataframe, RSResultDict, get_futures
 from remat.core.solvers.enum_strategy import SolveStrategy
 from evaluation.util.solver_utils import remote_evaluation_iteration
 from integration.tf2.TF2ExtractorParams import TF2ExtractorParams
-from experiments.common.keras_extractor import CHAIN_GRAPH_MODELS, pretty_platform_name, platform_memory, get_keras_model
+from experiments.common.keras_extractor import CHAIN_GRAPH_MODELS, get_keras_model
+from experiments.common.platforms import pretty_platform_name, platform_memory
 from solvers.result import RSResult
 from utils.redis import RedisCache
 from utils.setup_logger import setup_logger
@@ -29,12 +30,11 @@ ILP_ROUND_FACTOR = 1000  # 1KB
 PLOT_UNIT_RAM = 1e9  # 9 = GB
 DENSE_SOLVE_MODELS = ["VGG16", "VGG19"]
 ADDITIONAL_ILP_LOCAL_POINTS = {  # additional budgets to add to ILP local search.
-                                 # measured in GB, including fixed parameters.
+    # measured in GB, including fixed parameters.
     ("ResNet50", 256): [9.25, 9.5, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
     ("MobileNet", 512): [15.9, 15, 14, 17, 18, 19, 38, 37, 36, 39],
     ("vgg_unet", 32): [20, 21, 22, 23, 24, 25, 26, 6, 7, 8, 9, 10, 11, 12, 16, 15.9]
 }
-
 
 # Plotting parameters
 XLIM = {
@@ -50,7 +50,6 @@ YLIM = {
     ("vgg_unet", 32): [0.95, 1.5],
     ("VGG16", 256): [0.95, 1.5]
 }
-
 
 
 def result_dict_to_cache_list(results_dict: RSResultDict) -> List[RSResult]:
@@ -208,7 +207,8 @@ def eval_budget_sweep(args, log_base, key_prefix, cost_file=None):
                 for greedy_sol in all_greedy:
                     if greedy_sol.cpu <= max_result.cpu and greedy_sol.activation_ram < max_greedy_result.activation_ram:
                         max_greedy_result = greedy_sol
-                eval_points = distribute_k_points(tf2_params.g.max_degree_ram(), max_greedy_result.activation_ram, num_ilp_global(model_name))
+                eval_points = distribute_k_points(tf2_params.g.max_degree_ram(), max_greedy_result.activation_ram,
+                                                  num_ilp_global(model_name))
                 eval_points = list(map(functools.partial(round_up_by_factor, ILP_ROUND_FACTOR), eval_points))  # round
                 checkpoint_all_result = result_dict.get(SolveStrategy.CHECKPOINT_ALL, [])
                 if checkpoint_all_result:
@@ -337,4 +337,3 @@ def plot_budget_sweep(args, model_name: str, platform: str, result_dict: Dict[So
                 format='pdf', bbox_inches='tight')
     fig.savefig(os.path.join(log_base, f"!budget_sweep_{model_name}_{platform}_b{batch_size}.png"),
                 bbox_inches='tight', dpi=300)
-
