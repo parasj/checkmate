@@ -8,7 +8,6 @@ from typing import List, Dict, Any
 import dotenv
 import ray
 
-from evaluation.budget_sweep import eval_budget_sweep
 from evaluation.maximize_batch_size import eval_maximize_batch_size
 from evaluation.solve_time_plot import eval_solve_time
 from remat.core.solvers.enum_strategy import SolveStrategy
@@ -129,17 +128,7 @@ def main():
     log_base = os.path.join("data", args.mode, key_prefix.replace("/", "_"))
     cost_file = os.path.join("profiles", args.model_name, f"b{args.batch_size}_{args.platform}.npy")
     cost_file = cost_file if os.path.exists(cost_file) else None
-    if args.mode == "budget_sweep":
-        # if args.overwrite:
-        #     confirm("This will overwrite existing Redis cache keys {}/..., are you sure?".format(key_prefix))
-        setup_environment(log_base=log_base, overwrite=args.overwrite)
-        logger = setup_logger("eval_runner", os.path.join(log_base, "eval_runner.log"))
-        logger.info(f"Ray nodes: {get_ray_nodes()}")
-        logger.info(f"Using profile file {cost_file}")
-
-        eval_budget_sweep(args, log_base=log_base, key_prefix=key_prefix, cost_file=cost_file)
-        ray.timeline(filename=os.path.join(log_base, "timeline.json"))
-    elif args.mode == "solve_timer":
+    if args.mode == "solve_timer":
         log_base = os.path.join("data", "solve_timer")
         setup_environment(log_base=log_base, init_ray=False)
         eval_solve_time(args, log_base)
