@@ -1,8 +1,9 @@
 from __future__ import division
 
-from collections import defaultdict
+import logging
 import os
-from typing import Optional, Tuple, Union
+from collections import defaultdict
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,17 +11,14 @@ import scipy
 import scipy.stats
 import seaborn as sns
 
-from utils.setup_logger import setup_logger
-
-#BATCH_SIZES_LOAD = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
+# BATCH_SIZES_LOAD = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
 BATCH_SIZES_LOAD = [32, 64, 128, 256, 512, 1024, 2048]
 
 
 class CostModel:
     def __init__(self, model_name: str, platform: str, log_base: str, quantization: int):
         self.log_base = log_base
-        self.logger = setup_logger("eval_runner_batch_size_sweep",
-                                   os.path.join(log_base, "eval_runner_batch_size_sweep.log"))
+        self.logger = logging.getLogger("CostModel")
 
         self.model_name = model_name
         self.platform = platform
@@ -70,7 +68,8 @@ class CostModel:
                 self.logger.warn(f"Layer {layer} has overhead (bs=0 cost) of {intercept / 1000} ms. "
                                  f"r={rvalue}, p={pvalue}, stderr={stderr}, for cost model {slope}*bs+{intercept}")
             if rvalue < 0.8:
-                self.logger.warn(f"Poor fit: layer {layer} has r={rvalue}, p={pvalue}, stderr={stderr}, for cost model {slope}*bs+{intercept}")
+                self.logger.warn(
+                    f"Poor fit: layer {layer} has r={rvalue}, p={pvalue}, stderr={stderr}, for cost model {slope}*bs+{intercept}")
 
         # Collect models into ndarrays
         nlayer = len(self.fits)
@@ -166,4 +165,3 @@ class CostModel:
 
         fig.savefig(os.path.join(self.log_base, "!plot_costs.pdf"), format='pdf', bbox_inches='tight')
         fig.savefig(os.path.join(self.log_base, "!plot_costs.png"), bbox_inches='tight', dpi=300)
-
