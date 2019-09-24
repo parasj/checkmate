@@ -13,7 +13,7 @@ setup(
         "matplotlib",
         "seaborn",
         "tqdm",
-        "ray",
+        "ray @ https://github.com/ray-project/ray/archive/0.7.5.tar.gz#egg=ray-0.7.5",
         # "pydot",
         "graphviz",
         "python-dotenv",
