@@ -226,6 +226,7 @@ if __name__ == "__main__":
             for b in global_eval_points:
                 seed_result = get_closest_budget_result(result_dict, b)
                 seed_s = seed_result.schedule_aux_data.S if seed_result is not None else None
+                ray.put
                 future = remote_ilp(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES, seed_s=seed_s,
                                     write_log_file=os.path.join(log_base, f"ilp_{b}.log"), print_to_console=False,
                                     write_model_file=os.path.join(log_base, f"ilp_{b}.lp") if args.debug else None,

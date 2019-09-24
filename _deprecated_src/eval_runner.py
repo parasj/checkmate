@@ -12,7 +12,7 @@ from evaluation.maximize_batch_size import eval_maximize_batch_size
 from evaluation.solve_time_plot import eval_solve_time
 from remat.core.solvers.enum_strategy import SolveStrategy
 from experiments.common.keras_extractor import MODEL_NAMES
-from utils.redis import RedisCache
+from experiments.common.redis import RedisCache
 from utils.setup_logger import setup_logger
 
 PLATFORM_CHOICES = ['p32xlarge', 'p32xlarge_fp16', 'p2xlarge', 'c524xlarge', 'flops']

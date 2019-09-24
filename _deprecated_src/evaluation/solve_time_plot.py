@@ -2,7 +2,7 @@ import os
 
 import pandas
 
-from utils.redis import RedisCache
+from experiments.common.redis import RedisCache
 from utils.setup_logger import setup_logger
 
 

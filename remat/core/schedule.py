@@ -53,6 +53,7 @@ class ILPAuxData(NamedTuple):
 class ScheduledResult(NamedTuple):
     solve_strategy: SolveStrategy
     solver_budget: float
+    platform: str
     feasible: bool
 
     schedule: Optional[Schedule] = None
@@ -64,5 +65,5 @@ class ScheduledResult(NamedTuple):
         return pickle.dumps(self, protocol=pickle.HIGHEST_PROTOCOL)
 
     @staticmethod
-    def loads(serialized_result: bytes):
+    def loads(serialized_result: bytes) -> 'ScheduledResult':  # forward ref using string
         return pickle.loads(serialized_result)
