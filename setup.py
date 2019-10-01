@@ -16,7 +16,7 @@ setup(
         "ray>=0.7.5",
         "graphviz",
         "python-dotenv",
-        "tensorflow==2.0.0rc0",
+        "tensorflow>=2.0.0",
         "pytest",
         "keras_segmentation @ https://github.com/ajayjain/image-segmentation-keras/archive/master.zip#egg=keras_segmentation-0.2.0remat"
     ]
