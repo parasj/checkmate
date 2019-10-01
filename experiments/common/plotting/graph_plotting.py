@@ -36,11 +36,11 @@ def tensor_plot(g: DFGraph, sched: Schedule, directory, tag=None, format='pdf', 
 
 
 # deprecated
-def write_graphviz(g: DFGraph, directory, format='pdf', quiet=True, name=""):
+def render_dfgraph(g: DFGraph, directory, format='pdf', quiet=True, name=""):
     """
     Generate Graphviz-formatted edge list for visualization
     """
-    dot = Digraph("!ExtractedGraph" + str(name))
+    dot = Digraph("render_dfgraph" + str(name))
     dot.attr('graph', rankdir='LR')
     for u in g.vfwd:
         with dot.subgraph() as s:
