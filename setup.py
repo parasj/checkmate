@@ -9,19 +9,14 @@ setup(
     install_requires=[
         "numpy",
         "pandas",
-        # "redis",
+        "redis",
         "matplotlib",
         "seaborn",
         "tqdm",
-        "ray @ https://github.com/ray-project/ray/archive/0.7.5.tar.gz#egg=ray-0.7.5",
-        # "pydot",
+        "ray>=0.7.5",
         "graphviz",
         "python-dotenv",
-        # "colorlog",
         "tensorflow==2.0.0rc0",
-        # "aiohttp",
-        # "psutil",
-        # "setproctitle",
         "pytest",
         "keras_segmentation @ https://github.com/ajayjain/image-segmentation-keras/archive/master.zip#egg=keras_segmentation-0.2.0remat"
     ]
