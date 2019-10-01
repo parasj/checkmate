@@ -23,6 +23,6 @@ setup(
         # "psutil",
         # "setproctitle",
         "pytest",
-        "keras_segmentation @ https://github.com/ajayjain/image-segmentation-keras/archive/master.zip#egg=keras_segmentation-0.2.0remat"
+        "keras_segmentation @ https://github.com/ajayjain/image-segmentation-keras/archive/master.zip#egg=keras_segmentation-0.2.0remat",
     ]
 )
