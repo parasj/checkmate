@@ -216,6 +216,8 @@ if __name__ == "__main__":
 
     # sweep optimal ilp baseline
     if not args.skip_ilp:
+        ilp_log_base = os.path.join(log_base, "ilp_log")
+        pathlib.Path(ilp_log_base).mkdir(parents=True)
         # todo load any ILP results from cache
         remote_ilp = ray.remote(num_cpus=NUM_ILP_CORES)(solve_ilp_gurobi).remote
         if len(args.ilp_eval_points) > 0:
@@ -229,8 +231,8 @@ if __name__ == "__main__":
                 seed_result = get_closest_budget_result(result_dict, b)
                 seed_s = seed_result.schedule_aux_data.S if seed_result is not None else None
                 future = remote_ilp(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES, seed_s=seed_s,
-                                    write_log_file=os.path.join(log_base, f"ilp_{b}.log"), print_to_console=False,
-                                    write_model_file=os.path.join(log_base, f"ilp_{b}.lp") if args.debug else None,
+                                    write_log_file=os.path.join(ilp_log_base, f"ilp_{b}.log"), print_to_console=False,
+                                    write_model_file=os.path.join(ilp_log_base, f"ilp_{b}.lp") if args.debug else None,
                                     eps_noise=0 if args.exact_ilp_solve else 0.01, approx=args.exact_ilp_solve)
                 futures.append(future)
             result_dict[SolveStrategy.OPTIMAL_ILP_GC] = get_futures(futures, desc="Global optimal ILP sweep")
@@ -251,8 +253,8 @@ if __name__ == "__main__":
             seed_result = get_closest_budget_result(result_dict, b)
             seed_s = seed_result.schedule_aux_data.S if seed_result is not None else None
             future = remote_ilp(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES, seed_s=seed_s,
-                                write_log_file=os.path.join(log_base, f"ilp_{b}.log"), print_to_console=False,
-                                write_model_file=os.path.join(log_base, f"ilp_{b}.lp") if args.debug else None,
+                                write_log_file=os.path.join(ilp_log_base, f"ilp_{b}.log"), print_to_console=False,
+                                write_model_file=os.path.join(ilp_log_base, f"ilp_{b}.lp") if args.debug else None,
                                 eps_noise=0 if args.exact_ilp_solve else 0.01, approx=args.exact_ilp_solve)
             futures.append(future)
         result_dict[SolveStrategy.OPTIMAL_ILP_GC].extend(get_futures(futures, desc="Local optimal ILP sweep"))
