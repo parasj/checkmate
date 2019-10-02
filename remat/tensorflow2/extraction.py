@@ -2,9 +2,9 @@ import logging
 from collections import defaultdict
 from typing import Optional
 
-import numpy as np
 import tensorflow as tf
 
+from experiments.common.cost_model import CostModel
 from remat.tensorflow2.extraction_hooks import op_hook, MEMORY_MULTIPLIER
 from remat.core import dfgraph
 
@@ -15,7 +15,7 @@ except ImportError as e:
 
 
 def dfgraph_from_keras(mod: tf.keras.models.Model, include_prev_node=True, batch_size=1, loss_cpu_cost=0,
-                       loss_ram_cost=4, costs_np: Optional[np.ndarray] = None):
+                       loss_ram_cost=4, cost_model: Optional[CostModel] = None):
     """
     Given a Keras model, this method extracts a graph to be utilized by the solver
     :param mod: tf.keras.models.Model -- A Keras model
@@ -23,7 +23,7 @@ def dfgraph_from_keras(mod: tf.keras.models.Model, include_prev_node=True, batch
     :param batch_size: int -- batch size for generated model
     :param loss_cpu_cost: int -- CPU cost to evaluate loss node
     :param loss_ram_cost: int -- RAM cost to store loss node output
-    :param costs_np:
+    :param cost_model: CostModel object representing the costs loaded from disk
     :return: Graph -- graph generated from the Keras model
     """
     assert batch_size > 0
@@ -71,7 +71,8 @@ def dfgraph_from_keras(mod: tf.keras.models.Model, include_prev_node=True, batch
         mems[i] = m
         mems[fwd_to_bwd(i)] = m
 
-    if costs_np is not None:
+    if cost_model is not None:
+        costs_np = cost_model.get_costs(batch_size)
         if len(costs_np) == len(costs):
             costs = dict(enumerate(costs_np))
         else:

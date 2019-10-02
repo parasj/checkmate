@@ -64,5 +64,5 @@ class ScheduledResult(NamedTuple):
         return pickle.dumps(self, protocol=pickle.HIGHEST_PROTOCOL)
 
     @staticmethod
-    def loads(serialized_result: bytes):
+    def loads(serialized_result: bytes) -> 'ScheduledResult':  # forward ref using string
         return pickle.loads(serialized_result)

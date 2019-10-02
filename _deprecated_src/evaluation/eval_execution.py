@@ -14,7 +14,7 @@ from experiments.common.platforms import platform_memory
 from integration.tf2.TF2Runner import TF2Runner
 from integration.tf2.misc import categorical_cross_entropy, random_batch
 from solvers.result import RSResult
-from utils.redis import RedisCache
+from experiments.common.redis import RedisCache
 from utils.setup_logger import setup_logger
 from remat.core.utils.timer import Timer
 
