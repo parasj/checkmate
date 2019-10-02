@@ -35,12 +35,9 @@ def tensor_plot(g: DFGraph, sched: Schedule, directory, tag=None, format='pdf', 
         dot.render(directory=directory, format=format)
 
 
-# deprecated
-def write_graphviz(g: DFGraph, directory, format='pdf', quiet=True, name=""):
-    """
-    Generate Graphviz-formatted edge list for visualization
-    """
-    dot = Digraph("!ExtractedGraph" + str(name))
+def render_dfgraph(g: DFGraph, directory, format='pdf', quiet=True, name=""):
+    """Generate Graphviz-formatted edge list for visualization, and write pdf"""
+    dot = Digraph("render_dfgraph" + str(name))
     dot.attr('graph', rankdir='LR')
     for u in g.vfwd:
         with dot.subgraph() as s:
