@@ -181,7 +181,10 @@ if __name__ == "__main__":
         cost_model.plot_costs()
 
     # gen redis key
-    key_list = ["flops", args.batch_size] if cost_model is None else [cost_model.platform, cost_model.quantization, batch_size]
+    if cost_model is None:
+        key_list = ["flops", args.batch_size]
+    else:
+        key_list = [cost_model.platform, cost_model.quantization, args.batch_size]
     redis_cost_key = "_".join(map(str, key_list))
 
     # load model from Keras
