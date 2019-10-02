@@ -173,21 +173,23 @@ if __name__ == "__main__":
 
     # load costs, and plot optionally, if platform is not flops
     logger.info(f"Loading costs")
-    if args.platform != "flops":
+    if args.platform == "flops":
+        cost_model = None
+    else:
         cost_model = CostModel(model_name, args.platform, log_base, quantization=5)
         cost_model.fit()
         cost_model.plot_costs()
-        costs_np = cost_model.get_costs(args.batch_size)
-    else:
-        costs_np = None
+
+    # gen redis key
+    key_list = ["flops", args.batch_size] if cost_model is None else [cost_model.platform, cost_model.quantization, batch_size]
+    redis_cost_key = "_".join(map(str, key_list))
 
     # load model from Keras
     logger.info(f"Loading model {model_name}")
     model = get_keras_model(model_name, input_shape=args.input_shape)
-    g = dfgraph_from_keras(model, batch_size=args.batch_size, costs_np=costs_np,
+    g = dfgraph_from_keras(model, batch_size=args.batch_size, cost_model=cost_model,
                            loss_cpu_cost=0, loss_ram_cost=(4 * args.batch_size))
-    tf.keras.utils.plot_model(
-        model,
+    tf.keras.utils.plot_model(model,
         to_file=os.path.join(log_base, f"plot_{model_name}_keras.png"),
         show_shapes=True,
         show_layer_names=True,

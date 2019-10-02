@@ -53,7 +53,6 @@ class ILPAuxData(NamedTuple):
 class ScheduledResult(NamedTuple):
     solve_strategy: SolveStrategy
     solver_budget: float
-    platform: str
     feasible: bool
 
     schedule: Optional[Schedule] = None

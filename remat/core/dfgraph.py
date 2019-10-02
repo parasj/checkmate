@@ -12,15 +12,17 @@ AdjList = Dict[Vertex, List[Vertex]]
 class DFGraph:
     def __init__(self, args: AdjList, v: Iterable[Vertex], vfwd_map: Dict[Vertex, Vertex], vloss: Vertex,
                  cost_cpu: Dict[Vertex, int] = None, cost_ram: Dict[Vertex, int] = None,
-                 node_names: Dict[Vertex, str] = None, cost_ram_parameters: int = 0):
+                 node_names: Dict[Vertex, str] = None, cost_ram_parameters: int = 0, key=""):
         """
         Graph defines the forward and backward graph for a neural network
-        :param deps (Dict[int, List[int]]): Dependency listing, where arguments ordered
+        :param args (Dict[int, List[int]]): Dependency listing, where arguments ordered
         :param v: List of nodes in the graph
         :param vfwd_map: Mapping from forward graph to corresponding nodes in the reverse graph
         :param cost_cpu: Dictionary mapping nodes to respective integral runtime costs (for forward and backward operators)
         :param cost_ram: Dictionary mapping nodes to respective integral memory costs (for forward and backward operators)
+        :param key: If set, will store property that allows cache persistence in some experiments
         """
+        self.key = key
         self.args = defaultdict(list, args)
         self.v = list(sorted(v))
         self.size = len(self.v)
