@@ -6,6 +6,7 @@ import shutil
 import uuid
 from typing import Dict, List, Optional
 
+import tensorflow as tf
 import numpy as np
 import ray
 from matplotlib.lines import Line2D
@@ -185,6 +186,12 @@ if __name__ == "__main__":
     model = get_keras_model(model_name, input_shape=args.input_shape)
     g = dfgraph_from_keras(model, batch_size=args.batch_size, costs_np=costs_np,
                            loss_cpu_cost=0, loss_ram_cost=(4 * args.batch_size))
+    tf.keras.utils.plot_model(
+        model,
+        to_file=os.path.join(log_base, f"plot_{model_name}_keras.png"),
+        show_shapes=True,
+        show_layer_names=True,
+    )
     render_dfgraph(g, log_base, name=model_name)
 
     # sweep constant baselines
