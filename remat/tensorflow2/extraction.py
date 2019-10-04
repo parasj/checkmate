@@ -4,7 +4,7 @@ from typing import Optional
 
 import tensorflow as tf
 
-from experiments.common.cost_model import CostModel
+from experiments.common.profile.cost_model import CostModel
 from remat.tensorflow2.extraction_hooks import op_hook, MEMORY_MULTIPLIER
 from remat.core import dfgraph
 
