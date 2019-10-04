@@ -174,8 +174,7 @@ class MaxBatchILPSolver:
                 for e in range(len(self.g.edge_list)):
                     Free_Eout[t][e] = int(self.Free_E[t, e].X)
         except AttributeError as e:
-            logger = setup_logger("ILPSolver", self.gurobi_params.get('LogFile'))
-            logger.exception(e)
+            logging.exception(e)
             return None, None, None, None
 
         Rout = solve_r_opt(self.g, Sout)  # prune R using optimal recomputation solver
