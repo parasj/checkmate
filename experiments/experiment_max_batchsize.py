@@ -46,7 +46,7 @@ if __name__ == "__main__":
     args = extract_params()
 
     ray.init(temp_dir="/tmp/ray_checkpoint", redis_password=str(uuid.uuid1()), num_cpus=os.cpu_count() - 2,
-             object_store_memory=1024 * 1024 * 1024 if os.cpu_count() < 48 else None)
+             object_store_memory=1024 * 1024 * 1024 if os.cpu_count() < 48 else 1024 * 1024 * 1024 * 50)
 
     key = "_".join(map(str, [args.platform, args.model_name, args.input_shape]))
     log_base = os.path.join("data", "max_batch_size", key)
