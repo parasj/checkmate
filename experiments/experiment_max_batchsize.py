@@ -11,6 +11,7 @@ import numpy as np
 import pandas
 import tensorflow as tf
 import ray
+from tqdm import tqdm
 
 from experiments.common.keras_extractor import MODEL_NAMES, get_keras_model, CHAIN_GRAPH_MODELS
 from experiments.common.plotting.graph_plotting import render_dfgraph
@@ -70,8 +71,7 @@ if __name__ == "__main__":
     platform_ram = platform_memory(args.platform)
     bs_futures: Dict[int, List] = defaultdict(list)
     bs_fwd2xcost: Dict[int, int] = {}
-    for bs in range(128, 512, 8):
-        logging.info(f"Dispatching batch size {bs}")
+    for bs in tqdm(range(128, 512, 8)):
         # load model at batch size
         g = dfgraph_from_keras(model, batch_size=bs, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4 * bs))
         bs_fwd2xcost[bs] = sum(g.cost_cpu_fwd.values()) + sum(g.cost_cpu.values())
