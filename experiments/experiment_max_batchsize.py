@@ -78,11 +78,13 @@ if __name__ == "__main__":
         render_dfgraph(g, log_base, name=model_name)
 
         # run constant baselines
-        result_dict[bs][SolveStrategy.CHECKPOINT_ALL] = [solve_checkpoint_all(g)]
-        result_dict[bs][SolveStrategy.CHECKPOINT_ALL_AP] = [solve_checkpoint_all_ap(g)]
-        result_dict[bs][SolveStrategy.CHECKPOINT_LAST_NODE] = [solve_checkpoint_last_node(g)]
         result_dict[bs][SolveStrategy.CHEN_SQRTN_NOAP] = [solve_chen_sqrtn(g, False)]
-        result_dict[bs][SolveStrategy.CHEN_SQRTN] = [solve_chen_sqrtn(g, True)]
+        bs_futures[bs].extend([
+            ray.remote(num_cpus=1)(solve_checkpoint_all).remote(g),
+            ray.remote(num_cpus=1)(solve_checkpoint_all_ap).remote(g),
+            ray.remote(num_cpus=1)(solve_checkpoint_last_node).remote(g),
+            ray.remote(num_cpus=1)(solve_chen_sqrtn).remote(g, True)
+        ])
 
         # sweep chen's greedy baseline
         chen_sqrtn_noap = result_dict[bs][SolveStrategy.CHEN_SQRTN_NOAP][0]
