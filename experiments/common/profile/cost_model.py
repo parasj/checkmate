@@ -168,7 +168,7 @@ class CostModel:
 
     @staticmethod
     def load_profile_s3(model_name: str, batch_size: int, platform: str) -> Optional[str]:
-        local_base = "/tmp/remat_cache_profiles"
+        local_base = os.path.join("/tmp", "remat_cache", "profiles")
         local_path = os.path.join(local_base, f"{model_name}_{batch_size}_{platform}.npy")
         remote_path = f"https://optimalcheckpointing.s3.amazonaws.com/profiles/{model_name}/b{batch_size}_{platform}.npy"
         if os.path.exists(local_path):
