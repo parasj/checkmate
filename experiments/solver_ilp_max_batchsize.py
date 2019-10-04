@@ -1,4 +1,5 @@
 import functools
+import logging
 from typing import Dict, Any
 
 from gurobipy import quicksum, GRB, Model
@@ -7,7 +8,6 @@ import numpy as np
 from remat.core.dfgraph import DFGraph
 from remat.core.schedule import ILPAuxData, ScheduledResult
 from remat.core.solvers.common import SOLVER_DTYPE, solve_r_opt
-from utils.setup_logger import setup_logger
 
 from remat.core.solvers.enum_strategy import SolveStrategy
 from remat.core.solvers.scheduler import schedule_from_rs
@@ -17,7 +17,7 @@ from remat.core.utils.timer import Timer
 class MaxBatchILPSolver:
     def __init__(self, g: DFGraph, budget: int, eps_noise=None, model_file=None, remote=False, gurobi_params: Dict[str, Any] = None, cpu_fwd_factor: int = 2):
         self.cpu_fwd_factor = cpu_fwd_factor
-        self.logger = setup_logger("MaxBatchILPSolve")
+        self.logger = logging.getLogger(__name__)
         self.remote = remote
         self.profiler = functools.partial(Timer, print_results=True)
         self.gurobi_params = gurobi_params
