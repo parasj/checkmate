@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     max_batch_sizes = {}
     platform_ram = platform_memory(args.platform)
-    for bs in [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]:
+    for bs in range(128, 512, 8):
         logging.info(f"Sweeping batch size = {bs}")
         # load model at batch size
         logging.info(f"Loading model {model_name}")
