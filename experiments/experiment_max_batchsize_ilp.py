@@ -63,7 +63,6 @@ if __name__ == "__main__":
     platform_ram = platform_memory("p32xlarge")
     bs_futures: Dict[int, List] = defaultdict(list)
     bs_fwd2xcost: Dict[int, int] = {}
-    rg = list(range(args.batch_size_min, args.batch_size_max, args.batch_size_increment))
     # load model at batch size
     g = dfgraph_from_keras(model, batch_size=1, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4))
     render_dfgraph(g, log_base, name=model_name)
