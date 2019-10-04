@@ -103,13 +103,17 @@ class CostModel:
     def load_costs(self, cost_file: str, withdevs=False):
         try:
             cost_list, stds = np.load(cost_file)
-            return cost_list, stds
         except ValueError as exc:
+            if not withdevs:
+                cost_list = np.load(cost_file)
+                return cost_list
+            self.logger.error(f"Error loading cost file {cost_file}: %s", exc)
             if withdevs:
-                self.logger.error(f"Error loading cost file {cost_file}, no standard deviations: %s", exc)
                 return None, None
-            else:
-                return np.load(cost_file)
+            return None
+        if withdevs:
+            return cost_list, stds
+        return cost_list
 
     def plot_costs(self):
         self.logger.info("Plotting cost model")
@@ -177,7 +181,6 @@ class CostModel:
         pathlib.Path(local_base).mkdir(parents=True, exist_ok=True)
         try:
             urllib.request.urlretrieve(remote_path, local_path)
-            print("downloaded ", local_path)
             return local_path
         except urllib.error.HTTPError:
             return None
