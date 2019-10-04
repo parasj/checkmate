@@ -4,6 +4,7 @@ import os
 import pathlib
 import shutil
 import uuid
+from collections import defaultdict
 from typing import Dict, List
 
 import numpy as np
@@ -43,14 +44,14 @@ if __name__ == "__main__":
         os.environ["OMP_NUM_THREADS"] = "1"
     args = extract_params()
 
-    ray.init(temp_dir="/tmp/ray_checkpoint", redis_password=str(uuid.uuid1()), num_cpus=os.cpu_count(),
+    ray.init(temp_dir="/tmp/ray_checkpoint", redis_password=str(uuid.uuid1()), num_cpus=os.cpu_count() - 2,
              object_store_memory=1024 * 1024 * 1024 if os.cpu_count() < 48 else None)
 
     key = "_".join(map(str, [args.platform, args.model_name, args.input_shape]))
     log_base = os.path.join("data", "max_batch_size", key)
     shutil.rmtree(log_base, ignore_errors=True)
     pathlib.Path(log_base).mkdir(parents=True)
-    result_dict: Dict[SolveStrategy, List[ScheduledResult]] = {}
+    result_dict: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]] = defaultdict(lambda x: defaultdict(list))
     model_name = args.model_name
 
     # load costs, and plot optionally, if platform is not flops
@@ -66,54 +67,49 @@ if __name__ == "__main__":
     tf.keras.utils.plot_model(model, to_file=os.path.join(log_base, f"plot_{model_name}.png"),
                               show_shapes=True, show_layer_names=True)
 
-    max_batch_sizes = {}
     platform_ram = platform_memory(args.platform)
+    bs_futures: Dict[int, List] = defaultdict(list)
+    bs_fwd2xcost: Dict[int, int] = {}
     for bs in range(128, 512, 8):
-        logging.info(f"Sweeping batch size = {bs}")
         # load model at batch size
-        logging.info(f"Loading model {model_name}")
-        g = dfgraph_from_keras(model, batch_size=bs, cost_model=cost_model,
-                               loss_cpu_cost=0, loss_ram_cost=(4 * bs))
+        g = dfgraph_from_keras(model, batch_size=bs, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4 * bs))
+        bs_fwd2xcost[bs] = sum(g.cost_cpu_fwd.values()) + sum(g.cost_cpu.values())
         render_dfgraph(g, log_base, name=model_name)
 
         # run constant baselines
-        logging.info(f"Running constant baselines (ALL, ALL_AP, LAST_NODE, SQRTN_NOAP, SQRTN)")
-        result_dict[SolveStrategy.CHECKPOINT_ALL] = [solve_checkpoint_all(g)]
-        result_dict[SolveStrategy.CHECKPOINT_ALL_AP] = [solve_checkpoint_all_ap(g)]
-        result_dict[SolveStrategy.CHECKPOINT_LAST_NODE] = [solve_checkpoint_last_node(g)]
-        result_dict[SolveStrategy.CHEN_SQRTN_NOAP] = [solve_chen_sqrtn(g, False)]
-        result_dict[SolveStrategy.CHEN_SQRTN] = [solve_chen_sqrtn(g, True)]
+        result_dict[bs][SolveStrategy.CHECKPOINT_ALL] = [solve_checkpoint_all(g)]
+        result_dict[bs][SolveStrategy.CHECKPOINT_ALL_AP] = [solve_checkpoint_all_ap(g)]
+        result_dict[bs][SolveStrategy.CHECKPOINT_LAST_NODE] = [solve_checkpoint_last_node(g)]
+        result_dict[bs][SolveStrategy.CHEN_SQRTN_NOAP] = [solve_chen_sqrtn(g, False)]
+        result_dict[bs][SolveStrategy.CHEN_SQRTN] = [solve_chen_sqrtn(g, True)]
 
         # sweep chen's greedy baseline
-        logging.info(f"Running Chen's greedy baseline (APs only)")
         chen_sqrtn_noap = result_dict[SolveStrategy.CHEN_SQRTN_NOAP][0]
         greedy_eval_points = chen_sqrtn_noap.schedule_aux_data.activation_ram * (1. + np.arange(-1, 2, 0.01))
         remote_solve_chen_greedy = ray.remote(num_cpus=1)(solve_chen_greedy).remote
-        chen_futures = [remote_solve_chen_greedy(g, float(b), False) for b in greedy_eval_points]
+        bs_futures[bs].extend([remote_solve_chen_greedy(g, float(b), False) for b in greedy_eval_points])
         if model_name not in CHAIN_GRAPH_MODELS:
-            logging.info(f"Running Chen's greedy baseline (no AP) as model is non-linear")
-            chen_chain_futures = [remote_solve_chen_greedy(g, float(b), True) for b in greedy_eval_points]
+            bs_futures[bs].extend([remote_solve_chen_greedy(g, float(b), True) for b in greedy_eval_points])
 
         # sweep griewank baselines
         if model_name in CHAIN_GRAPH_MODELS:
-            logging.info(f"Running Griewank baseline (APs only)")
             solve_griewank(g, 1)  # prefetch griewank solution from s3, otherwise ray will cause race condition
             griewank_eval_points = range(1, g.size + 1)
             remote_solve_griewank = ray.remote(num_cpus=1)(solve_griewank).remote
-            griewank_futures = [remote_solve_griewank(g, float(b)) for b in griewank_eval_points]
+            bs_futures[bs].extend([remote_solve_griewank(g, float(b)) for b in griewank_eval_points])
 
-        # load futures results
-        result_dict[SolveStrategy.CHEN_GREEDY] = get_futures(list(chen_futures), desc="Greedy (APs only)")
-        if model_name in CHAIN_GRAPH_MODELS:
-            result_dict[SolveStrategy.GRIEWANK_LOGN] = get_futures(list(griewank_futures), desc="Griewank (APs only)")
-        else:
-            result_dict[SolveStrategy.CHEN_SQRTN_NOAP] = get_futures(list(chen_chain_futures), desc="Greedy (No AP)")
+    for bs, futures in bs_futures:
+        for result in get_futures(futures, desc=f"Batch size: {bs}"):
+            result_dict[bs][result.solve_strategy].append(result)
 
-        fwd2xcpu = sum(g.cost_cpu_fwd.values()) + sum(g.cost_cpu.values())
-        for strategy, results in result_dict.items():
-            is_valid = lambda result: result.schedule_aux_data is not None and result.schedule_aux_data.peak_ram <= platform_ram and result.schedule_aux_data.cpu <= fwd2xcpu:
+    max_batch_sizes = defaultdict(int)
+    for bs, strategy_results in result_dict.items():
+        for strategy, results in strategy_results:
+            is_valid = lambda r: r.schedule_aux_data is not None \
+                                 and r.schedule_aux_data.peak_ram <= platform_ram \
+                                 and r.schedule_aux_data.cpu <= bs_fwd2xcost[bs]
             if any(map(is_valid, results)):
-                max_batch_sizes[strategy] = bs
+                max_batch_sizes[strategy] = max(bs, max_batch_sizes[strategy])
                 logging.info(f"SolveStrategy {strategy} succeeded at batch size {bs}")
 
     df = pandas.DataFrame([{'strategy': k, 'batch_size': v} for k, v in max_batch_sizes.items()])
