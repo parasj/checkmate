@@ -51,7 +51,7 @@ if __name__ == "__main__":
     log_base = os.path.join("data", "max_batch_size", key)
     shutil.rmtree(log_base, ignore_errors=True)
     pathlib.Path(log_base).mkdir(parents=True)
-    result_dict: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]] = defaultdict(lambda x: defaultdict(list))
+    result_dict: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]] = defaultdict(lambda: defaultdict(list))
     model_name = args.model_name
 
     # load costs, and plot optionally, if platform is not flops
