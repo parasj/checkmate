@@ -111,9 +111,10 @@ if __name__ == "__main__":
 
         fwd2xcpu = sum(g.cost_cpu_fwd.values()) + sum(g.cost_cpu.values())
         for strategy, results in result_dict.items():
-            for result in results:
-                if result.schedule_aux_data is not None and result.schedule_aux_data.peak_ram <= platform_ram and result.schedule_aux_data.cpu <= fwd2xcpu:
-                    max_batch_sizes[strategy] = bs
+            is_valid = lambda result: result.schedule_aux_data is not None and result.schedule_aux_data.peak_ram <= platform_ram and result.schedule_aux_data.cpu <= fwd2xcpu:
+            if any(map(is_valid, results)):
+                max_batch_sizes[strategy] = bs
+                logging.info(f"SolveStrategy {strategy} succeeded at batch size {bs}")
 
     df = pandas.DataFrame([{'strategy': k, 'batch_size': v} for k, v in max_batch_sizes.items()])
     print(df)
