@@ -84,7 +84,7 @@ if __name__ == "__main__":
         result_dict[bs][SolveStrategy.CHEN_SQRTN] = [solve_chen_sqrtn(g, True)]
 
         # sweep chen's greedy baseline
-        chen_sqrtn_noap = result_dict[SolveStrategy.CHEN_SQRTN_NOAP][0]
+        chen_sqrtn_noap = result_dict[bs][SolveStrategy.CHEN_SQRTN_NOAP][0]
         greedy_eval_points = chen_sqrtn_noap.schedule_aux_data.activation_ram * (1. + np.arange(-1, 2, 0.01))
         remote_solve_chen_greedy = ray.remote(num_cpus=1)(solve_chen_greedy).remote
         bs_futures[bs].extend([remote_solve_chen_greedy(g, float(b), False) for b in greedy_eval_points])
