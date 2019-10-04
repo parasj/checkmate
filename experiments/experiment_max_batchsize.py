@@ -97,6 +97,7 @@ if __name__ == "__main__":
         # sweep griewank baselines
         if model_name in CHAIN_GRAPH_MODELS:
             logging.info(f"Running Griewank baseline (APs only)")
+            solve_griewank(g, 1)  # prefetch griewank solution from s3, otherwise ray will cause race condition
             griewank_eval_points = range(1, g.size + 1)
             remote_solve_griewank = ray.remote(num_cpus=1)(solve_griewank).remote
             griewank_futures = [remote_solve_griewank(g, float(b)) for b in griewank_eval_points]
