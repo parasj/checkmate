@@ -216,11 +216,13 @@ if __name__ == "__main__":
         result_dict[SolveStrategy.CHEN_SQRTN_NOAP] = get_futures(list(futures), desc="Greedy (No AP)")
 
     # sweep griewank baselines
-    logger.info(f"Running Griewank baseline (APs only)")
-    griewank_eval_points = range(1, g.size + 1)
-    remote_solve_griewank = ray.remote(num_cpus=1)(solve_griewank).remote
-    futures = [remote_solve_griewank(g, float(b)) for b in griewank_eval_points]
-    result_dict[SolveStrategy.GRIEWANK_LOGN] = get_futures(list(futures), desc="Griewank (APs only)")
+    if model_name in CHAIN_GRAPH_MODELS:
+        logger.info(f"Running Griewank baseline (APs only)")
+        solve_griewank(g, 1)  # prefetch griewank solution from s3, otherwise ray will cause race condition
+        griewank_eval_points = range(1, g.size + 1)
+        remote_solve_griewank = ray.remote(num_cpus=1)(solve_griewank).remote
+        futures = [remote_solve_griewank(g, float(b)) for b in griewank_eval_points]
+        result_dict[SolveStrategy.GRIEWANK_LOGN] = get_futures(list(futures), desc="Griewank (APs only)")
 
     # sweep optimal ilp baseline
     if not args.skip_ilp:
