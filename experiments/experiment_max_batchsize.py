@@ -99,13 +99,13 @@ if __name__ == "__main__":
             remote_solve_griewank = ray.remote(num_cpus=1)(solve_griewank).remote
             bs_futures[bs].extend([remote_solve_griewank(g, float(b)) for b in griewank_eval_points])
 
-    for bs, futures in bs_futures:
+    for bs, futures in bs_futures.items():
         for result in get_futures(futures, desc=f"Batch size: {bs}"):
             result_dict[bs][result.solve_strategy].append(result)
 
     max_batch_sizes = defaultdict(int)
     for bs, strategy_results in result_dict.items():
-        for strategy, results in strategy_results:
+        for strategy, results in strategy_results.items():
             is_valid = lambda r: r.schedule_aux_data is not None \
                                  and r.schedule_aux_data.peak_ram <= platform_ram \
                                  and r.schedule_aux_data.cpu <= bs_fwd2xcost[bs]
