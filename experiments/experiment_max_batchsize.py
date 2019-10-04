@@ -73,7 +73,7 @@ if __name__ == "__main__":
     rg = list(range(8, 32)) + list(range(32, 64, 4))
     for bs in tqdm(rg, desc="Event dispatch"):
         while not ray.is_initialized():
-            ray.init(temp_dir="/tmp/ray_checkpoint" + str(uuid.uuid1()), redis_password=str(uuid.uuid1()),
+            ray.init(temp_dir="/tmp/ray_checkpoint" + str(str(uuid.uuid4())[:8]), redis_password=str(uuid.uuid1()),
                      num_cpus=os.cpu_count() - 2, object_store_memory=obj_store_ram)
         futures = []
 
