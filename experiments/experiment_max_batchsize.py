@@ -70,7 +70,7 @@ if __name__ == "__main__":
     bs_fwd2xcost: Dict[int, int] = {}
     obj_store_ram = 1024 * 1024 * 2048 if os.cpu_count() < 48 else 1024 * 1024 * 1024 * 100
     redis_ram = 1024 * 1024 * 2048 if os.cpu_count() < 48 else 1024 * 1024 * 1024 * 100
-    rg = list(range(8, 32)) + list(range(32, 64, 4))
+    rg = list(range(84, 204, 4))
     for bs in tqdm(rg, desc="Event dispatch"):
         while not ray.is_initialized():
             ray.init(temp_dir="/tmp/ray_checkpoint" + str(str(uuid.uuid4())[:8]), redis_password=str(uuid.uuid1()),
@@ -88,7 +88,8 @@ if __name__ == "__main__":
             ray.remote(num_cpus=1)(solve_checkpoint_all).remote(g),
             ray.remote(num_cpus=1)(solve_checkpoint_all_ap).remote(g),
             ray.remote(num_cpus=1)(solve_checkpoint_last_node).remote(g),
-            ray.remote(num_cpus=1)(solve_chen_sqrtn).remote(g, True)
+            ray.remote(num_cpus=1)(solve_chen_sqrtn).remote(g, True),
+            ray.remote(num_cpus=1)(solve_chen_sqrtn).remote(g, False)
         ])
 
         # sweep chen's greedy baseline
@@ -96,8 +97,7 @@ if __name__ == "__main__":
         greedy_eval_points = chen_sqrtn_noap.schedule_aux_data.activation_ram * (1. + np.arange(-1, 2, 0.01))
         remote_solve_chen_greedy = ray.remote(num_cpus=1)(solve_chen_greedy).remote
         futures.extend([remote_solve_chen_greedy(g, float(b), False) for b in greedy_eval_points])
-        if model_name not in CHAIN_GRAPH_MODELS:
-            futures.extend([remote_solve_chen_greedy(g, float(b), True) for b in greedy_eval_points])
+        futures.extend([remote_solve_chen_greedy(g, float(b), True) for b in greedy_eval_points])
 
         # sweep griewank baselines
         if model_name in CHAIN_GRAPH_MODELS:
