@@ -70,7 +70,7 @@ if __name__ == "__main__":
     bs_fwd2xcost: Dict[int, int] = {}
     obj_store_ram = 1024 * 1024 * 2048 if os.cpu_count() < 48 else 1024 * 1024 * 1024 * 100
     redis_ram = 1024 * 1024 * 2048 if os.cpu_count() < 48 else 1024 * 1024 * 1024 * 100
-    rg = list(range(84, 204, 4))
+    rg = list(range(200, 280, 4))
     for bs in tqdm(rg, desc="Event dispatch"):
         while not ray.is_initialized():
             ray.init(temp_dir="/tmp/ray_checkpoint" + str(str(uuid.uuid4())[:8]), redis_password=str(uuid.uuid1()),
