@@ -2,6 +2,9 @@ from __future__ import division
 
 import logging
 import os
+import pathlib
+import urllib.request
+import urllib.error
 from collections import defaultdict
 from typing import Optional
 
@@ -24,19 +27,16 @@ class CostModel:
         self.platform = platform
         self.quantization = quantization
 
-        # TODO: Glob all these files rather than iterating.
-        # files = glob(os.path.join("profiles", model_name, f"b*_{platform}.npy"))
-
         # Make cost file paths
         self.batch_sizes_to_load = []
         self.cost_files_to_load = []
         for batch_size in BATCH_SIZES_LOAD:
-            cost_file = os.path.join("profiles", model_name, f"b{batch_size}_{platform}.npy")
-            if os.path.exists(cost_file):
+            cost_file = self.load_profile_s3(model_name, batch_size, platform)
+            if cost_file is not None:
                 self.batch_sizes_to_load.append(batch_size)
                 self.cost_files_to_load.append(cost_file)
             else:
-                self.logger.warn(f"Missing cost file {cost_file} for batch size {batch_size}")
+                self.logger.warning(f"Missing cost file {cost_file} for batch size {batch_size}")
 
         # Cost model parameters
         self.fits = []
@@ -103,17 +103,13 @@ class CostModel:
     def load_costs(self, cost_file: str, withdevs=False):
         try:
             cost_list, stds = np.load(cost_file)
-        except ValueError as exc:
-            if not withdevs:
-                cost_list = np.load(cost_file)
-                return cost_list
-            self.logger.error(f"Error loading cost file {cost_file}: %s", exc)
-            if withdevs:
-                return None, None
-            return None
-        if withdevs:
             return cost_list, stds
-        return cost_list
+        except ValueError as exc:
+            if withdevs:
+                self.logger.error(f"Error loading cost file {cost_file}, no standard deviations: %s", exc)
+                return None, None
+            else:
+                return np.load(cost_file)
 
     def plot_costs(self):
         self.logger.info("Plotting cost model")
@@ -165,3 +161,23 @@ class CostModel:
 
         fig.savefig(os.path.join(self.log_base, "!plot_costs.pdf"), format='pdf', bbox_inches='tight')
         fig.savefig(os.path.join(self.log_base, "!plot_costs.png"), bbox_inches='tight', dpi=300)
+
+    @staticmethod
+    def load_profile_s3(model_name: str, batch_size: int, platform: str) -> Optional[str]:
+        local_base = "/tmp/remat_cache_profiles"
+        local_path = os.path.join(local_base, f"{model_name}_{batch_size}_{platform}.npy")
+        remote_path = f"https://optimalcheckpointing.s3.amazonaws.com/profiles/{model_name}/b{batch_size}_{platform}.npy"
+        if os.path.exists(local_path):
+            try:
+                _ = np.load(local_path)
+                return local_path
+            except Exception as e:
+                logging.exception(e)
+                logging.warning("Error loading cached profile solution, corrupt file? Reloading from S3")
+        pathlib.Path(local_base).mkdir(parents=True, exist_ok=True)
+        try:
+            urllib.request.urlretrieve(remote_path, local_path)
+            print("downloaded ", local_path)
+            return local_path
+        except urllib.error.HTTPError:
+            return None

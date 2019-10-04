@@ -13,9 +13,9 @@ from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from experiments.common.cost_model import CostModel
+from experiments.common.profile.cost_model import CostModel
 from experiments.common.keras_extractor import MODEL_NAMES, get_keras_model, CHAIN_GRAPH_MODELS
-from experiments.common.platforms import PLATFORM_CHOICES, platform_memory, pretty_platform_name
+from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory, pretty_platform_name
 from experiments.common.plotting.graph_plotting import render_dfgraph
 from experiments.common.utils import get_futures
 from remat.core.dfgraph import DFGraph
@@ -160,10 +160,6 @@ if __name__ == "__main__":
     log_base = os.path.join("data", "budget_sweep", key)
     shutil.rmtree(log_base, ignore_errors=True)
     pathlib.Path(log_base).mkdir(parents=True)
-
-    # todo make web url fetcher w/ local cache to get profiles from from S3
-    cost_file = os.path.join("profiles", args.model_name, f"b{args.batch_size}_{args.platform}.npy")
-    cost_file = cost_file if os.path.exists(cost_file) else None
 
     ####
     # Begin budget_sweep data collection
