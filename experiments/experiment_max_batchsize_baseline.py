@@ -34,7 +34,7 @@ def extract_params():
     parser.add_argument("-s", "--input-shape", type=int, nargs="+", default=[])
     parser.add_argument("--batch-size-min", type=int, default=4)
     parser.add_argument("--batch-size-max", type=int, default=512)
-    parser.add_argument("--batch-increment", type=int, default=8)
+    parser.add_argument("--batch-size-increment", type=int, default=8)
 
     _args = parser.parse_args()
     _args.input_shape = _args.input_shape if _args.input_shape else None
