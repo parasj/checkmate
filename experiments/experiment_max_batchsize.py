@@ -45,7 +45,6 @@ if __name__ == "__main__":
         os.environ["OMP_NUM_THREADS"] = "1"
     args = extract_params()
 
-
     key = "_".join(map(str, [args.platform, args.model_name, args.input_shape]))
     log_base = os.path.join("data", "max_batch_size", key)
     shutil.rmtree(log_base, ignore_errors=True)
@@ -69,9 +68,12 @@ if __name__ == "__main__":
     platform_ram = platform_memory("p32xlarge")
     bs_futures: Dict[int, List] = defaultdict(list)
     bs_fwd2xcost: Dict[int, int] = {}
+    obj_store_ram = 1024 * 1024 * 2048 if os.cpu_count() < 48 else 1024 * 1024 * 1024 * 100
+    redis_ram = 1024 * 1024 * 2048 if os.cpu_count() < 48 else 1024 * 1024 * 1024 * 100
     for bs in tqdm(range(128, 512, 8), desc="Event dispatch"):
-        ray.init(temp_dir="/tmp/ray_checkpoint", redis_password=str(uuid.uuid1()), num_cpus=os.cpu_count() - 2,
-                 object_store_memory=1024 * 1024 * 1024 if os.cpu_count() < 48 else 1024 * 1024 * 1024 * 50)
+        while not ray.is_initialized():
+            ray.init(temp_dir="/tmp/ray_checkpoint" + str(uuid.uuid1()), redis_password=str(uuid.uuid1()),
+                     num_cpus=os.cpu_count() - 2, object_store_memory=obj_store_ram)
         futures = []
 
         # load model at batch size
@@ -105,6 +107,7 @@ if __name__ == "__main__":
 
         for result in get_futures(futures, desc=f"Batch size: {bs}"):
             result_dict[bs][result.solve_strategy].append(result)
+
         ray.shutdown()
 
     max_batch_sizes = defaultdict(int)
