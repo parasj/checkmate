@@ -68,13 +68,11 @@ if __name__ == "__main__":
     platform_ram = platform_memory("p32xlarge")
     bs_futures: Dict[int, List] = defaultdict(list)
     bs_fwd2xcost: Dict[int, int] = {}
-    obj_store_ram = 1024 * 1024 * 2048 if os.cpu_count() < 48 else 1024 * 1024 * 1024 * 100
-    redis_ram = 1024 * 1024 * 2048 if os.cpu_count() < 48 else 1024 * 1024 * 1024 * 100
     rg = list(range(200, 280, 4))
     for bs in tqdm(rg, desc="Event dispatch"):
         while not ray.is_initialized():
-            ray.init(temp_dir="/tmp/ray_checkpoint" + str(str(uuid.uuid4())[:8]), redis_password=str(uuid.uuid1()),
-                     num_cpus=os.cpu_count() - 2, object_store_memory=obj_store_ram)
+            ray.init(temp_dir="/tmp/ray_checkpoint_" + str(str(uuid.uuid4())[:8]), redis_password=str(uuid.uuid1()),
+                     num_cpus=os.cpu_count() - 2)
         futures = []
 
         # load model at batch size
