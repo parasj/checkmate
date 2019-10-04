@@ -71,7 +71,7 @@ if __name__ == "__main__":
     platform_ram = platform_memory(args.platform)
     bs_futures: Dict[int, List] = defaultdict(list)
     bs_fwd2xcost: Dict[int, int] = {}
-    for bs in tqdm(range(128, 512, 8)):
+    for bs in tqdm(range(128, 512, 8), desc="Event dispatch"):
         # load model at batch size
         g = dfgraph_from_keras(model, batch_size=bs, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4 * bs))
         bs_fwd2xcost[bs] = sum(g.cost_cpu_fwd.values()) + sum(g.cost_cpu.values())
