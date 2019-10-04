@@ -14,7 +14,7 @@ import ray
 from tqdm import tqdm
 
 from experiments.common.keras_extractor import MODEL_NAMES, get_keras_model, CHAIN_GRAPH_MODELS
-from experiments.common.plotting.graph_plotting import render_dfgraph
+from experiments.common.graph_plotting import render_dfgraph
 from experiments.common.profile.cost_model import CostModel
 from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory
 from experiments.common.utils import get_futures
@@ -32,9 +32,9 @@ def extract_params():
     parser.add_argument('--platform', default="flops", choices=PLATFORM_CHOICES)
     parser.add_argument('--model-name', default="VGG16", choices=list(sorted(MODEL_NAMES)))
     parser.add_argument("-s", "--input-shape", type=int, nargs="+", default=[])
-    parser.add_argument("-batch-size-min", "--batch-size-min", type=int, default=4)
-    parser.add_argument("-batch-size-max", "--batch-size-max", type=int, default=512)
-    parser.add_argument("-batch-size-increment", "--batch-increment", type=int, default=8)
+    parser.add_argument("--batch-size-min", type=int, default=4)
+    parser.add_argument("--batch-size-max", type=int, default=512)
+    parser.add_argument("--batch-increment", type=int, default=8)
 
     _args = parser.parse_args()
     _args.input_shape = _args.input_shape if _args.input_shape else None
@@ -70,6 +70,7 @@ if __name__ == "__main__":
 
     platform_ram = platform_memory("p32xlarge")
     bs_futures: Dict[int, List] = defaultdict(list)
+    bs_param_ram_cost: Dict[int, int] = {}
     bs_fwd2xcost: Dict[int, int] = {}
     rg = list(range(args.batch_size_min, args.batch_size_max, args.batch_size_increment))
     for bs in tqdm(rg, desc="Event dispatch"):
@@ -81,6 +82,7 @@ if __name__ == "__main__":
         # load model at batch size
         g = dfgraph_from_keras(model, batch_size=bs, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4 * bs))
         bs_fwd2xcost[bs] = sum(g.cost_cpu_fwd.values()) + sum(g.cost_cpu.values())
+        bs_param_ram_cost[bs] = g.cost_ram_parameters
         render_dfgraph(g, log_base, name=model_name)
 
         # run constant baselines
@@ -116,7 +118,7 @@ if __name__ == "__main__":
     for bs, strategy_results in result_dict.items():
         for strategy, results in strategy_results.items():
             is_valid = lambda r: r.schedule_aux_data is not None \
-                                 and r.schedule_aux_data.peak_ram <= platform_ram \
+                                 and r.schedule_aux_data.peak_ram <= platform_ram - bs_param_ram_cost[bs] \
                                  and r.schedule_aux_data.cpu <= bs_fwd2xcost[bs]
             if any(map(is_valid, results)):
                 max_batch_sizes[strategy] = max(bs, max_batch_sizes[strategy])

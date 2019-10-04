@@ -6,10 +6,9 @@ import os
 from integration.tf2.TF2ExtractorParams import TF2ExtractorParams
 from experiments.common.keras_extractor import get_keras_model
 from solvers.result import RSResult
-from solvers.solver_ilp_maxbs import MaxBatchILPSolver
+from experiments.solver_ilp_max_batchsize import MaxBatchILPSolver
 from utils.setup_logger import setup_logger
 
-GB = 1000 * 1000 * 1000
 
 MODELS = ["VGG16", "vgg_unet"]
 

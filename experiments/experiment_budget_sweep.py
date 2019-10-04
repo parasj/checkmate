@@ -16,7 +16,7 @@ import seaborn as sns
 from experiments.common.profile.cost_model import CostModel
 from experiments.common.keras_extractor import MODEL_NAMES, get_keras_model, CHAIN_GRAPH_MODELS
 from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory, pretty_platform_name
-from experiments.common.plotting.graph_plotting import render_dfgraph
+from experiments.common.graph_plotting import render_dfgraph
 from experiments.common.utils import get_futures
 from remat.core.dfgraph import DFGraph
 from remat.core.schedule import ScheduledResult

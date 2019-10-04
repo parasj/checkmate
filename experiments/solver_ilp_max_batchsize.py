@@ -5,8 +5,12 @@ from gurobipy import quicksum, GRB, Model
 import numpy as np
 
 from remat.core.dfgraph import DFGraph
+from remat.core.schedule import ILPAuxData, ScheduledResult
 from remat.core.solvers.common import SOLVER_DTYPE, solve_r_opt
 from utils.setup_logger import setup_logger
+
+from remat.core.solvers.enum_strategy import SolveStrategy
+from remat.core.solvers.scheduler import schedule_from_rs
 from remat.core.utils.timer import Timer
 
 
@@ -175,4 +179,16 @@ class MaxBatchILPSolver:
             return None, None, None, None
 
         Rout = solve_r_opt(self.g, Sout)  # prune R using optimal recomputation solver
-        return Rout, Sout, Uout, Free_Eout, batch_size
+
+        ilp_aux_data = ILPAuxData(U=Uout, Free_E=Free_Eout, ilp_approx=False, ilp_time_limit=0, ilp_eps_noise=0,
+                                  ilp_num_constraints=self.m.numConstrs, ilp_num_variables=self.m.numVars)
+        schedule, aux_data = schedule_from_rs(self.g, Rout, Sout)
+        return ScheduledResult(
+            solve_strategy=SolveStrategy.OPTIMAL_ILP_GC,
+            solver_budget=self.budget,
+            feasible=True,
+            schedule=schedule,
+            schedule_aux_data=aux_data,
+            solve_time_s=self.solve_time,
+            ilp_aux_data=ilp_aux_data
+        ), batch_size
