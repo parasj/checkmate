@@ -97,17 +97,17 @@ if __name__ == "__main__":
 
         # sweep chen's greedy baseline
         chen_sqrtn_noap = result_dict[bs][SolveStrategy.CHEN_SQRTN_NOAP][0]
-        greedy_eval_points = chen_sqrtn_noap.schedule_aux_data.activation_ram * (1. + np.arange(-1, 2, 0.01))
+        greedy_eval_points = chen_sqrtn_noap.schedule_aux_data.activation_ram * (1. + np.arange(-1, 2, 0.05))
         remote_solve_chen_greedy = ray.remote(num_cpus=1)(solve_chen_greedy).remote
         futures.extend([remote_solve_chen_greedy(g, float(b), False) for b in greedy_eval_points])
         futures.extend([remote_solve_chen_greedy(g, float(b), True) for b in greedy_eval_points])
 
-        # sweep griewank baselines
-        if model_name in CHAIN_GRAPH_MODELS:
-            solve_griewank(g, 1)  # prefetch griewank solution from s3, otherwise ray will cause race condition
-            griewank_eval_points = range(1, g.size + 1)
-            remote_solve_griewank = ray.remote(num_cpus=1)(solve_griewank).remote
-            futures.extend([remote_solve_griewank(g, float(b)) for b in griewank_eval_points])
+        # # sweep griewank baselines
+        # if model_name in CHAIN_GRAPH_MODELS:
+        #     solve_griewank(g, 1)  # prefetch griewank solution from s3, otherwise ray will cause race condition
+        #     griewank_eval_points = range(1, g.size + 1)
+        #     remote_solve_griewank = ray.remote(num_cpus=1)(solve_griewank).remote
+        #     futures.extend([remote_solve_griewank(g, float(b)) for b in griewank_eval_points])
 
         for result in get_futures(futures, desc=f"Batch size: {bs}"):
             result_dict[bs][result.solve_strategy].append(result)
