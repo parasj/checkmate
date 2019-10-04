@@ -118,5 +118,5 @@ if __name__ == "__main__":
                 logging.info(f"SolveStrategy {strategy} succeeded at batch size {bs}")
 
     df = pandas.DataFrame([{'strategy': k, 'batch_size': v} for k, v in max_batch_sizes.items()])
-    print(df)
     df.to_csv(os.path.join(log_base, 'max_batch_size.csv'))
+    print(df)
