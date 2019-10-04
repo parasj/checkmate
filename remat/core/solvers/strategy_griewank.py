@@ -68,7 +68,7 @@ def _solve_griewank_to_rs(g: DFGraph, budget: int):
 
 def _load_griewank(graph_size: int) -> pd.DataFrame:
     fname = f'{graph_size}.pkl.gz'
-    local_path_base = os.path.join('/tmp', 'griewank_cache')
+    local_path_base = os.path.join('/tmp', 'remat_cache', 'griewank_solutions')
     local_path = os.path.join(local_path_base, fname)
     remote_path = f"https://optimalcheckpointing.s3.amazonaws.com/griewank_solutions/pickle/{fname}"
     if os.path.exists(local_path):
