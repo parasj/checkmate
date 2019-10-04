@@ -68,7 +68,7 @@ if __name__ == "__main__":
     tf.keras.utils.plot_model(model, to_file=os.path.join(log_base, f"plot_{model_name}.png"),
                               show_shapes=True, show_layer_names=True)
 
-    platform_ram = platform_memory(args.platform)
+    platform_ram = platform_memory("p32xlarge")
     bs_futures: Dict[int, List] = defaultdict(list)
     bs_fwd2xcost: Dict[int, int] = {}
     for bs in tqdm(range(128, 512, 8), desc="Event dispatch"):
