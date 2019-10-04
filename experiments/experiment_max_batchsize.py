@@ -32,6 +32,9 @@ def extract_params():
     parser.add_argument('--platform', default="flops", choices=PLATFORM_CHOICES)
     parser.add_argument('--model-name', default="VGG16", choices=list(sorted(MODEL_NAMES)))
     parser.add_argument("-s", "--input-shape", type=int, nargs="+", default=[])
+    parser.add_argument("-batch-size-min", "--batch-size-min", type=int, default=4)
+    parser.add_argument("-batch-size-max", "--batch-size-max", type=int, default=512)
+    parser.add_argument("-batch-size-increment", "--batch-increment", type=int, default=8)
 
     _args = parser.parse_args()
     _args.input_shape = _args.input_shape if _args.input_shape else None
@@ -68,7 +71,7 @@ if __name__ == "__main__":
     platform_ram = platform_memory("p32xlarge")
     bs_futures: Dict[int, List] = defaultdict(list)
     bs_fwd2xcost: Dict[int, int] = {}
-    rg = list(range(200, 280, 4))
+    rg = list(range(args.batch_size_min, args.batch_size_max, args.batch_size_increment))
     for bs in tqdm(rg, desc="Event dispatch"):
         while not ray.is_initialized():
             ray.init(temp_dir="/tmp/ray_checkpoint_" + str(str(uuid.uuid4())[:8]), redis_password=str(uuid.uuid1()),
