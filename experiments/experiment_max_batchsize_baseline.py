@@ -82,7 +82,7 @@ if __name__ == "__main__":
         # load model at batch size
         g = dfgraph_from_keras(model, batch_size=bs, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4 * bs))
         bs_fwd2xcost[bs] = sum(g.cost_cpu_fwd.values()) + sum(g.cost_cpu.values())
-        bs_param_ram_cost[bs] = g.cost_ram_parameters
+        bs_param_ram_cost[bs] = g.cost_ram_fixed
         render_dfgraph(g, log_base, name=model_name)
 
         # run constant baselines
