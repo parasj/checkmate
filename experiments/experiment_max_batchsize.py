@@ -45,8 +45,6 @@ if __name__ == "__main__":
         os.environ["OMP_NUM_THREADS"] = "1"
     args = extract_params()
 
-    ray.init(temp_dir="/tmp/ray_checkpoint", redis_password=str(uuid.uuid1()), num_cpus=os.cpu_count() - 2,
-             object_store_memory=1024 * 1024 * 1024 if os.cpu_count() < 48 else 1024 * 1024 * 1024 * 50)
 
     key = "_".join(map(str, [args.platform, args.model_name, args.input_shape]))
     log_base = os.path.join("data", "max_batch_size", key)
@@ -72,6 +70,10 @@ if __name__ == "__main__":
     bs_futures: Dict[int, List] = defaultdict(list)
     bs_fwd2xcost: Dict[int, int] = {}
     for bs in tqdm(range(128, 512, 8), desc="Event dispatch"):
+        ray.init(temp_dir="/tmp/ray_checkpoint", redis_password=str(uuid.uuid1()), num_cpus=os.cpu_count() - 2,
+                 object_store_memory=1024 * 1024 * 1024 if os.cpu_count() < 48 else 1024 * 1024 * 1024 * 50)
+        futures = []
+
         # load model at batch size
         g = dfgraph_from_keras(model, batch_size=bs, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4 * bs))
         bs_fwd2xcost[bs] = sum(g.cost_cpu_fwd.values()) + sum(g.cost_cpu.values())
@@ -79,7 +81,7 @@ if __name__ == "__main__":
 
         # run constant baselines
         result_dict[bs][SolveStrategy.CHEN_SQRTN_NOAP] = [solve_chen_sqrtn(g, False)]
-        bs_futures[bs].extend([
+        futures.extend([
             ray.remote(num_cpus=1)(solve_checkpoint_all).remote(g),
             ray.remote(num_cpus=1)(solve_checkpoint_all_ap).remote(g),
             ray.remote(num_cpus=1)(solve_checkpoint_last_node).remote(g),
@@ -90,20 +92,20 @@ if __name__ == "__main__":
         chen_sqrtn_noap = result_dict[bs][SolveStrategy.CHEN_SQRTN_NOAP][0]
         greedy_eval_points = chen_sqrtn_noap.schedule_aux_data.activation_ram * (1. + np.arange(-1, 2, 0.01))
         remote_solve_chen_greedy = ray.remote(num_cpus=1)(solve_chen_greedy).remote
-        bs_futures[bs].extend([remote_solve_chen_greedy(g, float(b), False) for b in greedy_eval_points])
+        futures.extend([remote_solve_chen_greedy(g, float(b), False) for b in greedy_eval_points])
         if model_name not in CHAIN_GRAPH_MODELS:
-            bs_futures[bs].extend([remote_solve_chen_greedy(g, float(b), True) for b in greedy_eval_points])
+            futures.extend([remote_solve_chen_greedy(g, float(b), True) for b in greedy_eval_points])
 
         # sweep griewank baselines
         if model_name in CHAIN_GRAPH_MODELS:
             solve_griewank(g, 1)  # prefetch griewank solution from s3, otherwise ray will cause race condition
             griewank_eval_points = range(1, g.size + 1)
             remote_solve_griewank = ray.remote(num_cpus=1)(solve_griewank).remote
-            bs_futures[bs].extend([remote_solve_griewank(g, float(b)) for b in griewank_eval_points])
+            futures.extend([remote_solve_griewank(g, float(b)) for b in griewank_eval_points])
 
-    for bs, futures in bs_futures.items():
         for result in get_futures(futures, desc=f"Batch size: {bs}"):
             result_dict[bs][result.solve_strategy].append(result)
+        ray.shutdown()
 
     max_batch_sizes = defaultdict(int)
     for bs, strategy_results in result_dict.items():
