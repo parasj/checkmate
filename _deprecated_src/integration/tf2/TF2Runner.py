@@ -10,7 +10,8 @@ from utils.setup_logger import setup_logger
 
 class TF2Runner:
     def __init__(self, keras_model: tf.keras.models.Model, g: DFGraph, schedule: Schedule,
-                 loss_fn=categorical_cross_entropy, eager: bool = True, log_base: str = None, debug=False, batch_size=None):
+                 loss_fn=categorical_cross_entropy, eager: bool = True, log_base: str = None, debug=False,
+                 batch_size=None):
         self.log_base = log_base
         self.logger = setup_logger("TF2Runner", os.path.join(log_base, 'TF2Runner.log'))
         self.debug = debug
@@ -26,21 +27,17 @@ class TF2Runner:
 
     def _generate_tf_graph(self):
         if self.eager:
-            #raise NotImplementedError("Disable eager")
             return self._tf_eager_eval
-        #raise NotImplementedError("Disable static")
         model = self.keras_model
         in_shape = list(model.input_shape)
-        out_shape=list(model.output_shape)
+        out_shape = list(model.output_shape)
         in_shape[0] = self.batch_size
         out_shape[0] = self.batch_size
         input_sig = [tf.TensorSpec(in_shape), tf.TensorSpec(out_shape)]
-        #return self._tf_static_eval
         static_tf_graph = tf.function(self._tf_static_eval, autograph=False)
         return static_tf_graph.get_concrete_function(*input_sig)
 
     def _tf_eager_eval(self, input_val: tf.Tensor, label_val: tf.Tensor):
-        #raise NotImplementedError("Disable eager")
         def match_variables(_param_grads_dict, _model):
             for grads_idx, layer in enumerate(_model.layers[1:]):
                 grads = _param_grads_dict.get(grads_idx, [])
@@ -58,7 +55,6 @@ class TF2Runner:
         tapes = {}
         regs = {}
         our_loss = -1
-        print('\nreee\n' * 20)
         for op in self.schedule:
             if isinstance(op, AllocateRegister):
                 pass
@@ -77,7 +73,7 @@ class TF2Runner:
                     inputs = inputs if len(inputs) > 0 else [input_val]  # if first node
                     if self.debug: self.logger.info(f"reg[{op.out_register}] ⟵ {layer.name}")
                     if self.debug: self.logger.debug(f"\t⮑ Inputs = {inputs}")
-                    #for var in itertools.chain(inputs, layer.variables):
+                    # for var in itertools.chain(inputs, layer.variables):
                     #    if self.debug: self.logger.debug(f"\t⮑ Watching variable {var}")
                     #    tape.watch(var)
                     if len(inputs) > 1:
@@ -90,7 +86,7 @@ class TF2Runner:
                 with tf.GradientTape(persistent=True, watch_accessed_variables=False) as tape:
                     inputs = [regs[op.arg_regs[arg_idx]] for arg_idx in sorted(op.arg_regs.keys())]
                     inputs += [label_val]
-                    #for x in inputs:
+                    # for x in inputs:
                     #    tape.watch(x)
                     regs[op.out_register] = self.loss_fn(*inputs)
                 tapes[op.out_register] = tape
@@ -128,10 +124,12 @@ class TF2Runner:
                     loss_tape = tapes[op.arg_regs[x_idx]]
                     dLdX = loss_tape.gradient(y, X_reg, output_gradients=dLdY,
                                               unconnected_gradients=tf.UnconnectedGradients.ZERO)
-                    
+
                     act_grad_list.append(dLdX)
                     if layer.trainable_variables:
-                        param_grad_list.append(param_tape.gradient(X_reg, layer.trainable_variables, output_gradients=dLdX, unconnected_gradients=tf.UnconnectedGradients.ZERO))
+                        param_grad_list.append(
+                            param_tape.gradient(X_reg, layer.trainable_variables, output_gradients=dLdX,
+                                                unconnected_gradients=tf.UnconnectedGradients.ZERO))
                 if self.debug: self.logger.debug(f"\t⮑ Param grad list: {param_grad_list}")
                 if self.debug: self.logger.debug(f"\t⮑ Activation grad list: {act_grad_list}")
                 if layer.trainable_variables:
@@ -142,7 +140,7 @@ class TF2Runner:
         grad_dict = dict(match_variables(param_grads, self.keras_model))
         out_grads = [grad_dict[v.name] for v in self.keras_model.trainable_variables]
         return our_loss, out_grads
-    
+
     def _tf_static_eval(self, input_val: tf.Tensor, label_val: tf.Tensor):
         def match_variables(_param_grads_dict, _model):
             for grads_idx, layer in enumerate(_model.layers[1:]):
@@ -204,14 +202,16 @@ class TF2Runner:
                 param_grad_list = []
                 act_grad_list = []
                 for x_idx, y, dLdY in zip(Y_list_idx, Y_reg_list, dLdY_list):
-                    if(dLdY is not None):
+                    if (dLdY is not None):
                         dLdY = tf.squeeze(dLdY)
 
-                    dLdX = tf.gradients(y, X_reg, grad_ys=dLdY, name=f"grad_{layer.name}", unconnected_gradients=tf.UnconnectedGradients.ZERO)
+                    dLdX = tf.gradients(y, X_reg, grad_ys=dLdY, name=f"grad_{layer.name}",
+                                        unconnected_gradients=tf.UnconnectedGradients.ZERO)
 
                     act_grad_list.append(dLdX)
                     if layer.trainable_variables:
-                        param_grad_list.append(tf.gradients(X_reg, layer.trainable_variables, grad_ys=dLdX, unconnected_gradients=tf.UnconnectedGradients.ZERO))
+                        param_grad_list.append(tf.gradients(X_reg, layer.trainable_variables, grad_ys=dLdX,
+                                                            unconnected_gradients=tf.UnconnectedGradients.ZERO))
                 if self.debug: self.logger.debug(f"\t⮑ Param grad list: {param_grad_list}")
                 if self.debug: self.logger.debug(f"\t⮑ Activation grad list: {act_grad_list}")
                 if layer.trainable_variables:
@@ -220,4 +220,3 @@ class TF2Runner:
         grad_dict = dict(match_variables(param_grads, self.keras_model))
         out_grads = [grad_dict[v.name] for v in self.keras_model.trainable_variables]
         return our_loss, out_grads
-
