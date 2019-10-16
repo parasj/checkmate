@@ -9,9 +9,9 @@ import pandas as pd
 
 from remat.core.dfgraph import DFGraph
 from remat.core.schedule import ScheduledResult
-from remat.core.solvers.common import solve_r_opt, setup_implied_s_backwards
-from remat.core.solvers.scheduler import schedule_from_rs
-from remat.core.solvers.enum_strategy import SolveStrategy
+from remat.core.utils.solver_common import solve_r_opt, setup_implied_s_backwards
+from remat.core.utils.scheduler import schedule_from_rs
+from remat.core.enum_strategy import SolveStrategy
 from remat.core.utils.timer import Timer
 
 

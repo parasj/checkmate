@@ -7,10 +7,10 @@ import numpy as np
 
 from remat.core.dfgraph import DFGraph
 from remat.core.schedule import ILPAuxData, ScheduledResult
-from remat.core.solvers.common import SOLVER_DTYPE, solve_r_opt
+from remat.core.utils.solver_common import SOLVER_DTYPE, solve_r_opt
 
-from remat.core.solvers.enum_strategy import SolveStrategy
-from remat.core.solvers.scheduler import schedule_from_rs
+from remat.core.enum_strategy import SolveStrategy
+from remat.core.utils.scheduler import schedule_from_rs
 from remat.core.utils.timer import Timer
 
 

@@ -13,17 +13,16 @@ import tensorflow as tf
 import ray
 from tqdm import tqdm
 
-from experiments.common.keras_extractor import MODEL_NAMES, get_keras_model, CHAIN_GRAPH_MODELS
+from experiments.common.keras_models import MODEL_NAMES, get_keras_model
 from experiments.common.graph_plotting import render_dfgraph
 from experiments.common.profile.cost_model import CostModel
 from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory
-from experiments.common.utils import get_futures
+from experiments.common.ray_utils import get_futures
 from remat.core.schedule import ScheduledResult
-from remat.core.solvers.enum_strategy import SolveStrategy
+from remat.core.enum_strategy import SolveStrategy
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
 from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
 from remat.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
-from remat.core.solvers.strategy_griewank import solve_griewank
 from remat.tensorflow2.extraction import dfgraph_from_keras
 
 

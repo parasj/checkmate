@@ -1,6 +1,6 @@
 import logging
 
-from experiments.common.keras_extractor import get_keras_model
+from experiments.common.keras_models import get_keras_model
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
 from remat.tensorflow2.extraction import dfgraph_from_keras
 

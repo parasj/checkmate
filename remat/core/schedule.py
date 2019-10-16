@@ -3,7 +3,7 @@ from typing import NamedTuple, Dict, List, Union, Optional
 
 import numpy as np
 
-from remat.core.solvers.enum_strategy import SolveStrategy
+from remat.core.enum_strategy import SolveStrategy
 
 
 class OperatorEvaluation(NamedTuple):
