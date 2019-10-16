@@ -14,7 +14,7 @@ except ImportError as e:
     from tensorflow.keras.backend import count_params  # TF r1.14
 
 
-def dfgraph_from_keras(mod: tf.keras.models.Model, include_prev_node=True, batch_size=1, loss_cpu_cost=0,
+def dfgraph_from_keras(mod: tf.keras.models.Model, include_prev_node=False, batch_size=1, loss_cpu_cost=0,
                        loss_ram_cost=4, cost_model: Optional[CostModel] = None):
     """
     Given a Keras model, this method extracts a graph to be utilized by the solver
