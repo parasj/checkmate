@@ -9,12 +9,12 @@ from typing import Dict, List
 
 import tensorflow as tf
 
-from experiments.common.keras_extractor import MODEL_NAMES, get_keras_model
+from experiments.common.keras_models import MODEL_NAMES, get_keras_model
 from experiments.common.graph_plotting import render_dfgraph, plot
 from experiments.common.profile.cost_model import CostModel
 from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory
 from remat.core.schedule import ScheduledResult
-from remat.core.solvers.enum_strategy import SolveStrategy
+from remat.core.enum_strategy import SolveStrategy
 from remat.tensorflow2.extraction import dfgraph_from_keras
 from experiments.solver_ilp_max_batchsize import MaxBatchILPSolver
 

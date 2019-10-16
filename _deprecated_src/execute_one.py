@@ -8,8 +8,8 @@ import pickle
 
 import dotenv
 
-from remat.core.solvers.enum_strategy import SolveStrategy
-from experiments.common.keras_extractor import MODEL_NAMES
+from remat.core.enum_strategy import SolveStrategy
+from experiments.common.keras_models import MODEL_NAMES
 from evaluation.eval_execution import execute_one
 from utils.setup_logger import setup_logger
 
