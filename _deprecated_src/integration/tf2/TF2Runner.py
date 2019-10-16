@@ -2,7 +2,7 @@ import os
 
 import tensorflow as tf
 
-from integration.tf2.misc import categorical_cross_entropy
+from remat.tensorflow2.tf_losses import categorical_cross_entropy
 from remat.core.schedule import OperatorEvaluation, AllocateRegister, DeallocateRegister, Schedule
 from remat.core.dfgraph import DFGraph
 from utils.setup_logger import setup_logger
