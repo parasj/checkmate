@@ -2,19 +2,18 @@ import logging
 from collections import defaultdict
 from typing import Optional
 
-import tensorflow as tf
-
 from experiments.common.profile.cost_model import CostModel
-from remat.tensorflow2.extraction_hooks import op_hook, MEMORY_MULTIPLIER
 from remat.core import dfgraph
+from remat.tensorflow2.extraction_hooks import op_hook, MEMORY_MULTIPLIER
 
 try:
     from tensorflow.python.keras.utils.layer_utils import count_params  # TF r2.0
 except ImportError as e:
+    # noinspection PyUnresolvedReferences
     from tensorflow.keras.backend import count_params  # TF r1.14
 
 
-def dfgraph_from_keras(mod: tf.keras.models.Model, include_prev_node=False, batch_size=1, loss_cpu_cost=0,
+def dfgraph_from_keras(mod, include_prev_node=False, batch_size=1, loss_cpu_cost=0,
                        loss_ram_cost=4, cost_model: Optional[CostModel] = None):
     """
     Given a Keras model, this method extracts a graph to be utilized by the solver
@@ -94,7 +93,7 @@ def dfgraph_from_keras(mod: tf.keras.models.Model, include_prev_node=False, batc
 
 
 # noinspection PyProtectedMember
-def count_params_keras(model: tf.keras.models.Model):
+def count_params_keras(model):
     model._check_trainable_weights_consistency()
     if hasattr(model, '_collected_trainable_weights'):
         trainable_count = count_params(model._collected_trainable_weights)

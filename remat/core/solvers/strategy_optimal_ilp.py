@@ -4,6 +4,7 @@ import os
 from typing import Dict, Any, Optional
 
 import numpy as np
+# noinspection PyPackageRequirements
 from gurobipy import GRB, Model, quicksum
 
 import remat.core
@@ -192,6 +193,7 @@ def solve_ilp_gurobi(g: DFGraph, budget: int, seed_s: Optional[np.ndarray] = Non
                      write_model_file: Optional[str] = None, eps_noise=0.01, solver_cores=os.cpu_count()):
     """
     Memory-accurate solver with garbage collection.
+    :param g: DFGraph -- graph definition extracted from model
     :param budget: int -- budget constraint for solving
     :param seed_s: np.ndarray -- optional parameter to set warm-start for solver, defaults to empty S
     :param approx: bool -- set true to return as soon as a solution is found that is within 1% of optimal

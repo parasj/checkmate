@@ -85,7 +85,7 @@ def solve_r_opt(g: DFGraph, s: np.ndarray):
     sdiff = s[1:] - s[:-1]
     R[:-1] = R[:-1] | (R[:-1] < sdiff)
     # Create reverse adjacency list (child -> parents, i.e. node -> dependencies)
-    adj = [[] for v in range(T)]
+    adj = [[] for _ in range(T)]
     for (u, v) in g.edge_list:
         adj[v].append(u)
     # Enforce R_{t,v} <= R_{t,u} + S_{t,u} for all (u, v) \in E

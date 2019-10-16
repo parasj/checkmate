@@ -18,8 +18,8 @@ class DFGraph:
         :param args (Dict[int, List[int]]): Dependency listing, where arguments ordered
         :param v: List of nodes in the graph
         :param vfwd_map: Mapping from forward graph to corresponding nodes in the reverse graph
-        :param cost_cpu: Dictionary mapping nodes to respective integral runtime costs (for forward and backward operators)
-        :param cost_ram: Dictionary mapping nodes to respective integral memory costs (for forward and backward operators)
+        :param cost_cpu: Dictionary mapping nodes to respective integral runtime costs (for forward/backward operators)
+        :param cost_ram: Dictionary mapping nodes to respective integral memory costs (for forward/backward operators)
         :param key: If set, will store property that allows cache persistence in some experiments
         """
         self.key = key
