@@ -1,7 +1,8 @@
 import logging
 
 from experiments.common.execution_utils import random_batch
-from experiments.common.keras_models import get_keras_model
+from experiments.common.graph_plotting import render_dfgraph
+from experiments.common.load_keras_model import get_keras_model
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
 from remat.tensorflow2.execution import tfgraph_from_schedule
 from remat.tensorflow2.extraction import dfgraph_from_keras
