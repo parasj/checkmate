@@ -9,7 +9,7 @@ import numpy as np
 
 from remat.core.enum_strategy import SolveStrategy
 from integration.tf2.TF2ExtractorParams import TF2ExtractorParams
-from experiments.common.keras_models import get_keras_model
+from experiments.common.load_keras_model import get_keras_model
 from experiments.common.profile.platforms import platform_memory
 from integration.tf2.TF2Runner import TF2Runner
 from remat.tensorflow2.tf_losses import categorical_cross_entropy

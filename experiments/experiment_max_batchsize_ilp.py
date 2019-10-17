@@ -9,14 +9,15 @@ from typing import Dict, List
 
 import tensorflow as tf
 
-from experiments.common.keras_models import MODEL_NAMES, get_keras_model
+from experiments.common.definitions import remat_data_dir
 from experiments.common.graph_plotting import render_dfgraph, plot
+from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model
 from experiments.common.profile.cost_model import CostModel
 from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory
-from remat.core.schedule import ScheduledResult
-from remat.core.enum_strategy import SolveStrategy
-from remat.tensorflow2.extraction import dfgraph_from_keras
 from experiments.solver_ilp_max_batchsize import MaxBatchILPSolver
+from remat.core.enum_strategy import SolveStrategy
+from remat.core.schedule import ScheduledResult
+from remat.tensorflow2.extraction import dfgraph_from_keras
 
 GB = 1000 * 1000 * 1000
 
@@ -34,14 +35,14 @@ def extract_params():
 
 
 if __name__ == "__main__":
-    logging.getLogger().setLevel(logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     # due to bug on havoc, limit parallelism on high-core machines
     if os.cpu_count() > 48:
         os.environ["OMP_NUM_THREADS"] = "1"
     args = extract_params()
 
     key = "_".join(map(str, [args.platform, args.model_name, args.input_shape]))
-    log_base = os.path.join("data", "max_batch_size_ilp", key)
+    log_base = remat_data_dir() / "max_batch_size_ilp" / key
     shutil.rmtree(log_base, ignore_errors=True)
     pathlib.Path(log_base).mkdir(parents=True)
     result_dict: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]] = defaultdict(lambda: defaultdict(list))
@@ -57,8 +58,8 @@ if __name__ == "__main__":
         cost_model.plot_costs()
 
     model = get_keras_model(model_name, input_shape=args.input_shape)
-    tf.keras.utils.plot_model(model, to_file=os.path.join(log_base, f"plot_{model_name}.png"),
-                              show_shapes=True, show_layer_names=True)
+    tf.keras.utils.plot_model(model, to_file=log_base / f"plot_{model_name}.png", show_shapes=True,
+                              show_layer_names=True)
 
     platform_ram = platform_memory("p32xlarge")
     bs_futures: Dict[int, List] = defaultdict(list)
@@ -67,9 +68,9 @@ if __name__ == "__main__":
     g = dfgraph_from_keras(model, batch_size=1, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4))
     render_dfgraph(g, log_base, name=model_name)
 
-    model_file = os.path.join(log_base, f"max_bs_{model_name}.mps")
+    model_file = log_base / f"max_bs_{model_name}.mps"
     param_dict = {'LogToConsole': 1,
-                  'LogFile': os.path.join(log_base, f"max_bs_{model_name}.solve.log"),
+                  'LogFile': str((log_base / f"max_bs_{model_name}.solve.log").resolve()),
                   'Threads': os.cpu_count(),
                   'TimeLimit': math.inf}
     ilp_solver = MaxBatchILPSolver(g, budget=platform_memory("p32xlarge") - g.cost_ram_fixed, model_file=model_file,
@@ -78,5 +79,5 @@ if __name__ == "__main__":
     result, batch_size = ilp_solver.solve()
     logging.info(f"Max batch size = {batch_size}")
 
-    save_file = os.path.join(log_base, f'{model}_plot.png')
+    save_file = log_base / f'{model}_plot.png'
     plot(result, plot_mem_usage=True, save_file=save_file)

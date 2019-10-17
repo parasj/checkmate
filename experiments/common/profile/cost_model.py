@@ -14,12 +14,14 @@ import scipy
 import scipy.stats
 import seaborn as sns
 
+from remat.core.utils.definitions import PathLike
+
 # BATCH_SIZES_LOAD = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
 BATCH_SIZES_LOAD = [32, 64, 128, 256, 512, 1024, 2048]
 
 
 class CostModel:
-    def __init__(self, model_name: str, platform: str, log_base: str, quantization: int):
+    def __init__(self, model_name: str, platform: str, log_base: PathLike, quantization: int):
         self.log_base = log_base
         self.logger = logging.getLogger("CostModel")
 
@@ -163,13 +165,13 @@ class CostModel:
         ax.legend(bbox_to_anchor=(1.04, 1))
         plt.xticks(sorted(list(batch_sizes)))
 
-        fig.savefig(os.path.join(self.log_base, "!plot_costs.pdf"), format='pdf', bbox_inches='tight')
-        fig.savefig(os.path.join(self.log_base, "!plot_costs.png"), bbox_inches='tight', dpi=300)
+        fig.savefig(self.log_base / "!plot_costs.pdf", format='pdf', bbox_inches='tight')
+        fig.savefig(self.log_base / "!plot_costs.png", bbox_inches='tight', dpi=300)
 
     @staticmethod
     def load_profile_s3(model_name: str, batch_size: int, platform: str) -> Optional[str]:
-        local_base = os.path.join("/tmp", "remat_cache", "profiles")
-        local_path = os.path.join(local_base, f"{model_name}_{batch_size}_{platform}.npy")
+        local_base = pathlib.Path("/tmp") / "remat_cache" / "profiles"
+        local_path = local_base / f"{model_name}_{batch_size}_{platform}.npy"
         remote_path = f"https://optimalcheckpointing.s3.amazonaws.com/profiles/{model_name}/b{batch_size}_{platform}.npy"
         if os.path.exists(local_path):
             try:

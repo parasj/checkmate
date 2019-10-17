@@ -13,7 +13,8 @@ import tensorflow as tf
 import ray
 from tqdm import tqdm
 
-from experiments.common.keras_models import MODEL_NAMES, get_keras_model
+from experiments.common.definitions import remat_data_dir
+from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model
 from experiments.common.graph_plotting import render_dfgraph
 from experiments.common.profile.cost_model import CostModel
 from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory
@@ -48,7 +49,7 @@ if __name__ == "__main__":
     args = extract_params()
 
     key = "_".join(map(str, [args.platform, args.model_name, args.input_shape]))
-    log_base = os.path.join("data", "max_batch_size", key)
+    log_base = remat_data_dir() / "max_batch_size" / key
     shutil.rmtree(log_base, ignore_errors=True)
     pathlib.Path(log_base).mkdir(parents=True)
     result_dict: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]] = defaultdict(lambda: defaultdict(list))
@@ -64,7 +65,7 @@ if __name__ == "__main__":
         cost_model.plot_costs()
 
     model = get_keras_model(model_name, input_shape=args.input_shape)
-    tf.keras.utils.plot_model(model, to_file=os.path.join(log_base, f"plot_{model_name}.png"),
+    tf.keras.utils.plot_model(model, to_file=log_base / f"plot_{model_name}.png",
                               show_shapes=True, show_layer_names=True)
 
     platform_ram = platform_memory("p32xlarge")
@@ -124,5 +125,5 @@ if __name__ == "__main__":
                 logging.info(f"SolveStrategy {strategy} succeeded at batch size {bs}")
 
     df = pandas.DataFrame([{'strategy': k, 'batch_size': v} for k, v in max_batch_sizes.items()])
-    df.to_csv(os.path.join(log_base, 'max_batch_size.csv'))
+    df.to_csv(log_base / 'max_batch_size.csv')
     print(df)

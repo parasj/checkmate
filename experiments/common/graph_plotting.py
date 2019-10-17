@@ -1,3 +1,5 @@
+from typing import Optional
+
 from graphviz import Digraph
 import numpy as np
 
@@ -6,6 +8,9 @@ from remat.core.schedule import Schedule, OperatorEvaluation, ScheduledResult
 
 
 # deprecated
+from remat.core.utils.definitions import PathLike
+
+
 def tensor_plot(g: DFGraph, sched: Schedule, directory, tag=None, format='pdf', quiet=True):
     dot = Digraph(f"!TensorPlot_{tag}", engine="dot")
     if sched is None:
@@ -70,7 +75,7 @@ def render_dfgraph(g: DFGraph, directory, format='pdf', quiet=True, name=""):
 
 
 # deprecated
-def plot(sched_result: ScheduledResult, plot_mem_usage: bool = False, save_file: str = None, show: bool = False, plt=None):
+def plot(sched_result: ScheduledResult, plot_mem_usage: bool = False, save_file: Optional[PathLike] = None, show: bool = False, plt=None):
     assert sched_result.feasible
     R = sched_result.schedule_aux_data.R
     S = sched_result.schedule_aux_data.S
