@@ -1,13 +1,10 @@
 from typing import Optional
 
-from graphviz import Digraph
 import numpy as np
+from graphviz import Digraph
 
 from remat.core.dfgraph import DFGraph
 from remat.core.schedule import Schedule, OperatorEvaluation, ScheduledResult
-
-
-# deprecated
 from remat.core.utils.definitions import PathLike
 
 
@@ -74,19 +71,23 @@ def render_dfgraph(g: DFGraph, directory, format='pdf', quiet=True, name=""):
         dot.render(directory=directory, format=format)
 
 
-# deprecated
-def plot(sched_result: ScheduledResult, plot_mem_usage: bool = False, save_file: Optional[PathLike] = None, show: bool = False, plt=None):
+def plot(sched_result: ScheduledResult, plot_mem_usage=False, save_file: Optional[PathLike] = None, show=False,
+         plt=None):
     assert sched_result.feasible
     R = sched_result.schedule_aux_data.R
     S = sched_result.schedule_aux_data.S
 
     if plt is None:
         import matplotlib.pyplot as plt
+
     if plot_mem_usage:
-        U = sched_result.ilp_aux_data.U if sched_result.ilp_aux_data is not None else None
         fig, axs = plt.subplots(1, 4)
         vmax = sched_result.schedule_aux_data.mem_grid
-        vmax = max(vmax, np.max(U)) if U is not None else vmax
+        if sched_result.ilp_aux_data is not None:
+            U = sched_result.ilp_aux_data.U
+            vmax = vmax if U is None else max(vmax, np.max(U))
+        else:
+            U = None
 
         # Plot slow verifier memory usage
         axs[2].invert_yaxis()
