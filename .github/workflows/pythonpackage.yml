@@ -2,7 +2,7 @@ name: Python package testsuite (remat)
 on: [push]
 jobs:
   build:
-    name: Test remat package on py${{ matrix.node_version }}, ${{ matrix.os }}
+    name: Test remat package on py${{ matrix.python-version }}, ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       max-parallel: 4
