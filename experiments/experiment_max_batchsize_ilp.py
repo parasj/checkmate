@@ -68,7 +68,7 @@ if __name__ == "__main__":
     g = dfgraph_from_keras(model, batch_size=1, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4))
     render_dfgraph(g, log_base, name=model_name)
 
-    model_file = log_base / f"max_bs_{model_name}.mps"
+    model_file = str(log_base / f"max_bs_{model_name}.mps")
     param_dict = {'LogToConsole': 1,
                   'LogFile': str((log_base / f"max_bs_{model_name}.solve.log").resolve()),
                   'Threads': os.cpu_count(),

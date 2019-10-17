@@ -10,6 +10,7 @@ from gurobipy import GRB, Model, quicksum
 import remat.core
 from remat.core.dfgraph import DFGraph
 from remat.core.schedule import ScheduledResult, ILPAuxData
+from remat.core.utils.definitions import PathLike
 from remat.core.utils.solver_common import solve_r_opt
 from remat.core.utils.scheduler import schedule_from_rs
 from remat.core.enum_strategy import SolveStrategy
@@ -17,8 +18,8 @@ from remat.core.utils.timer import Timer
 
 
 class ILPSolver:
-    def __init__(self, g: DFGraph, budget: int, eps_noise=None, seed_s=None, write_model_file=None,
-                 gurobi_params: Dict[str, Any] = None):
+    def __init__(self, g: DFGraph, budget: int, eps_noise=None, seed_s=None,
+                 write_model_file: Optional[PathLike] = None, gurobi_params: Dict[str, Any] = None):
         self.gurobi_params = gurobi_params
         self.num_threads = self.gurobi_params.get('Threads', 1)
         self.model_file = write_model_file
@@ -189,8 +190,8 @@ class ILPSolver:
 
 
 def solve_ilp_gurobi(g: DFGraph, budget: int, seed_s: Optional[np.ndarray] = None, approx: bool = True,
-                     time_limit: Optional[int] = None, write_log_file: Optional[str] = None, print_to_console=True,
-                     write_model_file: Optional[str] = None, eps_noise=0.01, solver_cores=os.cpu_count()):
+                     time_limit: Optional[int] = None, write_log_file: Optional[PathLike] = None, print_to_console=True,
+                     write_model_file: Optional[PathLike] = None, eps_noise=0.01, solver_cores=os.cpu_count()):
     """
     Memory-accurate solver with garbage collection.
     :param g: DFGraph -- graph definition extracted from model
@@ -205,7 +206,7 @@ def solve_ilp_gurobi(g: DFGraph, budget: int, seed_s: Optional[np.ndarray] = Non
     :param solver_cores: int -- if set, use this number of cores for ILP solving
     """
     param_dict = {'LogToConsole': 1 if print_to_console else 0,
-                  'LogFile': write_log_file if write_log_file is not None else "",
+                  'LogFile': str(write_log_file) if write_log_file is not None else "",
                   'Threads': solver_cores,
                   'TimeLimit': math.inf if time_limit is None else time_limit,
                   'OptimalityTol': 1e-2 if approx else 1e-4,
