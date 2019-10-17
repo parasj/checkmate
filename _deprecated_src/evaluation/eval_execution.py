@@ -41,13 +41,12 @@ def get_param(strategy: SolveStrategy, log_base=""):
 
 def evaluate_solved_model(result: RSResult, runner: TF2Runner, warmup, trials, batch_size):
     logger = setup_logger("evaluate_solved_model")
-    
+
     recompute_baseline = runner.tf_graph
 
     logger.debug("Warming up models")
     in_shape = runner.keras_model.input_shape
     out_shape = runner.keras_model.output_shape
-
 
     h = in_shape[1]
     w = in_shape[2]
@@ -55,7 +54,7 @@ def evaluate_solved_model(result: RSResult, runner: TF2Runner, warmup, trials, b
     reshape_to = list(out_shape)
     print(reshape_to)
     reshape_to[0] = -1
-    for data in tqdm([random_batch(batch_size, img_h=h, img_w=w,num_classes=c ) for _ in range(warmup)], desc="Warmup"):
+    for data in tqdm([random_batch(batch_size, img_h=h, img_w=w, num_classes=c) for _ in range(warmup)], desc="Warmup"):
         dat, lab = data
         lab = tf.reshape(lab, reshape_to)
         recompute_baseline(dat, lab)
@@ -68,9 +67,9 @@ def evaluate_solved_model(result: RSResult, runner: TF2Runner, warmup, trials, b
         #       more realistic
 
         images, labels = random_batch(batch_size, img_h=h, img_w=w, num_classes=c)
-        labels =  tf.reshape(labels, reshape_to)
+        labels = tf.reshape(labels, reshape_to)
         with timer:
-            loss , gradients= recompute_baseline(images, labels)
+            loss, gradients = recompute_baseline(images, labels)
 
         # todo assert correctness of the model by applying gradients
 
@@ -81,8 +80,10 @@ def evaluate_solved_model(result: RSResult, runner: TF2Runner, warmup, trials, b
 
 EAGER = False
 
+
 def execute_one(log_base: str, solve_strategy: SolveStrategy, model_name: str, batch_size: int,
-        platform: str, input_shape=None, model_version="v1", num_runs=16, buffer_mem: int=0) -> Tuple[Optional[RSResult], str, int]:
+                platform: str, input_shape=None, model_version="v1", num_runs=16, buffer_mem: int = 0) -> Tuple[
+    Optional[RSResult], str, int]:
     logger = setup_logger("eval_one")
     results_and_keys = get_solutions_to_evaluate(solve_strategy, model_name, batch_size, platform, input_shape,
                                                  model_version, buffer_mem)
@@ -124,7 +125,8 @@ def execute_one(log_base: str, solve_strategy: SolveStrategy, model_name: str, b
 
 
 def get_solutions_to_evaluate(solve_strategy: SolveStrategy, model_name: str, batch_size: int,
-        platform: str, input_shape=None, model_version="v1", buffer_mem: int=0) -> List[Tuple[RSResult, str]]:
+                              platform: str, input_shape=None, model_version="v1", buffer_mem: int = 0) -> List[
+    Tuple[RSResult, str]]:
     """
 
     :param solve_strategy:
@@ -164,7 +166,8 @@ def get_solutions_to_evaluate(solve_strategy: SolveStrategy, model_name: str, ba
             continue
         if result.peak_ram + buffer_mem <= platform_budget:
             within_budget.append((result, key))
-    logger.info(f"Out of {len(results)} solver results, {len(within_budget)} had <= {platform_budget} - {buffer_mem} peak ram")
+    logger.info(
+        f"Out of {len(results)} solver results, {len(within_budget)} had <= {platform_budget} - {buffer_mem} peak ram")
     if not within_budget:
         logger.warn(f"While {len(results)} solutions were found in cache, no solutions are within budget")
         return []
@@ -180,4 +183,3 @@ def get_solutions_to_evaluate(solve_strategy: SolveStrategy, model_name: str, ba
             min_compute = result
     logger.info(f"Using solution with f{min_compute[0].cpu} compute, f{min_compute[0].peak_ram} ram")
     return min_compute
-

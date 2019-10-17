@@ -32,18 +32,3 @@ def test_testnet_optimalilp():
     assert scheduler_result.schedule_aux_data.activation_ram <= sum(g.cost_cpu.values())
     assert scheduler_result.schedule_aux_data.peak_ram <= budget
 
-
-def test_exec_vgg16_optimalilp():
-    try:
-        import gurobipy as _
-    except ImportError as e:
-        logging.exception(e)
-        logging.warning("Continuing with tests, gurobi not installed")
-        return
-    model = get_keras_model("VGG16")
-    g = dfgraph_from_keras(mod=model)
-    scheduler_result = solve_checkpoint_all(g)
-    assert scheduler_result.feasible
-    assert scheduler_result.schedule_aux_data.cpu <= sum(g.cost_cpu.values())
-    assert scheduler_result.schedule_aux_data.activation_ram <= sum(g.cost_cpu.values())
-
