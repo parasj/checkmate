@@ -1,4 +1,4 @@
-# Checkmate: Train huge DNNs on a single GPU
+# Checkmate: Training huge DNNs on a single GPU
 [![Actions Status](https://github.com/parasj/tensor-remat/workflows/Python%20package%20testsuite%20(remat)/badge.svg)](https://github.com/parasj/tensor-remat/actions)
 
 `checkmate` is a package to compute schedules for rematerializing tensors in DFGraphs (tensor dataflow graphs).
