@@ -1,7 +1,7 @@
-# Optimal tensor rematerialization
+# Checkmate: Train huge DNNs on a single GPU
 [![Actions Status](https://github.com/parasj/tensor-remat/workflows/Python%20package%20testsuite%20(remat)/badge.svg)](https://github.com/parasj/tensor-remat/actions)
 
-`remat` is a package to compute schedules for rematerializing tensors in DFGraphs (tensor dataflow graphs).
+`checkmate` is a package to compute schedules for rematerializing tensors in DFGraphs (tensor dataflow graphs).
 
 # Installation
 ```bash
@@ -13,6 +13,7 @@ $  py.test
 
 If you are evaluating on a GPU instance, you can install `tensorflow-gpu` as a dependency in order to enable GPU support.
 
+<!--
 # Project structure
 ```
 .
@@ -26,3 +27,4 @@ If you are evaluating on a GPU instance, you can install `tensorflow-gpu` as a d
 │   └── tensorflow2            Tensorflow 2.0 integration (extraction and execution)
 └── tests
 ```
+-->
