@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
     model_file = str(log_base / f"max_bs_{model_name}.mps")
     param_dict = {'LogToConsole': 1,
-                  'LogFile': str((log_base / f"max_bs_{model_name}.solve.log").resolve()),
+                  'LogFile': str(log_base / f"max_bs_{model_name}.solve.log"),
                   'Threads': os.cpu_count(),
                   'TimeLimit': math.inf}
     ilp_solver = MaxBatchILPSolver(g, budget=platform_memory("p32xlarge") - g.cost_ram_fixed, model_file=model_file,
