@@ -39,7 +39,7 @@ def tensor_plot(g: DFGraph, sched: Schedule, directory, tag=None, format='pdf', 
 def render_dfgraph(g: DFGraph, directory, format='pdf', quiet=True, name=""):
     """Generate Graphviz-formatted edge list for visualization, and write pdf"""
     dot = Digraph("render_dfgraph" + str(name))
-    dot.attr('graph', ratio='compress', size="8.5")  # rankdir='LR',
+    dot.attr('graph', ratio='compress')  # rankdir='LR',
     for u in g.vfwd:
         with dot.subgraph() as s:
             s.attr(rank='same')
