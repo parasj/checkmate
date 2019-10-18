@@ -160,7 +160,7 @@ if __name__ == "__main__":
     key = "_".join(map(str, [args.platform, args.model_name, args.batch_size, args.input_shape]))
     log_base = remat_data_dir() / "budget_sweep" / key
     shutil.rmtree(log_base, ignore_errors=True)
-    pathlib.Path(log_base).mkdir(parents=True)
+    pathlib.Path(log_base).mkdir(parents=True, exist_ok=True)
 
     ####
     # Begin budget_sweep data collection
@@ -227,7 +227,7 @@ if __name__ == "__main__":
     # sweep optimal ilp baseline
     if not args.skip_ilp:
         ilp_log_base = log_base / "ilp_log"
-        ilp_log_base.mkdir(parents=True)
+        ilp_log_base.mkdir(parents=True, exist_ok=True)
         # todo load any ILP results from cache
         remote_ilp = ray.remote(num_cpus=NUM_ILP_CORES)(solve_ilp_gurobi).remote
         if len(args.ilp_eval_points) > 0:

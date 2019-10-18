@@ -30,7 +30,6 @@ def tensor_plot(g: DFGraph, sched: Schedule, directory, tag=None, format='pdf', 
             for dep_op, dep_reg in op.arg_regs.items():
                 dot.edge("reg{}".format(dep_reg), "reg{}".format(op.out_register),
                          style="dashed", label=str(g.args[op.id].index(dep_op)))
-
     try:
         dot.render(directory=directory, format=format, quiet=quiet)
     except TypeError:
@@ -40,7 +39,7 @@ def tensor_plot(g: DFGraph, sched: Schedule, directory, tag=None, format='pdf', 
 def render_dfgraph(g: DFGraph, directory, format='pdf', quiet=True, name=""):
     """Generate Graphviz-formatted edge list for visualization, and write pdf"""
     dot = Digraph("render_dfgraph" + str(name))
-    dot.attr('graph', rankdir='LR')
+    dot.attr('graph', ratio='compress', size="8.5")  # rankdir='LR',
     for u in g.vfwd:
         with dot.subgraph() as s:
             s.attr(rank='same')

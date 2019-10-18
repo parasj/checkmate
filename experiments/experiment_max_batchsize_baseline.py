@@ -51,7 +51,7 @@ if __name__ == "__main__":
     key = "_".join(map(str, [args.platform, args.model_name, args.input_shape]))
     log_base = remat_data_dir() / "max_batch_size" / key
     shutil.rmtree(log_base, ignore_errors=True)
-    pathlib.Path(log_base).mkdir(parents=True)
+    pathlib.Path(log_base).mkdir(parents=True, exist_ok=True)
     result_dict: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]] = defaultdict(lambda: defaultdict(list))
     model_name = args.model_name
 
