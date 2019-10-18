@@ -9,7 +9,7 @@ import pickle
 import dotenv
 
 from remat.core.enum_strategy import SolveStrategy
-from experiments.common.keras_models import MODEL_NAMES
+from experiments.common.load_keras_model import MODEL_NAMES
 from evaluation.eval_execution import execute_one
 from utils.setup_logger import setup_logger
 

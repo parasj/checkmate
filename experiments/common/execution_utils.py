@@ -8,9 +8,3 @@ def random_batch(batch_size, data_format="channels_last", num_classes=1000, img_
     labels = tf.keras.backend.random_uniform([batch_size], minval=0, maxval=num_classes, dtype=tf.int32)
     one_hot = tf.one_hot(labels, num_classes)
     return images, one_hot
-
-
-def categorical_cross_entropy(pred_logits, labels, model_losses=[]):
-    loss = tf.keras.losses.categorical_crossentropy(labels, pred_logits, from_logits=True)
-    loss += 0 if not model_losses else tf.add_n(model_losses)  # regularization
-    return loss

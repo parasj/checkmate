@@ -13,8 +13,9 @@ from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from experiments.common.definitions import remat_data_dir
 from experiments.common.profile.cost_model import CostModel
-from experiments.common.keras_models import MODEL_NAMES, get_keras_model, CHAIN_GRAPH_MODELS
+from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model, CHAIN_GRAPH_MODELS
 from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory, pretty_platform_name
 from experiments.common.graph_plotting import render_dfgraph
 from experiments.common.ray_utils import get_futures
@@ -157,9 +158,9 @@ if __name__ == "__main__":
              object_store_memory=1024 * 1024 * 1024 if os.cpu_count() < 48 else None)
 
     key = "_".join(map(str, [args.platform, args.model_name, args.batch_size, args.input_shape]))
-    log_base = os.path.join("data", "budget_sweep", key)
+    log_base = remat_data_dir() / "budget_sweep" / key
     shutil.rmtree(log_base, ignore_errors=True)
-    pathlib.Path(log_base).mkdir(parents=True)
+    pathlib.Path(log_base).mkdir(parents=True, exist_ok=True)
 
     ####
     # Begin budget_sweep data collection
@@ -189,10 +190,9 @@ if __name__ == "__main__":
     g = dfgraph_from_keras(model, batch_size=args.batch_size, cost_model=cost_model,
                            loss_cpu_cost=0, loss_ram_cost=(4 * args.batch_size))
     tf.keras.utils.plot_model(model,
-        to_file=os.path.join(log_base, f"plot_{model_name}_keras.png"),
-        show_shapes=True,
-        show_layer_names=True,
-    )
+                              to_file=log_base / f"plot_{model_name}_keras.png",
+                              show_shapes=True,
+                              show_layer_names=True)
     render_dfgraph(g, log_base, name=model_name)
 
     # sweep constant baselines
@@ -226,8 +226,8 @@ if __name__ == "__main__":
 
     # sweep optimal ilp baseline
     if not args.skip_ilp:
-        ilp_log_base = os.path.join(log_base, "ilp_log")
-        pathlib.Path(ilp_log_base).mkdir(parents=True)
+        ilp_log_base = log_base / "ilp_log"
+        ilp_log_base.mkdir(parents=True, exist_ok=True)
         # todo load any ILP results from cache
         remote_ilp = ray.remote(num_cpus=NUM_ILP_CORES)(solve_ilp_gurobi).remote
         if len(args.ilp_eval_points) > 0:
@@ -241,8 +241,8 @@ if __name__ == "__main__":
                 seed_result = get_closest_budget_result(result_dict, b)
                 seed_s = seed_result.schedule_aux_data.S if seed_result is not None else None
                 future = remote_ilp(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES, seed_s=seed_s,
-                                    write_log_file=os.path.join(ilp_log_base, f"ilp_{b}.log"), print_to_console=False,
-                                    write_model_file=os.path.join(ilp_log_base, f"ilp_{b}.lp") if args.debug else None,
+                                    write_log_file=ilp_log_base / f"ilp_{b}.log", print_to_console=False,
+                                    write_model_file=ilp_log_base / f"ilp_{b}.lp" if args.debug else None,
                                     eps_noise=0 if args.exact_ilp_solve else 0.01, approx=args.exact_ilp_solve)
                 futures.append(future)
             result_dict[SolveStrategy.OPTIMAL_ILP_GC] = get_futures(futures, desc="Global optimal ILP sweep")
@@ -263,8 +263,8 @@ if __name__ == "__main__":
             seed_result = get_closest_budget_result(result_dict, b)
             seed_s = seed_result.schedule_aux_data.S if seed_result is not None else None
             future = remote_ilp(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES, seed_s=seed_s,
-                                write_log_file=os.path.join(ilp_log_base, f"ilp_{b}.log"), print_to_console=False,
-                                write_model_file=os.path.join(ilp_log_base, f"ilp_{b}.lp") if args.debug else None,
+                                write_log_file=ilp_log_base / f"ilp_{b}.log", print_to_console=False,
+                                write_model_file=ilp_log_base / f"ilp_{b}.lp" if args.debug else None,
                                 eps_noise=0 if args.exact_ilp_solve else 0.01, approx=args.exact_ilp_solve)
             futures.append(future)
         result_dict[SolveStrategy.OPTIMAL_ILP_GC].extend(get_futures(futures, desc="Local optimal ILP sweep"))
@@ -354,7 +354,7 @@ if __name__ == "__main__":
     ax.legend(handles=legend_elements, loc='upper center', bbox_to_anchor=(0.5, -0.2),
               fancybox=False, shadow=False, ncol=2)
 
-    fig.savefig(os.path.join(log_base, f"plot_budget_sweep_{model_name}_{args.platform}_b{args.batch_size}.pdf"),
+    fig.savefig(log_base / f"plot_budget_sweep_{model_name}_{args.platform}_b{args.batch_size}.pdf",
                 format='pdf', bbox_inches='tight')
-    fig.savefig(os.path.join(log_base, f"plot_budget_sweep_{model_name}_{args.platform}_b{args.batch_size}.png"),
+    fig.savefig(log_base / f"plot_budget_sweep_{model_name}_{args.platform}_b{args.batch_size}.png",
                 bbox_inches='tight', dpi=300)

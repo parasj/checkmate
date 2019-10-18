@@ -1,4 +1,4 @@
-from experiments.common.keras_models import MODEL_NAMES, get_keras_model
+from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model
 
 # MODEL_NAMES = ['VGG16', 'VGG19', 'MobileNet', 'fcn_8', 'pspnet', 'vgg_unet', 'unet', 'segnet', 'resnet50_segnet']
 

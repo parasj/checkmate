@@ -5,21 +5,22 @@ from typing import Optional
 import tensorflow as tf
 
 from experiments.common.profile.cost_model import CostModel
-from remat.tensorflow2.extraction_hooks import op_hook, MEMORY_MULTIPLIER
 from remat.core import dfgraph
+from remat.tensorflow2.extraction_hooks import op_hook, MEMORY_MULTIPLIER
 
 try:
     from tensorflow.python.keras.utils.layer_utils import count_params  # TF r2.0
 except ImportError as e:
+    # noinspection PyUnresolvedReferences
     from tensorflow.keras.backend import count_params  # TF r1.14
 
 
-def dfgraph_from_keras(mod: tf.keras.models.Model, include_prev_node=True, batch_size=1, loss_cpu_cost=0,
-                       loss_ram_cost=4, cost_model: Optional[CostModel] = None):
+def dfgraph_from_keras(mod: tf.keras.models.Model, next_outputs_deps=False, batch_size=1,
+                       loss_cpu_cost=0, loss_ram_cost=4, cost_model: Optional[CostModel] = None):
     """
     Given a Keras model, this method extracts a graph to be utilized by the solver
     :param mod: tf.keras.models.Model -- A Keras model
-    :param include_prev_node: bool -- If true, insert nodes from y to dy/dx (required by some autodiff engines)
+    :param next_outputs_deps: bool -- graph dependency on outputs of nodes that consume this node
     :param batch_size: int -- batch size for generated model
     :param loss_cpu_cost: int -- CPU cost to evaluate loss node
     :param loss_ram_cost: int -- RAM cost to store loss node output
@@ -45,7 +46,7 @@ def dfgraph_from_keras(mod: tf.keras.models.Model, include_prev_node=True, batch
         for inbound_position, inbound_node in enumerate(filter(lambda x: x != -1, inbound_idx)):
             dep_list_fwd[layer_idx].append(inbound_node)
             dep_list_bwd[fwd_to_bwd(inbound_node)].append(fwd_to_bwd(layer_idx))
-            if include_prev_node:  # hopefully not needed: this is using y to compute dy/dx
+            if next_outputs_deps:
                 dep_list_fwd[fwd_to_bwd(inbound_node)].append(layer_idx)
         if layer_idx == loss_node_idx - 1:  # inject loss node assuming we are at output node
             dep_list_fwd[loss_node_idx].append(layer_idx)
@@ -94,14 +95,14 @@ def dfgraph_from_keras(mod: tf.keras.models.Model, include_prev_node=True, batch
 
 
 # noinspection PyProtectedMember
-def count_params_keras(model: tf.keras.models.Model):
-    model._check_trainable_weights_consistency()
-    if hasattr(model, '_collected_trainable_weights'):
-        trainable_count = count_params(model._collected_trainable_weights)
-    elif hasattr(model, '_unique_trainable_weights'):
-        trainable_count = count_params(model._unique_trainable_weights)  # TF r2.0
+def count_params_keras(mod: tf.keras.models.Model):
+    mod._check_trainable_weights_consistency()
+    if hasattr(mod, '_collected_trainable_weights'):
+        trainable_count = count_params(mod._collected_trainable_weights)
+    elif hasattr(mod, '_unique_trainable_weights'):
+        trainable_count = count_params(mod._unique_trainable_weights)  # TF r2.0
     else:
-        trainable_count = count_params(model.trainable_weights)  # TF r1.14
+        trainable_count = count_params(mod.trainable_weights)  # TF r1.14
 
-    non_trainable_count = count_params(model.non_trainable_weights)
+    non_trainable_count = count_params(mod.non_trainable_weights)
     return trainable_count, non_trainable_count

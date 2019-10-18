@@ -70,7 +70,7 @@ class ScheduleBuilder:
 
 def schedule_from_rs(g: DFGraph, r: np.ndarray, s: np.ndarray) -> Tuple[Optional[Schedule], Optional[SchedulerAuxData]]:
     if r is None or s is None:
-        return (None, None)  # infeasible
+        return None, None  # infeasible
     T = g.size
 
     def _used_after(t_, u_, i_):

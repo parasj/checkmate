@@ -68,15 +68,15 @@ def _solve_griewank_to_rs(g: DFGraph, budget: int):
 
 def _load_griewank(graph_size: int) -> pd.DataFrame:
     fname = f'{graph_size}.pkl.gz'
-    local_path_base = os.path.join('/tmp', 'remat_cache', 'griewank_solutions')
-    local_path = os.path.join(local_path_base, fname)
+    local_path_base = pathlib.Path('/tmp') / 'remat_cache' / 'griewank_solutions'
+    local_path = local_path_base / fname
     remote_path = f"https://optimalcheckpointing.s3.amazonaws.com/griewank_solutions/pickle/{fname}"
-    if os.path.exists(local_path):
+    if local_path.exists():
         try:
             return pd.read_pickle(local_path)
         except Exception as e:
             logging.exception(e)
             logging.warning("Error loading cached griewank solution, corrupt file? Reloading from S3")
-    pathlib.Path(local_path_base).mkdir(parents=True, exist_ok=True)
+    local_path_base.mkdir(parents=True, exist_ok=True)
     urllib.request.urlretrieve(remote_path, local_path)
     return pd.read_pickle(local_path)
