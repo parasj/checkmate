@@ -3,9 +3,11 @@ import logging
 import tensorflow as tf
 from tensorflow.keras import layers
 
+from tensorflow.python.ops import gradients_util as tfg
+
+tf.compat.v1.disable_eager_execution()
 logging.basicConfig(level=logging.DEBUG)
 
-# tf.compat.v1.disable_eager_execution()
 
 
 class Linear(layers.Layer):
@@ -40,26 +42,26 @@ class MLPBlock(layers.Layer):
 
 def main():
     mlp = MLPBlock()
-    x = tf.ones(shape=(3, 64))
-    with tf.GradientTape(persistent=True) as tape:
-        tape.watch(x)
-        y = mlp(x)
-        loss = tf.reduce_mean(y)
-    logging.debug(f'x: {x}')
-    logging.debug(f'y: {y}')
+    x = tf.ones(shape=(3, 64), name="x")
+    y = mlp(x)
+    loss = tf.reduce_mean(y, name="loss")
     logging.debug(f'loss: {loss}')
-    logging.debug(f'weights: {len(mlp.weights)}')
-    logging.debug(f'trainable weights: {len(mlp.trainable_weights)}')
 
-    @tf.function
-    def grad(ys, xs):
-        return tape.gradient(ys, xs)
+    dldy = tf.compat.v2.gradients(loss, y, name="dldy")
+    dldtheta = tf.compat.v2.gradients(y, mlp.trainable_variables, dldy, name="dldtheta")
+    print(dldtheta)
 
-    # first backprop loss to last activation
-    logging.debug(f'dldy ref: {tape.gradient(loss, mlp.trainable_weights[0])}')
-    logging.debug(f'dldy: {grad(loss, mlp.trainable_weights[0])}')
-    logging.debug(f'dldy: {grad(loss, mlp.trainable_weights[0])}')
+    # del loss
+    # loss = tf.reduce_mean(mlp(x))
+    # dldtheta = tf.gradients
+    # out_g = dldtheta(loss, mlp.trainable_weights[0])
 
+    import tfgraphviz
+    g = tfgraphviz.board(tf.compat.v1.get_default_graph())
+    g.view()
+
+    # with tf.compat.v1.Session() as sess:
+    #     sess.run(out_g)
 
 if __name__ == "__main__":
     main()
