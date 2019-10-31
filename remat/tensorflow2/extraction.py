@@ -15,7 +15,7 @@ except ImportError as e:
     from tensorflow.keras.backend import count_params  # TF r1.14
 
 
-def dfgraph_from_keras(mod: tf.keras.models.Model, next_outputs_deps=False, batch_size=1,
+def dfgraph_from_keras(mod: tf.keras.models.Model, input_dep=True, output_dep=False, next_outputs_deps=False, batch_size=1,
                        loss_cpu_cost=0, loss_ram_cost=4, cost_model: Optional[CostModel] = None):
     """
     Given a Keras model, this method extracts a graph to be utilized by the solver
@@ -43,15 +43,19 @@ def dfgraph_from_keras(mod: tf.keras.models.Model, next_outputs_deps=False, batc
         name_to_idx[layer.name] = layer_idx
         inbound_idx = [name_to_idx[t[0].name] for node in layer._inbound_nodes for t in node.iterate_inbound() if
                        node in relevant_nodes]
+        print(layer.name, [key for key, value in name_to_idx.items() if value in inbound_idx])
         for inbound_position, inbound_node in enumerate(filter(lambda x: x != -1, inbound_idx)):
-            dep_list_fwd[layer_idx].append(inbound_node)
-            dep_list_bwd[fwd_to_bwd(inbound_node)].append(fwd_to_bwd(layer_idx))
-            if next_outputs_deps:
+            dep_list_fwd[layer_idx].append(inbound_node)  # forward dependency
+            dep_list_bwd[fwd_to_bwd(inbound_node)].append(fwd_to_bwd(layer_idx))  # connect grad node to previous backward node
+            if next_outputs_deps:  # connect output of node to the inbound node's gradient node
                 dep_list_fwd[fwd_to_bwd(inbound_node)].append(layer_idx)
+            if input_dep:
+                dep_list_fwd[fwd_to_bwd(layer_idx)].append(inbound_node)
         if layer_idx == loss_node_idx - 1:  # inject loss node assuming we are at output node
             dep_list_fwd[loss_node_idx].append(layer_idx)
             dep_list_fwd[fwd_to_bwd(layer_idx)].append(loss_node_idx)
-        dep_list_fwd[fwd_to_bwd(layer_idx)].append(layer_idx)
+        if output_dep:  # connect output of node to corresponding backwards node
+            dep_list_fwd[fwd_to_bwd(layer_idx)].append(layer_idx)
     args = {i: dep_list_fwd[i] + dep_list_bwd[i] for i in set(dep_list_fwd.keys()).union(set(dep_list_bwd.keys()))}
 
     # Get per-node compute costs and activation memory usages
