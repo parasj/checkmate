@@ -3,7 +3,8 @@ import logging
 import tensorflow as tf
 from tensorflow.keras import layers
 
-from tensorflow.python.ops import gradients_util as tfg
+#from tensorflow.python.ops import gradients_util as tfg
+from remat.remat.core.schedule import OperaterEvaluation, AllocateRegister, DeallocateRegister, Schedule
 
 #tf.compat.v1.disable_eager_execution()
 logging.basicConfig(level=logging.DEBUG)
@@ -37,8 +38,8 @@ class MLPBlock(layers.Layer):
     def call(self, inputs):
         x = self.linear_1(inputs)
         z = tf.nn.relu(x)
-        y = tf.matmul(z,x)
-        y = tf.reduce_mean(y)
+        #y = tf.matmul(z,x)
+        y = tf.reduce_mean(z)
         return y  #loss
 @tf.function
 def get_grads(f, inputs, tvars):
@@ -62,9 +63,8 @@ for op in op_list:
     in_id = op_dict[op]
     adj_list[in_id] = []
     for out in op.outputs:
-        adj_list[in_id].append(op_dict[out])
+        adj_list[in_id].append(op_dict[out.op])
 
 #schedule
-
 
 
