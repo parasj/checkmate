@@ -1,8 +1,8 @@
-name: Python package testsuite (remat)
+name: Python package testsuite (checkmate)
 on: [push]
 jobs:
   build:
-    name: Test remat package on py${{ matrix.python-version }}, ${{ matrix.os }}
+    name: Test checkmate package on py${{ matrix.python-version }}, ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       max-parallel: 4
