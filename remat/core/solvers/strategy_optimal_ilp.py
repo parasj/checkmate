@@ -194,7 +194,7 @@ class ILPSolver:
         return Rout, Sout, Uout, Free_Eout
 
 
-def solve_ilp_gurobi(g: DFGraph, budget: int, seed_s: Optional[np.ndarray] = None, approx = True, integral = True,
+def solve_ilp_gurobi(g: DFGraph, budget: int, seed_s: Optional[np.ndarray] = None, approx=True,
                      time_limit: Optional[int] = None, write_log_file: Optional[PathLike] = None, print_to_console=True,
                      write_model_file: Optional[PathLike] = None, eps_noise=0.01, solver_cores=os.cpu_count()):
     """
@@ -203,7 +203,6 @@ def solve_ilp_gurobi(g: DFGraph, budget: int, seed_s: Optional[np.ndarray] = Non
     :param budget: int -- budget constraint for solving
     :param seed_s: np.ndarray -- optional parameter to set warm-start for solver, defaults to empty S
     :param approx: bool -- set true to return as soon as a solution is found that is within 1% of optimal
-    :param integral: bool -- solution must be integral (False = LP relaxation)
     :param time_limit: int -- time limit for solving in seconds
     :param write_log_file: if set, log gurobi to this file
     :param print_to_console: if set, print gurobi logs to the console
@@ -219,7 +218,7 @@ def solve_ilp_gurobi(g: DFGraph, budget: int, seed_s: Optional[np.ndarray] = Non
                   'IntFeasTol': 1e-3 if approx else 1e-5,
                   'Presolve': 2,
                   'StartNodeLimit': 10000000}
-    ilpsolver = ILPSolver(g, budget, gurobi_params=param_dict, seed_s=seed_s, integral=integral,
+    ilpsolver = ILPSolver(g, budget, gurobi_params=param_dict, seed_s=seed_s,
                           eps_noise=eps_noise, write_model_file=write_model_file)
     ilpsolver.build_model()
     try:
@@ -231,7 +230,7 @@ def solve_ilp_gurobi(g: DFGraph, budget: int, seed_s: Optional[np.ndarray] = Non
         ilp_feasible = False
     ilp_aux_data = ILPAuxData(U=u, Free_E=free_e, ilp_approx=approx, ilp_time_limit=time_limit, ilp_eps_noise=eps_noise,
                               ilp_num_constraints=ilpsolver.m.numConstrs, ilp_num_variables=ilpsolver.m.numVars)
-    schedule, aux_data = schedule_from_rs(g, r, s) if integral else (None, SchedulerAuxData(r, s, 0, 0, 0, None, None, None))
+    schedule, aux_data = schedule_from_rs(g, r, s)
     return ScheduledResult(
         solve_strategy=SolveStrategy.OPTIMAL_ILP_GC,
         solver_budget=budget,
