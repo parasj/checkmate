@@ -33,7 +33,7 @@ class ScheduleBuilder:
                 print("WARNING! Double allocating output register for op #{}, skipping allocation to reuse reg #{}"
                       .format(op_id, self.live_registers[op_id]))
             return self.live_registers[op_id]
-        reg = AllocateRegister(self.next_free_register_id, op_id, self.g.cost_ram[op_id])
+        reg = AllocateRegister(self.next_free_register_id, self.g.cost_ram[op_id])
         self.live_registers[op_id] = reg.register_id
         self.schedule.append(reg)
         self.next_free_register_id += 1
@@ -61,7 +61,7 @@ class ScheduleBuilder:
         if op_id not in self.live_registers.keys():
             print("WARNING! Double free output register for op #{}".format(op_id))
         reg_id = self.live_registers.pop(op_id)
-        self.schedule.append(DeallocateRegister(op_id, reg_id))
+        self.schedule.append(DeallocateRegister(reg_id))
         self.ram_timeline.append(self.current_mem())
 
     def current_mem(self):

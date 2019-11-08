@@ -5,25 +5,25 @@ import numpy as np
 
 from remat.core.enum_strategy import SolveStrategy, ImposedSchedule
 
+RegisterID = int
+
 
 class OperatorEvaluation(NamedTuple):
     id: int
-    arg_regs: Dict[int, int]
-    out_register: int
+    arg_regs: Dict[int, RegisterID]  # map from layer id to register IDX
+    out_register: RegisterID
     operator_cost: int
     is_backwards: bool = False
     update_aux_vars: bool = True  # will be true if this is the last time this node is evaluated
 
 
 class AllocateRegister(NamedTuple):
-    register_id: int
-    for_operation_id: int
-    register_size: int
+    register_id: RegisterID
+    register_size_bytes: int
 
 
 class DeallocateRegister(NamedTuple):
-    op_id: int
-    register_id: int
+    register_id: RegisterID
 
 
 Schedule = List[Union[OperatorEvaluation, AllocateRegister, DeallocateRegister]]

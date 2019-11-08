@@ -32,7 +32,7 @@ class DFGraph:
         self.vloss = vloss
         self.node_names = node_names if node_names is not None else {}
         if self.vloss not in self.node_names:
-            self.node_names[self.vloss] = "Loss"
+            self.node_names[self.vloss] = "LossGrad"
         self.size_fwd = len(self.vfwd)
         self.edge_list_fwd = self.induce_subgraph(self.vfwd)
         self.cost_cpu = cost_cpu if cost_cpu else {v: 1 for v in set(self.v + [self.vloss])}

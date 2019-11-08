@@ -15,12 +15,16 @@ except ImportError as e:
     from tensorflow.keras.backend import count_params  # TF r1.14
 
 
-def dfgraph_from_keras(mod: tf.keras.models.Model, input_dep=False, output_dep=True, next_outputs_deps=True,
+def dfgraph_from_keras(mod: tf.keras.models.Model, input_dep=False, output_dep=False, next_outputs_deps=False, users_deps=True,
                        batch_size=1, loss_cpu_cost=0, loss_ram_cost=4, cost_model: Optional[CostModel] = None):
     """
     Given a Keras model, this method extracts a graph to be utilized by the solver
     :param mod: tf.keras.models.Model -- A Keras model
+    :param input_dep: bool -- graph dep on fwd node's inputs
+    :param output_dep: bool -- graph dep on fwd node's output
     :param next_outputs_deps: bool -- graph dependency on outputs of nodes that consume this node
+    :param users_deps:  bool -- graph dependency on the dependencies of nodes that consume this node,
+                                to enable always-rematerializing nodes
     :param batch_size: int -- batch size for generated model
     :param loss_cpu_cost: int -- CPU cost to evaluate loss node
     :param loss_ram_cost: int -- RAM cost to store loss node output
@@ -49,6 +53,8 @@ def dfgraph_from_keras(mod: tf.keras.models.Model, input_dep=False, output_dep=T
             dep_list_bwd[fwd_to_bwd(inbound_node)].append(fwd_to_bwd(layer_idx))  # connect grad node to previous backward node
             if next_outputs_deps:  # connect output of node to the inbound node's gradient node
                 dep_list_fwd[fwd_to_bwd(inbound_node)].append(layer_idx)
+            # if users_deps:
+                
             if input_dep:
                 dep_list_fwd[fwd_to_bwd(layer_idx)].append(inbound_node)
         if layer_idx == loss_node_idx - 1:  # inject loss node assuming we are at output node
