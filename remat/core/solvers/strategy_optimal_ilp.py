@@ -20,6 +20,7 @@ from remat.core.utils.timer import Timer
 class ILPSolver:
     def __init__(self, g: DFGraph, budget: int, eps_noise=None, seed_s=None, integral=True,
                  write_model_file: Optional[PathLike] = None, gurobi_params: Dict[str, Any] = None):
+        self.GRB_CONSTRAINED_PRESOLVE_TIME_LIMIT = 300  # todo (paras): read this from gurobi_params
         self.gurobi_params = gurobi_params
         self.num_threads = self.gurobi_params.get('Threads', 1)
         self.model_file = write_model_file
@@ -141,13 +142,12 @@ class ILPSolver:
         T = self.g.size
         with Timer('Gurobi model optimization', extra_data={'T': str(T), 'budget': str(self.budget)}):
             if self.seed_s is not None:
-                self.m.Params.TimeLimit = 300
+                self.m.Params.TimeLimit = self.GRB_CONSTRAINED_PRESOLVE_TIME_LIMIT
                 self.m.optimize()
                 if self.m.status == GRB.INFEASIBLE:
                     print(f"Infeasible ILP seed at budget {self.budget:.2E}")
                 self.m.remove(self.init_constraints)
-            self.m.Params.TimeLimit = self.gurobi_params.get('TimeLimit',
-                                                             3600)  # todo remove this check, and default to np.inf
+            self.m.Params.TimeLimit = self.gurobi_params.get('TimeLimit', 0)
             self.m.message("\n\nRestarting solve\n\n")
             with Timer("ILPSolve") as solve_ilp:
                 self.m.optimize()
@@ -164,18 +164,19 @@ class ILPSolver:
         Sout = np.zeros((T, T), dtype=remat.core.utils.solver_common.SOLVER_DTYPE if self.integral else np.float)
         Uout = np.zeros((T, T), dtype=remat.core.utils.solver_common.SOLVER_DTYPE if self.integral else np.float)
         Free_Eout = np.zeros((T, len(self.g.edge_list)), dtype=remat.core.utils.solver_common.SOLVER_DTYPE)
+        solver_dtype_cast = int if self.integral else float
         try:
             for t in range(T):
                 for i in range(T):
                     try:
-                        Rout[t][i] = float(self.R[t, i].X)
+                        Rout[t][i] = solver_dtype_cast(self.R[t, i].X)
                     except (AttributeError, TypeError) as e:
-                        Rout[t][i] = float(self.R[t, i])
+                        Rout[t][i] = solver_dtype_cast(self.R[t, i])
 
                     try:
-                        Sout[t][i] = float(self.S[t, i])
+                        Sout[t][i] = solver_dtype_cast(self.S[t, i])
                     except (AttributeError, TypeError) as e:
-                        Sout[t][i] = float(self.S[t, i].X)
+                        Sout[t][i] = solver_dtype_cast(self.S[t, i].X)
 
                     try:
                         Uout[t][i] = self.U[t, i].X * self.ram_gcd
@@ -183,9 +184,9 @@ class ILPSolver:
                         Uout[t][i] = self.U[t, i] * self.ram_gcd
                 for e in range(len(self.g.edge_list)):
                     try:
-                        Free_Eout[t][e] = float(self.Free_E[t, e].X)
+                        Free_Eout[t][e] = solver_dtype_cast(self.Free_E[t, e].X)
                     except (AttributeError, TypeError) as e:
-                        Free_Eout[t][e] = float(self.Free_E[t, e])
+                        Free_Eout[t][e] = solver_dtype_cast(self.Free_E[t, e])
         except AttributeError as e:
             logging.exception(e)
             return None, None, None, None
