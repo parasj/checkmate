@@ -138,8 +138,5 @@ def execute(fxn, op_list, op_dict, schedule, samp_inputs):
                 for j, inp in enumerate(new_op.inputs):
                     if can_replace(inp, arg):
                         new_op._update_input(j, arg)
-                    else:
             registers[inst.out_register] = new_op.outputs[0]
-    
-
 
