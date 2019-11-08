@@ -33,7 +33,7 @@ def solve_chen_greedy(g: DFGraph, segment_mem_B: int, use_actuation_points: bool
     )
 
 
-def solve_chen_sqrtn(g: DFGraph, use_actuation_points: bool):
+def solve_chen_sqrtn(g: DFGraph, use_actuation_points: bool) -> ScheduledResult:
     with Timer('solve_chen_sqrtn') as timer_solve:
         C = g.checkpoint_set if use_actuation_points else g.checkpoint_set_all
         k = int(math.sqrt(len(C)))
