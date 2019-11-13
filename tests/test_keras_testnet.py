@@ -22,6 +22,7 @@ def test_testnet_optimalilp():
         logging.warning("Continuing with tests, gurobi not installed")
         return
     from remat.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
+
     model = get_keras_model("test")
     g = dfgraph_from_keras(mod=model)
     assert g.size_fwd == 6
@@ -31,4 +32,3 @@ def test_testnet_optimalilp():
     assert scheduler_result.schedule_aux_data.cpu <= sum(g.cost_cpu.values())
     assert scheduler_result.schedule_aux_data.activation_ram <= sum(g.cost_cpu.values())
     assert scheduler_result.schedule_aux_data.peak_ram <= budget
-
