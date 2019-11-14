@@ -1,9 +1,7 @@
 import logging
-import os
 import pathlib
 import shutil
 import urllib.request
-from functools import lru_cache
 
 import numpy as np
 import pandas as pd
@@ -66,7 +64,6 @@ def _solve_griewank_to_rs(g: DFGraph, budget: int):
     return R, S
 
 
-@lru_cache(16)
 def _load_griewank(graph_size: int) -> pd.DataFrame:
     fname = f'{graph_size}.pkl.gz'
     local_path_base = pathlib.Path('/tmp') / 'remat_cache' / 'griewank_solutions'
