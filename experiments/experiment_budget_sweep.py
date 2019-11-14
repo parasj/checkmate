@@ -385,4 +385,5 @@ if __name__ == "__main__":
                 bbox_inches='tight', dpi=300)
 
     # export list of budget, CPU tuples for each strategy
-    pickle.dump(export_prefix_min, (log_base / f"export_prefix_min_data.pickle").open('wb'), protocol=pickle.HIGHEST_PROTOCOL)
+    pickle.dump(export_prefix_min, (log_base / f"export_prefix_min_data.pickle").open('wb'),
+                protocol=pickle.HIGHEST_PROTOCOL)
