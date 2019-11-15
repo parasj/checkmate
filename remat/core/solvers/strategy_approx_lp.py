@@ -79,3 +79,74 @@ def solve_approx_lp_deterministic(
             approx_deterministic_round_threshold=min_threshold,
         ),
     )
+
+
+def solve_approx_lp_deterministic_rand_threshold(
+        g: DFGraph,
+        budget: int,
+        seed_s: Optional[np.ndarray] = None,
+        approx=True,
+        time_limit: Optional[int] = None,
+        write_log_file: Optional[PathLike] = None,
+        print_to_console=True,
+        write_model_file: Optional[PathLike] = None,
+        eps_noise=0.01,
+        solver_cores=os.cpu_count(),
+):
+    param_dict = {
+        "LogToConsole": 1 if print_to_console else 0,
+        "LogFile": str(write_log_file) if write_log_file is not None else "",
+        "Threads": solver_cores,
+        "TimeLimit": math.inf if time_limit is None else time_limit,
+        "OptimalityTol": 1e-2 if approx else 1e-4,
+        "IntFeasTol": 1e-3 if approx else 1e-5,
+        "Presolve": 2,
+        "StartNodeLimit": 10000000,
+    }
+    lpsolver = ILPSolver(
+        g,
+        int(0.9 * budget),  # hack to get values under the budget
+        gurobi_params=param_dict,
+        seed_s=seed_s,
+        integral=False,
+        eps_noise=eps_noise,
+        write_model_file=write_model_file,
+    )
+    lpsolver.build_model()
+    try:
+        r, s, u, free_e = lpsolver.solve()
+        lp_feasible = True
+    except ValueError as e:
+        logging.exception(e)
+        r, s, u, free_e = (None, None, None, None)
+        lp_feasible = False
+    schedule, aux_data, min_threshold = None, None, None
+    if lp_feasible:  # round the solution
+        for i in range(10):
+            threshold = np.random.normal(0.5, 0.5)
+            threshold = min(1.0, max(0.0, threshold))
+            s_ = (s >= threshold).astype(np.int)
+            r_ = solve_r_opt(g, s_)
+            schedule_, aux_data_ = schedule_from_rs(g, r_, s_)
+            if aux_data_.activation_ram <= budget and (aux_data is None or aux_data_.cpu <= aux_data.cpu):
+                aux_data = aux_data_
+                schedule = schedule_
+                min_threshold = threshold
+    return ScheduledResult(
+        solve_strategy=SolveStrategy.APPROX_DETERMINISTIC_ROUND_LP,
+        solver_budget=budget,
+        feasible=lp_feasible,
+        schedule=schedule,
+        schedule_aux_data=aux_data,
+        solve_time_s=lpsolver.solve_time,
+        ilp_aux_data=ILPAuxData(
+            U=u,
+            Free_E=free_e,
+            ilp_approx=approx,
+            ilp_time_limit=time_limit,
+            ilp_eps_noise=eps_noise,
+            ilp_num_constraints=lpsolver.m.numConstrs,
+            ilp_num_variables=lpsolver.m.numVars,
+            approx_deterministic_round_threshold=min_threshold,
+        ),
+    )
