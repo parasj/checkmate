@@ -392,23 +392,24 @@ if __name__ == "__main__":
     pickle.dump(export_prefix_min, (log_base / f"export_prefix_min_data.pickle").open('wb'),
                 protocol=pickle.HIGHEST_PROTOCOL)
 
-    optimal_ilp_budgets = [x[0] for x in export_prefix_min['OPTIMAL_ILP_GC']]
-    optimal_ilp_cpu = [x[1] for x in export_prefix_min['OPTIMAL_ILP_GC']]
+    if not args.skip_ilp:
+        optimal_ilp_budgets = [x[0] for x in export_prefix_min['OPTIMAL_ILP_GC']]
+        optimal_ilp_cpu = [x[1] for x in export_prefix_min['OPTIMAL_ILP_GC']]
 
-    slowdowns = defaultdict(list)
-    for key in [x for x in export_prefix_min.keys() if x != 'OPTIMAL_ILP_GC']:
-        for budget, optimal_cpu in export_prefix_min['OPTIMAL_ILP_GC']:
-            filtered_budgets = [x for x in export_prefix_min[key] if x[0] <= budget]
-            if len(filtered_budgets) == 0:
-                continue
-            min_budget, min_cpu = min(filtered_budgets, key=lambda x: x[1])
-            slowdown = min_cpu / optimal_cpu
-            slowdowns[key].append(slowdown)
+        slowdowns = defaultdict(list)
+        for key in [x for x in export_prefix_min.keys() if x != 'OPTIMAL_ILP_GC']:
+            for budget, optimal_cpu in export_prefix_min['OPTIMAL_ILP_GC']:
+                filtered_budgets = [x for x in export_prefix_min[key] if x[0] <= budget]
+                if len(filtered_budgets) == 0:
+                    continue
+                min_budget, min_cpu = min(filtered_budgets, key=lambda x: x[1])
+                slowdown = min_cpu / optimal_cpu
+                slowdowns[key].append(slowdown)
 
-    df_data = []
-    for key, slowdown_list in slowdowns.items():
-        max_slowdown = max(slowdown_list)
-        gmean_slowdown = gmean(slowdown_list)
-        df_data.append({'method': key, 'max': max_slowdown, 'geomean_slowdown': gmean_slowdown})
-    df = pd.DataFrame(df_data)
-    df.to_csv(log_base / "slowdowns.csv")
+        df_data = []
+        for key, slowdown_list in slowdowns.items():
+            max_slowdown = max(slowdown_list)
+            gmean_slowdown = gmean(slowdown_list)
+            df_data.append({'method': key, 'max': max_slowdown, 'geomean_slowdown': gmean_slowdown})
+        df = pd.DataFrame(df_data)
+        df.to_csv(log_base / "slowdowns.csv")
