@@ -12,6 +12,7 @@ class SolveStrategy(Enum):
     CHECKPOINT_ALL = 'CHECKPOINT_ALL'
     CHECKPOINT_ALL_AP = 'CHECKPOINT_ALL_AP'
     GRIEWANK_LOGN = 'GRIEWANK_LOGN'
+    APPROX_DETERMINISTIC_ROUND_LP = 'APPROX_DETERMINISTIC_ROUND_LP'
 
     @classmethod
     def get_description(cls, val, model_name=None):
@@ -26,6 +27,7 @@ class SolveStrategy(Enum):
             cls.CHECKPOINT_ALL: "Checkpoint all (ideal)",
             cls.CHECKPOINT_ALL_AP: "Checkpoint all APs",
             cls.GRIEWANK_LOGN: "Griewank et al. $\\log~n$" if is_linear else "AP $\\log~n$",
+            cls.APPROX_DETERMINISTIC_ROUND_LP: "Approximation via deterministic rounding of LP relaxation"
         }[val]
 
     # todo move this to experiments codebase
@@ -44,6 +46,7 @@ class SolveStrategy(Enum):
             cls.CHECKPOINT_ALL: ("k", "*", bigger),
             cls.CHECKPOINT_ALL_AP: ("b", "x", fullsize),
             cls.GRIEWANK_LOGN: ("m", "p", fullsize),
+            cls.APPROX_DETERMINISTIC_ROUND_LP: ("r", "*", fullsize)
         }
         if val in mapping:
             return mapping[val]

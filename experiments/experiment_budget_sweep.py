@@ -2,30 +2,35 @@ import argparse
 import logging
 import os
 import pathlib
+import pickle
 import shutil
 import uuid
+from collections import defaultdict
 from typing import Dict, List, Optional
 
-import tensorflow as tf
-import numpy as np
-import ray
-from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import ray
 import seaborn as sns
+import tensorflow as tf
+from matplotlib.lines import Line2D
+from scipy.stats.mstats import gmean
 
 from experiments.common.definitions import remat_data_dir
-from experiments.common.profile.cost_model import CostModel
-from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model, CHAIN_GRAPH_MODELS
-from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory, pretty_platform_name
 from experiments.common.graph_plotting import render_dfgraph
+from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model, CHAIN_GRAPH_MODELS
+from experiments.common.profile.cost_model import CostModel
+from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory, pretty_platform_name
 from experiments.common.ray_utils import get_futures
 from remat.core.dfgraph import DFGraph
-from remat.core.schedule import ScheduledResult
 from remat.core.enum_strategy import SolveStrategy
+from remat.core.schedule import ScheduledResult
+from remat.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
 from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
 from remat.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
-from remat.core.solvers.strategy_griewank import solve_griewank
+from remat.core.solvers.strategy_griewank import solve_griewank, clean_griewank_cache
 from remat.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
 from remat.tensorflow2.extraction import dfgraph_from_keras
 
@@ -155,7 +160,7 @@ if __name__ == "__main__":
     args = extract_params()
 
     ray.init(temp_dir="/tmp/ray_checkpoint", redis_password=str(uuid.uuid1()), num_cpus=os.cpu_count(),
-             object_store_memory=1024 * 1024 * 1024 if os.cpu_count() < 48 else None)
+             object_store_memory=1024 * 1024 * 1024 if os.cpu_count() < 48 else None)  # include_webui=args.debug
 
     key = "_".join(map(str, [args.platform, args.model_name, args.batch_size, args.input_shape]))
     log_base = remat_data_dir() / "budget_sweep" / key
@@ -175,7 +180,8 @@ if __name__ == "__main__":
     else:
         cost_model = CostModel(model_name, args.platform, log_base, quantization=5)
         cost_model.fit()
-        cost_model.plot_costs()
+        if args.debug:
+            cost_model.plot_costs()
 
     # gen redis key
     if cost_model is None:
@@ -189,11 +195,12 @@ if __name__ == "__main__":
     model = get_keras_model(model_name, input_shape=args.input_shape)
     g = dfgraph_from_keras(model, batch_size=args.batch_size, cost_model=cost_model,
                            loss_cpu_cost=0, loss_ram_cost=(4 * args.batch_size))
-    tf.keras.utils.plot_model(model,
-                              to_file=log_base / f"plot_{model_name}_keras.png",
-                              show_shapes=True,
-                              show_layer_names=True)
-    render_dfgraph(g, log_base, name=model_name)
+    if args.debug:
+        tf.keras.utils.plot_model(model,
+                                  to_file=log_base / f"plot_{model_name}_keras.png",
+                                  show_shapes=True,
+                                  show_layer_names=True)
+        render_dfgraph(g, log_base, name=model_name)
 
     # sweep constant baselines
     logger.info(f"Running constant baselines (ALL, ALL_AP, LAST_NODE, SQRTN_NOAP, SQRTN)")
@@ -218,6 +225,7 @@ if __name__ == "__main__":
     # sweep griewank baselines
     if model_name in CHAIN_GRAPH_MODELS:
         logger.info(f"Running Griewank baseline (APs only)")
+        clean_griewank_cache()
         solve_griewank(g, 1)  # prefetch griewank solution from s3, otherwise ray will cause race condition
         griewank_eval_points = range(1, g.size + 1)
         remote_solve_griewank = ray.remote(num_cpus=1)(solve_griewank).remote
@@ -269,6 +277,23 @@ if __name__ == "__main__":
             futures.append(future)
         result_dict[SolveStrategy.OPTIMAL_ILP_GC].extend(get_futures(futures, desc="Local optimal ILP sweep"))
 
+        # sweep LP rounding (deterministic)
+        lpdet_log_base = log_base / "lp_det_logw"
+        lpdet_log_base.mkdir(parents=True, exist_ok=True)
+        # todo load any ILP results from cache
+        remote_lp_det = ray.remote(num_cpus=NUM_ILP_CORES)(solve_approx_lp_deterministic).remote
+        approx_eval_points = list(get_global_eval_points(g, result_dict)) + list(local_ilp_eval_points)
+        logger.info(f"Evaluating LP deterministic rounding at evaluation points: {approx_eval_points}")
+        futures = []
+        for b in approx_eval_points:
+            future = remote_lp_det(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES,
+                                   write_log_file=lpdet_log_base / f"lp_det_{b}.log", print_to_console=False,
+                                   write_model_file=lpdet_log_base / f"lp_det_{b}.lp" if args.debug else None,
+                                   eps_noise=0, approx=False)
+            futures.append(future)
+        result_dict[SolveStrategy.APPROX_DETERMINISTIC_ROUND_LP] = get_futures(futures,
+                                                                               desc="Local optimal LP approx det sweep")
+
     ####
     # Plot result_dict
     ####
@@ -285,6 +310,8 @@ if __name__ == "__main__":
          r is not None and r.schedule_aux_data is not None])
     logger.info(f"xmax value = {xmax}")
     legend_elements = []
+
+    export_prefix_min = {}
 
     for solve_strategy, results in result_dict.items():
         # checkpoint last node has too high compute, checkpoint all is plotted later
@@ -317,6 +344,8 @@ if __name__ == "__main__":
             ax.scatter(x, np.array(y), label="", zorder=scatter_zorder, s=markersize ** 2, color=color,
                        marker=marker)
         legend_elements.append(Line2D([0], [0], lw=2, label=label, markersize=markersize, color=color, marker=marker))
+
+        export_prefix_min[solve_strategy.name] = list(zip(x_step, y_step))
 
     # Plot ideal (checkpoint all)
     xlim_min, xlim_max = ax.get_xlim()
@@ -358,3 +387,29 @@ if __name__ == "__main__":
                 format='pdf', bbox_inches='tight')
     fig.savefig(log_base / f"plot_budget_sweep_{model_name}_{args.platform}_b{args.batch_size}.png",
                 bbox_inches='tight', dpi=300)
+
+    # export list of budget, CPU tuples for each strategy
+    pickle.dump(export_prefix_min, (log_base / f"export_prefix_min_data.pickle").open('wb'),
+                protocol=pickle.HIGHEST_PROTOCOL)
+
+    if not args.skip_ilp:
+        optimal_ilp_budgets = [x[0] for x in export_prefix_min['OPTIMAL_ILP_GC']]
+        optimal_ilp_cpu = [x[1] for x in export_prefix_min['OPTIMAL_ILP_GC']]
+
+        slowdowns = defaultdict(list)
+        for key in [x for x in export_prefix_min.keys() if x != 'OPTIMAL_ILP_GC']:
+            for budget, optimal_cpu in export_prefix_min['OPTIMAL_ILP_GC']:
+                filtered_budgets = [x for x in export_prefix_min[key] if x[0] <= budget]
+                if len(filtered_budgets) == 0:
+                    continue
+                min_budget, min_cpu = min(filtered_budgets, key=lambda x: x[1])
+                slowdown = min_cpu / optimal_cpu
+                slowdowns[key].append(slowdown)
+
+        df_data = []
+        for key, slowdown_list in slowdowns.items():
+            max_slowdown = max(slowdown_list)
+            gmean_slowdown = gmean(slowdown_list)
+            df_data.append({'method': key, 'max': max_slowdown, 'geomean_slowdown': gmean_slowdown})
+        df = pd.DataFrame(df_data)
+        df.to_csv(log_base / "slowdowns.csv")

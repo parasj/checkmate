@@ -1,8 +1,7 @@
 import logging
-import os
 import pathlib
+import shutil
 import urllib.request
-from functools import lru_cache
 
 import numpy as np
 import pandas as pd
@@ -31,7 +30,6 @@ def solve_griewank(g: DFGraph, budget: int):
     )
 
 
-@lru_cache(maxsize=32)
 def _solve_griewank_to_rs(g: DFGraph, budget: int):
     S = np.zeros((g.size, g.size), dtype=np.int32)
     S = setup_implied_s_backwards(g, S)
@@ -77,6 +75,13 @@ def _load_griewank(graph_size: int) -> pd.DataFrame:
         except Exception as e:
             logging.exception(e)
             logging.warning("Error loading cached griewank solution, corrupt file? Reloading from S3")
-    local_path_base.mkdir(parents=True, exist_ok=True)
-    urllib.request.urlretrieve(remote_path, local_path)
+    with Timer('griewank_dl') as dl_timer:
+        local_path_base.mkdir(parents=True, exist_ok=True)
+        urllib.request.urlretrieve(remote_path, local_path)
+    logging.info(f"Loaded graph from {remote_path} and saving to {local_path} in {dl_timer.elapsed:.2f}s")
     return pd.read_pickle(local_path)
+
+
+def clean_griewank_cache():
+    local_path_base = pathlib.Path('/tmp') / 'remat_cache' / 'griewank_solutions'
+    shutil.rmtree(local_path_base, ignore_errors=True)

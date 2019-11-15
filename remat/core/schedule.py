@@ -49,6 +49,8 @@ class ILPAuxData(NamedTuple):
     Free_E: Optional[np.ndarray] = None
     ilp_time_limit: Optional[int] = None
 
+    # approximation results
+    approx_deterministic_round_threshold: Optional[float] = None
 
 class ScheduledResult(NamedTuple):
     solve_strategy: SolveStrategy
