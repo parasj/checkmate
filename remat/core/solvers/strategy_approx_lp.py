@@ -23,6 +23,7 @@ def solve_approx_lp_deterministic(
     write_model_file: Optional[PathLike] = None,
     eps_noise=0.01,
     solver_cores=os.cpu_count(),
+    thresholds=(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
 ):
     param_dict = {
         "LogToConsole": 1 if print_to_console else 0,
@@ -53,7 +54,7 @@ def solve_approx_lp_deterministic(
         lp_feasible = False
     schedule, aux_data, min_threshold = None, None, None
     if lp_feasible:  # round the solution
-        for threshold in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
+        for threshold in thresholds:
             s_ = (s >= threshold).astype(np.int)
             r_ = solve_r_opt(g, s_)
             schedule_, aux_data_ = schedule_from_rs(g, r_, s_)
@@ -79,3 +80,21 @@ def solve_approx_lp_deterministic(
             approx_deterministic_round_threshold=min_threshold,
         ),
     )
+
+
+def solve_approx_lp_deterministic_rand_threshold(
+        g: DFGraph,
+        budget: int,
+        seed_s: Optional[np.ndarray] = None,
+        approx=True,
+        time_limit: Optional[int] = None,
+        write_log_file: Optional[PathLike] = None,
+        print_to_console=True,
+        write_model_file: Optional[PathLike] = None,
+        eps_noise=0.01,
+        solver_cores=os.cpu_count(),
+        n_samples=1,
+):
+    thresholds = [min(1.0, max(0.0, np.random.normal(0.5, 0.5))) for i in range(n_samples)]
+    return solve_approx_lp_deterministic(g, budget, seed_s, approx, time_limit, write_log_file, print_to_console,
+                                         write_model_file, eps_noise, solver_cores, thresholds=thresholds)
