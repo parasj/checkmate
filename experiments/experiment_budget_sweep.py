@@ -5,24 +5,27 @@ import pathlib
 import pickle
 import shutil
 import uuid
+from collections import defaultdict
 from typing import Dict, List, Optional
 
-import tensorflow as tf
-import numpy as np
-import ray
-from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import ray
 import seaborn as sns
+import tensorflow as tf
+from matplotlib.lines import Line2D
+from scipy.stats.mstats import gmean
 
 from experiments.common.definitions import remat_data_dir
-from experiments.common.profile.cost_model import CostModel
-from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model, CHAIN_GRAPH_MODELS
-from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory, pretty_platform_name
 from experiments.common.graph_plotting import render_dfgraph
+from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model, CHAIN_GRAPH_MODELS
+from experiments.common.profile.cost_model import CostModel
+from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory, pretty_platform_name
 from experiments.common.ray_utils import get_futures
 from remat.core.dfgraph import DFGraph
-from remat.core.schedule import ScheduledResult
 from remat.core.enum_strategy import SolveStrategy
+from remat.core.schedule import ScheduledResult
 from remat.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
 from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
@@ -288,7 +291,8 @@ if __name__ == "__main__":
                                    write_model_file=lpdet_log_base / f"lp_det_{b}.lp" if args.debug else None,
                                    eps_noise=0, approx=False)
             futures.append(future)
-        result_dict[SolveStrategy.APPROX_DETERMINISTIC_ROUND_LP] = get_futures(futures, desc="Local optimal LP approx det sweep")
+        result_dict[SolveStrategy.APPROX_DETERMINISTIC_ROUND_LP] = get_futures(futures,
+                                                                               desc="Local optimal LP approx det sweep")
 
     ####
     # Plot result_dict
@@ -387,3 +391,24 @@ if __name__ == "__main__":
     # export list of budget, CPU tuples for each strategy
     pickle.dump(export_prefix_min, (log_base / f"export_prefix_min_data.pickle").open('wb'),
                 protocol=pickle.HIGHEST_PROTOCOL)
+
+    optimal_ilp_budgets = [x[0] for x in export_prefix_min['OPTIMAL_ILP_GC']]
+    optimal_ilp_cpu = [x[1] for x in export_prefix_min['OPTIMAL_ILP_GC']]
+
+    slowdowns = defaultdict(list)
+    for key in [x for x in export_prefix_min.keys() if x != 'OPTIMAL_ILP_GC']:
+        for budget, optimal_cpu in export_prefix_min['OPTIMAL_ILP_GC']:
+            filtered_budgets = [x for x in export_prefix_min[key] if x[0] <= budget]
+            if len(filtered_budgets) == 0:
+                continue
+            min_budget, min_cpu = min(filtered_budgets, key=lambda x: x[1])
+            slowdown = min_cpu / optimal_cpu
+            slowdowns[key].append(slowdown)
+
+    df_data = []
+    for key, slowdown_list in slowdowns.items():
+        max_slowdown = max(slowdown_list)
+        gmean_slowdown = gmean(slowdown_list)
+        df_data.append({'method': key, 'max': max_slowdown, 'geomean_slowdown': gmean_slowdown})
+    df = pd.DataFrame(df_data)
+    df.to_csv(log_base / "slowdowns.csv")
