@@ -307,7 +307,7 @@ if __name__ == "__main__":
                                write_model_file=lpdet_log_base / f"lp_det_rand_{b}.lp" if args.debug else None,
                                eps_noise=0, approx=False)
         futures.append(future)
-    result_dict[SolveStrategy.APPROX_DETERMINISTIC_ROUND_LP] = get_futures(futures, desc="LP approx det sweep")
+    result_dict[SolveStrategy.APPROX_DETERMINISTIC_RANDOM_THRESH_ROUND_LP] = get_futures(futures, desc="LP approx det sweep")
 
     ####
     # Plot result_dict
