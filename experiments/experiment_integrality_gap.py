@@ -37,7 +37,7 @@ if __name__ == "__main__":
     # Compute integrality gap for each budget
     for B in reversed(range(4, N+3)):  # Try several budgets
         g = gen_linear_graph(N)
-        scratch_dir = remat_data_dir() / f"scratch_integrality_gap_linear" / str(N) / str(B)
+        scratch_dir = remat_data_dir() / f"scratch_integrality_gap_linear" / str(N) + "_layers" / str(IMPOSED_SCHEDULE) / str(B) + "_budget"
         scratch_dir.mkdir(parents=True, exist_ok=True)
         data = []
 
