@@ -18,14 +18,16 @@ from remat.core.utils.timer import Timer
 
 
 class ILPSolver:
-    def __init__(self, g: DFGraph, budget: int, eps_noise=None, seed_s=None, integral=True,
-                 write_model_file: Optional[PathLike] = None, gurobi_params: Dict[str, Any] = None):
+    def __init__(self, g: DFGraph, budget: int, eps_noise=None, seed_s=None, integral=True, impose_schedule=True,
+                 solve_r=False, write_model_file: Optional[PathLike] = None, gurobi_params: Dict[str, Any] = None):
         self.GRB_CONSTRAINED_PRESOLVE_TIME_LIMIT = 300  # todo (paras): read this from gurobi_params
         self.gurobi_params = gurobi_params
         self.num_threads = self.gurobi_params.get('Threads', 1)
         self.model_file = write_model_file
         self.seed_s = seed_s
         self.integral = integral
+        self.impose_schedule = impose_schedule
+        self.solve_r = solve_r
         self.eps_noise = eps_noise
         self.budget = budget
         self.g: DFGraph = g
@@ -81,9 +83,17 @@ class ILPSolver:
                     GRB.MINIMIZE)
 
             with Timer("Variable initialization", extra_data={'T': str(T), 'budget': str(budget)}):
-                self.m.addLConstr(quicksum(self.R[t, i] for t in range(T) for i in range(t + 1, T)), GRB.EQUAL, 0)
-                self.m.addLConstr(quicksum(self.S[t, i] for t in range(T) for i in range(t, T)), GRB.EQUAL, 0)
-                self.m.addLConstr(quicksum(self.R[t, t] for t in range(T)), GRB.EQUAL, T)
+                if self.impose_schedule:
+                    self.m.addLConstr(quicksum(self.R[t, i] for t in range(T) for i in range(t + 1, T)), GRB.EQUAL, 0)
+                    self.m.addLConstr(quicksum(self.S[t, i] for t in range(T) for i in range(t, T)), GRB.EQUAL, 0)
+                    # self.m.addLConstr(quicksum(self.R[t, t] for t in range(T)), GRB.EQUAL, T)
+                    for t in range(T):
+                        self.m.addLConstr(self.R[t, t], GRB.EQUAL, 1)
+                else:
+                    # self.m.addLConstr(quicksum(self.R[T-1, T-1] for t in range(T)), GRB.EQUAL, 1)
+                    self.m.addLConstr(quicksum(self.S[0, i] for i in range(T)), GRB.EQUAL, 0)
+                    for i in range(T):
+                        self.m.addLConstr(quicksum(self.R[t, i] for t in range(T)), GRB.GREATER_EQUAL, 1)
 
             with Timer("Correctness constraints", extra_data={'T': str(T), 'budget': str(budget)}):
                 # ensure all checkpoints are in memory
@@ -191,12 +201,15 @@ class ILPSolver:
             logging.exception(e)
             return None, None, None, None
 
-        Rout = solve_r_opt(self.g, Sout) if self.integral else Rout  # prune R using closed-form solver
+        # prune R using closed-form solver
+        if self.solve_r and self.integral:
+            Rout = solve_r_opt(self.g, Sout)
+
         return Rout, Sout, Uout, Free_Eout
 
 
-def solve_ilp_gurobi(g: DFGraph, budget: int, seed_s: Optional[np.ndarray] = None, approx=True,
-                     time_limit: Optional[int] = None, write_log_file: Optional[PathLike] = None, print_to_console=True,
+def solve_ilp_gurobi(g: DFGraph, budget: int, seed_s: Optional[np.ndarray] = None, approx=True, impose_schedule=True,
+                     solve_r=True, time_limit: Optional[int] = None, write_log_file: Optional[PathLike] = None, print_to_console=True,
                      write_model_file: Optional[PathLike] = None, eps_noise=0.01, solver_cores=os.cpu_count()):
     """
     Memory-accurate solver with garbage collection.
@@ -220,7 +233,8 @@ def solve_ilp_gurobi(g: DFGraph, budget: int, seed_s: Optional[np.ndarray] = Non
                   'Presolve': 2,
                   'StartNodeLimit': 10000000}
     ilpsolver = ILPSolver(g, budget, gurobi_params=param_dict, seed_s=seed_s,
-                          eps_noise=eps_noise, write_model_file=write_model_file)
+                          eps_noise=eps_noise, impose_schedule=impose_schedule,
+                          solve_r=solve_r, write_model_file=write_model_file)
     ilpsolver.build_model()
     try:
         r, s, u, free_e = ilpsolver.solve()

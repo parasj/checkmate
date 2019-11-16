@@ -14,6 +14,7 @@ class SolveStrategy(Enum):
     GRIEWANK_LOGN = 'GRIEWANK_LOGN'
     APPROX_DETERMINISTIC_ROUND_LP = 'APPROX_DETERMINISTIC_ROUND_LP'
     APPROX_DETERMINISTIC_RANDOM_THRESH_ROUND_LP = 'APPROX_DETERMINISTIC_RANDOM_THRESH_ROUND_LP'
+    LB_LP = 'LB_LP'
 
     @classmethod
     def get_description(cls, val, model_name=None):
@@ -29,7 +30,8 @@ class SolveStrategy(Enum):
             cls.CHECKPOINT_ALL_AP: "Checkpoint all APs",
             cls.GRIEWANK_LOGN: "Griewank et al. $\\log~n$" if is_linear else "AP $\\log~n$",
             cls.APPROX_DETERMINISTIC_ROUND_LP: "Approximation via deterministic rounding of LP relaxation w/ threshold sweep",
-            cls.APPROX_DETERMINISTIC_RANDOM_THRESH_ROUND_LP: "Approximation via deterministic rounding of LP relaxation with random thresholds"
+            cls.APPROX_DETERMINISTIC_RANDOM_THRESH_ROUND_LP: "Approximation via deterministic rounding of LP relaxation with random thresholds",
+            cls.LB_LP: "Lower bound via LP relaxation",
         }[val]
 
     # todo move this to experiments codebase
@@ -50,6 +52,7 @@ class SolveStrategy(Enum):
             cls.GRIEWANK_LOGN: ("m", "p", fullsize),
             cls.APPROX_DETERMINISTIC_ROUND_LP: ("r", "*", fullsize),
             cls.APPROX_DETERMINISTIC_RANDOM_THRESH_ROUND_LP: ("r", "x", fullsize),
+            cls.LB_LP: ("r", "s", fullsize),
         }
         if val in mapping:
             return mapping[val]
@@ -69,4 +72,5 @@ class SolveStrategy(Enum):
             cls.GRIEWANK_LOGN: "v1.3",  # 1.3 -> fix AP point mapping
             cls.APPROX_DETERMINISTIC_ROUND_LP: "v1.1",
             cls.APPROX_DETERMINISTIC_RANDOM_THRESH_ROUND_LP: "v1.1",
+            cls.LB_LP: "v1.1",
         }[val]
