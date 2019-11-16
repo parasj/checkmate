@@ -105,11 +105,11 @@ def plot(sched_result: ScheduledResult, plot_mem_usage=False, save_file: Optiona
         fig.set_size_inches(18, 6)
 
     axs[0].invert_yaxis()
-    axs[0].pcolormesh(R, cmap="Greys")
+    axs[0].pcolormesh(R, cmap="Greys", vmin=0, vmax=1)
     axs[0].set_title("R")
 
     axs[1].invert_yaxis()
-    axs[1].pcolormesh(S, cmap="Greys")
+    axs[1].pcolormesh(S, cmap="Greys", vmin=0, vmax=1)
     axs[1].set_title("S")
 
     if show:
