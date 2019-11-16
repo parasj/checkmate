@@ -51,7 +51,7 @@ class SolveStrategy(Enum):
             cls.CHECKPOINT_ALL_AP: ("b", "x", fullsize),
             cls.GRIEWANK_LOGN: ("m", "p", fullsize),
             cls.APPROX_DETERMINISTIC_ROUND_LP: ("r", "*", fullsize),
-            cls.APPROX_DETERMINISTIC_ROUND_LP_05_THRESH: ("r", "s", fullsize),
+            cls.APPROX_DETERMINISTIC_ROUND_LP_05_THRESH: ("r", "s", halfsize),
             cls.APPROX_DETERMINISTIC_RANDOM_THRESH_ROUND_LP: ("r", "x", fullsize),
         }
         if val in mapping:
