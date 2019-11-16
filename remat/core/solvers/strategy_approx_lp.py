@@ -4,7 +4,7 @@ import os
 from typing import Optional
 import numpy as np
 from remat.core.dfgraph import DFGraph
-from remat.core.enum_strategy import SolveStrategy
+from remat.core.enum_strategy import SolveStrategy, ImposedSchedule
 from remat.core.schedule import ILPAuxData, ScheduledResult
 from remat.core.solvers.strategy_optimal_ilp import ILPSolver
 from remat.core.utils.definitions import PathLike
@@ -17,7 +17,7 @@ def solve_approx_lp_deterministic(
     budget: int,
     seed_s: Optional[np.ndarray] = None,
     approx=True,
-    impose_schedule=True,
+    imposed_schedule: ImposedSchedule=ImposedSchedule.FULL_SCHEDULE,
     time_limit: Optional[int] = None,
     write_log_file: Optional[PathLike] = None,
     print_to_console=True,
@@ -42,8 +42,9 @@ def solve_approx_lp_deterministic(
         gurobi_params=param_dict,
         seed_s=seed_s,
         integral=False,
+        solve_r=False,
         eps_noise=eps_noise,
-        impose_schedule=impose_schedule,
+        imposed_schedule=imposed_schedule,
         write_model_file=write_model_file,
     )
     lpsolver.build_model()

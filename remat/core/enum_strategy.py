@@ -74,3 +74,12 @@ class SolveStrategy(Enum):
             cls.APPROX_DETERMINISTIC_RANDOM_THRESH_ROUND_LP: "v1.1",
             cls.LB_LP: "v1.1",
         }[val]
+
+
+class ImposedSchedule(Enum):
+    COVER_LAST_NODE = 'COVER_LAST_NODE'
+    COVER_ALL_NODES = 'COVER_ALL_NODES'
+    FULL_SCHEDULE = 'FULL_SCHEDULE'
+
+    def __str__(self):
+        return self.value
