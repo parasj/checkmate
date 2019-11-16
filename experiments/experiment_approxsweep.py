@@ -1,5 +1,5 @@
 from remat.core.dfgraph import gen_linear_graph
-from remat.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic
+from remat.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic_sweep
 from experiments.common.definitions import remat_data_dir
 from experiments.common.graph_plotting import plot
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
@@ -64,7 +64,7 @@ if __name__ == "__main__":
             )
 
         with Timer("det_lp") as timer_lp_det:
-            scheduler_lp_deterministicround = solve_approx_lp_deterministic(g, B)
+            scheduler_lp_deterministicround = solve_approx_lp_deterministic_sweep(g, B)
             if scheduler_lp_deterministicround.schedule_aux_data is not None:
                 plot(scheduler_lp_deterministicround, False,
                      save_file=scratch_dir / f"CHECKMATE_LP_DETERMINISTICROUND_{scheduler_lp_deterministicround.ilp_aux_data.approx_deterministic_round_threshold}.png")

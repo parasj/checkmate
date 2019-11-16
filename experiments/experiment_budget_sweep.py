@@ -26,7 +26,7 @@ from experiments.common.ray_utils import get_futures
 from remat.core.dfgraph import DFGraph
 from remat.core.enum_strategy import SolveStrategy
 from remat.core.schedule import ScheduledResult
-from remat.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic, \
+from remat.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic_sweep, \
     solve_approx_lp_deterministic_rand_threshold, solve_approx_lp_deterministic_05_threshold, solve_approx_lp_randomized
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
 from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
@@ -304,8 +304,8 @@ if __name__ == "__main__":
     futures = []
     for b in approx_eval_points:
         future = remote_lp_det_rand(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES,
-                                    write_log_file=lpdetrand_log_base / f"lp_det_rand_{b}.log", print_to_console=False,
-                                    write_model_file=lpdetrand_log_base / f"lp_det_rand_{b}.lp" if args.debug else None,
+                                    write_log_file=lpdetrand_log_base / f"lp_det_05_{b}.log", print_to_console=False,
+                                    write_model_file=lpdetrand_log_base / f"lp_det_05_{b}.lp" if args.debug else None,
                                     eps_noise=0, approx=False)
         futures.append(future)
     result_dict[SolveStrategy.APPROX_DET_RANDOM_THRESH_ROUND_LP] = get_futures(futures,
@@ -314,13 +314,13 @@ if __name__ == "__main__":
     # sweep LP rounding (deterministic sweep)
     lpdet_log_base = log_base / "lp_det_sweep"
     lpdet_log_base.mkdir(parents=True, exist_ok=True)
-    remote_lp_det = ray.remote(num_cpus=NUM_ILP_CORES)(solve_approx_lp_deterministic).remote
+    remote_lp_det_sweep = ray.remote(num_cpus=NUM_ILP_CORES)(solve_approx_lp_deterministic_sweep).remote
     futures = []
     for b in approx_eval_points:
-        future = remote_lp_det(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES,
-                               write_log_file=lpdet_log_base / f"lp_det_{b}.log", print_to_console=False,
-                               write_model_file=lpdet_log_base / f"lp_det_{b}.lp" if args.debug else None,
-                               eps_noise=0, approx=False)
+        future = remote_lp_det_sweep(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES,
+                                     write_log_file=lpdet_log_base / f"lp_det_{b}.log", print_to_console=False,
+                                     write_model_file=lpdet_log_base / f"lp_det_{b}.lp" if args.debug else None,
+                                     eps_noise=0, approx=False)
         futures.append(future)
     result_dict[SolveStrategy.APPROX_DET_ROUND_LP_SWEEP] = get_futures(futures, desc="LP approx det sweep")
 
