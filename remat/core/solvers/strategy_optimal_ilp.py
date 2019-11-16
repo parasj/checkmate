@@ -86,12 +86,11 @@ class ILPSolver:
                 if self.impose_schedule:
                     self.m.addLConstr(quicksum(self.R[t, i] for t in range(T) for i in range(t + 1, T)), GRB.EQUAL, 0)
                     self.m.addLConstr(quicksum(self.S[t, i] for t in range(T) for i in range(t, T)), GRB.EQUAL, 0)
-                    # self.m.addLConstr(quicksum(self.R[t, t] for t in range(T)), GRB.EQUAL, T)
-                    for t in range(T):
-                        self.m.addLConstr(self.R[t, t], GRB.EQUAL, 1)
+                    self.m.addLConstr(quicksum(self.R[t, t] for t in range(T)), GRB.EQUAL, T)
                 else:
-                    # self.m.addLConstr(quicksum(self.R[T-1, T-1] for t in range(T)), GRB.EQUAL, 1)
                     self.m.addLConstr(quicksum(self.S[0, i] for i in range(T)), GRB.EQUAL, 0)
+                    # note: the integrality gap is very large if this constraint
+                    # is only applied to the last node (last column of self.R).
                     for i in range(T):
                         self.m.addLConstr(quicksum(self.R[t, i] for t in range(T)), GRB.GREATER_EQUAL, 1)
 
