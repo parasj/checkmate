@@ -17,7 +17,7 @@ if __name__ == "__main__":
     EPS_NOISE = 0
     IMPOSE_SCHEDULE = False
     SOLVE_R = False
-    for B in reversed(range(4, 17)):  # Try several budgets
+    for B in reversed(range(4, N+3)):  # Try several budgets
         g = gen_linear_graph(N)
         scratch_dir = remat_data_dir() / f"scratch_integrality_gap_linear" / str(N) / str(B)
         scratch_dir.mkdir(parents=True, exist_ok=True)
@@ -25,15 +25,16 @@ if __name__ == "__main__":
 
         griewank = solve_griewank(g, B)
 
+        print("--- Solving LP relaxation for lower bound")
+        lb_lp  = lower_bound_lp_relaxation(g, B, approx=APPROX, eps_noise=EPS_NOISE, impose_schedule=IMPOSE_SCHEDULE)
+        plot(lb_lp, False, save_file=scratch_dir / "CHECKMATE_LB_LP.png")
+
         print("--- Solving ILP")
         ilp = solve_ilp_gurobi(g, B, approx=APPROX, eps_noise=EPS_NOISE, impose_schedule=IMPOSE_SCHEDULE,
                                solve_r=SOLVE_R)
         ilp_feasible = ilp.schedule_aux_data.activation_ram <= B
         plot(ilp, False, save_file=scratch_dir / "CHECKMATE_ILP.png")
 
-        print("--- Solving LP relaxation for lower bound")
-        lb_lp  = lower_bound_lp_relaxation(g, B, approx=APPROX, eps_noise=EPS_NOISE, impose_schedule=IMPOSE_SCHEDULE)
-        plot(lb_lp, False, save_file=scratch_dir / "CHECKMATE_LB_LP.png")
         integrality_gap = ilp.schedule_aux_data.cpu / lb_lp.schedule_aux_data.cpu
         speedup = ilp.solve_time_s / lb_lp.solve_time_s
 
@@ -47,5 +48,6 @@ if __name__ == "__main__":
         except Exception as e:
             print("WARN: exception in solve_approx_lp_deterministic:", e)
 
-        print(">>> N={} B={} ilp_feasible={} lb_lp_feasible={} integrality_gap={:.3f} approx_ratio={:.3f}-{:.3f} speedup={:.3f}".format(
-            N, B, ilp.feasible, lb_lp.feasible, integrality_gap, approx_ratio_actual, approx_ratio_ub, speedup))
+        print(">>> N={} B={} ilp_feasible={} lb_lp_feasible={} integrality_gap={:.3f} approx_ratio={:.3f}-{:.3f} time_ilp={:.3f} time_lp={:.3f} speedup={:.3f}".format(
+            N, B, ilp.feasible, lb_lp.feasible, integrality_gap, approx_ratio_actual, approx_ratio_ub,
+            ilp.solve_time_s, lb_lp.solve_time_s, speedup))
