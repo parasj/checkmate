@@ -12,9 +12,10 @@ class SolveStrategy(Enum):
     CHECKPOINT_ALL = 'CHECKPOINT_ALL'
     CHECKPOINT_ALL_AP = 'CHECKPOINT_ALL_AP'
     GRIEWANK_LOGN = 'GRIEWANK_LOGN'
-    APPROX_DETERMINISTIC_ROUND_LP = 'APPROX_DETERMINISTIC_ROUND_LP'
-    APPROX_DETERMINISTIC_ROUND_LP_05_THRESH = 'APPROX_DETERMINISTIC_ROUND_LP_05_THRESH'
-    APPROX_DETERMINISTIC_RANDOM_THRESH_ROUND_LP = 'APPROX_DETERMINISTIC_RANDOM_THRESH_ROUND_LP'
+    APPROX_DET_ROUND_LP_SWEEP = 'APPROX_DET_ROUND_LP_SWEEP'
+    APPROX_DET_ROUND_LP_05_THRESH = 'APPROX_DET_ROUND_LP_05_THRESH'
+    APPROX_DET_RANDOM_THRESH_ROUND_LP = 'APPROX_DET_RANDOM_THRESH_ROUND_LP'
+    APPROX_RANDOMIZED_ROUND = 'APPROX_RANDOMIZED_ROUND'
 
     @classmethod
     def get_description(cls, val, model_name=None):
@@ -29,9 +30,10 @@ class SolveStrategy(Enum):
             cls.CHECKPOINT_ALL: "Checkpoint all (ideal)",
             cls.CHECKPOINT_ALL_AP: "Checkpoint all APs",
             cls.GRIEWANK_LOGN: "Griewank et al. $\\log~n$" if is_linear else "AP $\\log~n$",
-            cls.APPROX_DETERMINISTIC_ROUND_LP: "Approximation via deterministic rounding of LP relaxation w/ threshold sweep",
-            cls.APPROX_DETERMINISTIC_ROUND_LP_05_THRESH: "Approximation cia deterministic rounding of LP relaxation w/ 0.5 threshold",
-            cls.APPROX_DETERMINISTIC_RANDOM_THRESH_ROUND_LP: "Approximation via deterministic rounding of LP relaxation with random thresholds"
+            cls.APPROX_DET_ROUND_LP_SWEEP: "Approximation via deterministic rounding of LP relaxation w/ threshold sweep",
+            cls.APPROX_DET_ROUND_LP_05_THRESH: "Approximation cia deterministic rounding of LP relaxation w/ 0.5 threshold",
+            cls.APPROX_DET_RANDOM_THRESH_ROUND_LP: "Approximation via deterministic rounding of LP relaxation with random thresholds",
+            cls.APPROX_RANDOMIZED_ROUND: "Approximation via randomized rounding of LP relaxation",
         }[val]
 
     # todo move this to experiments codebase
@@ -50,9 +52,10 @@ class SolveStrategy(Enum):
             cls.CHECKPOINT_ALL: ("k", "*", bigger),
             cls.CHECKPOINT_ALL_AP: ("b", "x", fullsize),
             cls.GRIEWANK_LOGN: ("m", "p", fullsize),
-            cls.APPROX_DETERMINISTIC_ROUND_LP: ("r", "*", fullsize),
-            cls.APPROX_DETERMINISTIC_ROUND_LP_05_THRESH: ("r", "s", halfsize),
-            cls.APPROX_DETERMINISTIC_RANDOM_THRESH_ROUND_LP: ("r", "x", fullsize),
+            cls.APPROX_DET_ROUND_LP_SWEEP: ("r", "*", fullsize),
+            cls.APPROX_DET_ROUND_LP_05_THRESH: ("r", "s", halfsize),
+            cls.APPROX_DET_RANDOM_THRESH_ROUND_LP: ("r", "x", fullsize),
+            cls.APPROX_RANDOMIZED_ROUND: ("r", "+", fullsize),
         }
         if val in mapping:
             return mapping[val]
@@ -70,7 +73,8 @@ class SolveStrategy(Enum):
             cls.CHECKPOINT_ALL: "v1.1",
             cls.CHECKPOINT_ALL_AP: "v1.1",
             cls.GRIEWANK_LOGN: "v1.3",  # 1.3 -> fix AP point mapping
-            cls.APPROX_DETERMINISTIC_ROUND_LP: "v1.1",
-            cls.APPROX_DETERMINISTIC_ROUND_LP_05_THRESH: "v1.1",
-            cls.APPROX_DETERMINISTIC_RANDOM_THRESH_ROUND_LP: "v1.1",
+            cls.APPROX_DET_ROUND_LP_SWEEP: "v1.1",
+            cls.APPROX_DET_ROUND_LP_05_THRESH: "v1.1",
+            cls.APPROX_DET_RANDOM_THRESH_ROUND_LP: "v1.1",
+            cls.APPROX_RANDOMIZED_ROUND: "v1.1"
         }[val]
