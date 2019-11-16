@@ -283,46 +283,46 @@ if __name__ == "__main__":
         approx_eval_points.extend(list(local_ilp_eval_points))
     logger.info(f"Evaluating LP approximation evaluation points: {approx_eval_points}")
 
-    # sweep LP rounding (deterministic w/ 0.5 threshold)
-    lpdet05_log_base = log_base / "lp_det_05"
-    lpdet05_log_base.mkdir(parents=True, exist_ok=True)
-    remote_lp_det_05 = ray.remote(num_cpus=NUM_ILP_CORES)(solve_approx_lp_deterministic_05_threshold).remote
-    futures = []
-    for b in approx_eval_points:
-        future = remote_lp_det_05(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES,
-                                  write_log_file=lpdet05_log_base / f"lp_det_rand_{b}.log", print_to_console=False,
-                                  write_model_file=lpdet05_log_base / f"lp_det_rand_{b}.lp" if args.debug else None,
-                                  eps_noise=0, approx=False)
-        futures.append(future)
-    result_dict[SolveStrategy.APPROX_DET_ROUND_LP_05_THRESH] = get_futures(futures,
-                                                                           desc="LP approx det 0.5")
+    # # sweep LP rounding (deterministic w/ 0.5 threshold)
+    # lpdet05_log_base = log_base / "lp_det_05"
+    # lpdet05_log_base.mkdir(parents=True, exist_ok=True)
+    # remote_lp_det_05 = ray.remote(num_cpus=NUM_ILP_CORES)(solve_approx_lp_deterministic_05_threshold).remote
+    # futures = []
+    # for b in approx_eval_points:
+    #     future = remote_lp_det_05(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES,
+    #                               write_log_file=lpdet05_log_base / f"lp_det_rand_{b}.log", print_to_console=False,
+    #                               write_model_file=lpdet05_log_base / f"lp_det_rand_{b}.lp" if args.debug else None,
+    #                               eps_noise=0, approx=False)
+    #     futures.append(future)
+    # result_dict[SolveStrategy.APPROX_DET_ROUND_LP_05_THRESH] = get_futures(futures,
+    #                                                                        desc="LP approx det 0.5")
 
-    # sweep LP rounding (deterministic w/ randomly sampled threshold)
-    lpdetrand_log_base = log_base / "lp_det_rand"
-    lpdetrand_log_base.mkdir(parents=True, exist_ok=True)
-    remote_lp_det_rand = ray.remote(num_cpus=NUM_ILP_CORES)(solve_approx_lp_deterministic_rand_threshold).remote
-    futures = []
-    for b in approx_eval_points:
-        future = remote_lp_det_rand(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES,
-                                    write_log_file=lpdetrand_log_base / f"lp_det_rand_{b}.log", print_to_console=False,
-                                    write_model_file=lpdetrand_log_base / f"lp_det_rand_{b}.lp" if args.debug else None,
-                                    eps_noise=0, approx=False)
-        futures.append(future)
-    result_dict[SolveStrategy.APPROX_DET_RANDOM_THRESH_ROUND_LP] = get_futures(futures,
-                                                                               desc="LP approx det rand")
+    # # sweep LP rounding (deterministic w/ randomly sampled threshold)
+    # lpdetrand_log_base = log_base / "lp_det_rand"
+    # lpdetrand_log_base.mkdir(parents=True, exist_ok=True)
+    # remote_lp_det_rand = ray.remote(num_cpus=NUM_ILP_CORES)(solve_approx_lp_deterministic_rand_threshold).remote
+    # futures = []
+    # for b in approx_eval_points:
+    #     future = remote_lp_det_rand(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES,
+    #                                 write_log_file=lpdetrand_log_base / f"lp_det_rand_{b}.log", print_to_console=False,
+    #                                 write_model_file=lpdetrand_log_base / f"lp_det_rand_{b}.lp" if args.debug else None,
+    #                                 eps_noise=0, approx=False)
+    #     futures.append(future)
+    # result_dict[SolveStrategy.APPROX_DET_RANDOM_THRESH_ROUND_LP] = get_futures(futures,
+    #                                                                            desc="LP approx det rand")
 
-    # sweep LP rounding (deterministic sweep)
-    lpdet_log_base = log_base / "lp_det_sweep"
-    lpdet_log_base.mkdir(parents=True, exist_ok=True)
-    remote_lp_det = ray.remote(num_cpus=NUM_ILP_CORES)(solve_approx_lp_deterministic).remote
-    futures = []
-    for b in approx_eval_points:
-        future = remote_lp_det(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES,
-                               write_log_file=lpdet_log_base / f"lp_det_{b}.log", print_to_console=False,
-                               write_model_file=lpdet_log_base / f"lp_det_{b}.lp" if args.debug else None,
-                               eps_noise=0, approx=False)
-        futures.append(future)
-    result_dict[SolveStrategy.APPROX_DET_ROUND_LP_SWEEP] = get_futures(futures, desc="LP approx det sweep")
+    # # sweep LP rounding (deterministic sweep)
+    # lpdet_log_base = log_base / "lp_det_sweep"
+    # lpdet_log_base.mkdir(parents=True, exist_ok=True)
+    # remote_lp_det = ray.remote(num_cpus=NUM_ILP_CORES)(solve_approx_lp_deterministic).remote
+    # futures = []
+    # for b in approx_eval_points:
+    #     future = remote_lp_det(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES,
+    #                            write_log_file=lpdet_log_base / f"lp_det_{b}.log", print_to_console=False,
+    #                            write_model_file=lpdet_log_base / f"lp_det_{b}.lp" if args.debug else None,
+    #                            eps_noise=0, approx=False)
+    #     futures.append(future)
+    # result_dict[SolveStrategy.APPROX_DET_ROUND_LP_SWEEP] = get_futures(futures, desc="LP approx det sweep")
 
     # sweep LP randomized rounding
     lprand_log_base = log_base / "lp_rand"

@@ -158,8 +158,8 @@ def solve_approx_lp_randomized(
         lp_feasible = False
     schedule, aux_data, min_threshold = None, None, None
     if lp_feasible:  # round the solution
-        s_ = np.random.rand(s.size) <= s.flatten()
-        r_ = solve_r_opt(g, s)
+        s_ = (np.random.rand(*s.shape) <= s).astype(np.int32)
+        r_ = solve_r_opt(g, s_)
         schedule, aux_data = schedule_from_rs(g, r_, s_)
     return ScheduledResult(
         solve_strategy=SolveStrategy.APPROX_DET_ROUND_LP_SWEEP,
