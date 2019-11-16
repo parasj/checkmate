@@ -2,6 +2,7 @@ from typing import Optional, List
 
 import keras_segmentation
 import tensorflow as tf
+from nlp import BertModel
 
 KERAS_APPLICATION_MODEL_NAMES = ['InceptionV3', 'VGG16', 'VGG19', 'ResNet50',
                                  'Xception', 'MobileNet', 'MobileNetV2', 'DenseNet121',
@@ -9,7 +10,7 @@ KERAS_APPLICATION_MODEL_NAMES = ['InceptionV3', 'VGG16', 'VGG19', 'ResNet50',
                                  'ResNet101', 'ResNet152', 'ResNet50V2', 'ResNet101V2',
                                  'ResNet152V2']
 SEGMENTATION_MODEL_NAMES = list(keras_segmentation.models.model_from_name.keys())
-MODEL_NAMES = KERAS_APPLICATION_MODEL_NAMES + SEGMENTATION_MODEL_NAMES + ["test"]
+MODEL_NAMES = KERAS_APPLICATION_MODEL_NAMES + SEGMENTATION_MODEL_NAMES + ["test", "bert"]
 CHAIN_GRAPH_MODELS = ["VGG16", "VGG19", "MobileNet"]
 NUM_SEGMENTATION_CLASSES = 19  # Cityscapes has 19 evaluation classes
 
@@ -37,6 +38,8 @@ def simple_model():
 def get_keras_model(model_name: str, input_shape: Optional[List[int]] = None):
     if model_name == "test":
         model = simple_model()
+    elif model_name == "bert":
+        model = BertModel(12, input_shape[1], input_shape[2], 12)
     elif model_name in KERAS_APPLICATION_MODEL_NAMES:
         model = eval("tf.keras.applications.{}".format(model_name))
         model = model(input_shape=input_shape)
