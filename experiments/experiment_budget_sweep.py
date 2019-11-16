@@ -27,7 +27,7 @@ from remat.core.dfgraph import DFGraph
 from remat.core.enum_strategy import SolveStrategy
 from remat.core.schedule import ScheduledResult
 from remat.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic, \
-    solve_approx_lp_deterministic_rand_threshold
+    solve_approx_lp_deterministic_rand_threshold, solve_approx_lp_deterministic_05_threshold
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
 from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
 from remat.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
@@ -278,12 +278,44 @@ if __name__ == "__main__":
             futures.append(future)
         result_dict[SolveStrategy.OPTIMAL_ILP_GC].extend(get_futures(futures, desc="Local optimal ILP sweep"))
 
-    # sweep LP rounding (deterministic)
+    approx_eval_points = list(get_global_eval_points(g, result_dict))
+    if not args.skip_ilp:
+        approx_eval_points.extend(list(local_ilp_eval_points))
+
+    # sweep LP rounding (deterministic w/ 0.5 threshold)
+    lpdet05_log_base = log_base / "lp_det_05"
+    lpdet05_log_base.mkdir(parents=True, exist_ok=True)
+    remote_lp_det_rand = ray.remote(num_cpus=NUM_ILP_CORES)(solve_approx_lp_deterministic_05_threshold).remote
+    logger.info(f"Evaluating LP deterministic rounding, w/ 0.5 threshold at evaluation points: {approx_eval_points}")
+    futures = []
+    for b in approx_eval_points:
+        future = remote_lp_det_rand(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES,
+                                    write_log_file=lpdet05_log_base / f"lp_det_rand_{b}.log", print_to_console=False,
+                                    write_model_file=lpdet05_log_base / f"lp_det_rand_{b}.lp" if args.debug else None,
+                                    eps_noise=0, approx=False)
+        futures.append(future)
+    result_dict[SolveStrategy.APPROX_DETERMINISTIC_ROUND_LP_05_THRESH] = get_futures(futures,
+                                                                                         desc="LP approx det 0.5")
+
+    # sweep LP rounding (deterministic w/ randomly sampled threshold)
+    lpdetrand_log_base = log_base / "lp_det_rand"
+    lpdetrand_log_base.mkdir(parents=True, exist_ok=True)
+    remote_lp_det_rand = ray.remote(num_cpus=NUM_ILP_CORES)(solve_approx_lp_deterministic_rand_threshold).remote
+    logger.info(f"Evaluating LP deterministic rounding, w/ rand thresholds at evaluation points: {approx_eval_points}")
+    futures = []
+    for b in approx_eval_points:
+        future = remote_lp_det_rand(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES,
+                                    write_log_file=lpdetrand_log_base / f"lp_det_rand_{b}.log", print_to_console=False,
+                                    write_model_file=lpdetrand_log_base / f"lp_det_rand_{b}.lp" if args.debug else None,
+                                    eps_noise=0, approx=False)
+        futures.append(future)
+    result_dict[SolveStrategy.APPROX_DETERMINISTIC_RANDOM_THRESH_ROUND_LP] = get_futures(futures,
+                                                                                         desc="LP approx det rand")
+
+    # sweep LP rounding (deterministic sweep)
     lpdet_log_base = log_base / "lp_det"
     lpdet_log_base.mkdir(parents=True, exist_ok=True)
-    # todo load any ILP results from cache
     remote_lp_det = ray.remote(num_cpus=NUM_ILP_CORES)(solve_approx_lp_deterministic).remote
-    approx_eval_points = list(get_global_eval_points(g, result_dict)) + list(local_ilp_eval_points)
     logger.info(f"Evaluating LP deterministic rounding at evaluation points: {approx_eval_points}")
     futures = []
     for b in approx_eval_points:
@@ -293,21 +325,6 @@ if __name__ == "__main__":
                                eps_noise=0, approx=False)
         futures.append(future)
     result_dict[SolveStrategy.APPROX_DETERMINISTIC_ROUND_LP] = get_futures(futures, desc="LP approx det sweep")
-
-    # sweep LP rounding (deterministic)
-    lpdetrand_log_base = log_base / "lp_det_rand"
-    lpdetrand_log_base.mkdir(parents=True, exist_ok=True)
-    # todo load any ILP results from cache
-    remote_lp_det_rand = ray.remote(num_cpus=NUM_ILP_CORES)(solve_approx_lp_deterministic_rand_threshold).remote
-    logger.info(f"Evaluating LP deterministic rounding, w/ rand thresholds at evaluation points: {approx_eval_points}")
-    futures = []
-    for b in approx_eval_points:
-        future = remote_lp_det_rand(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES,
-                               write_log_file=lpdet_log_base / f"lp_det_rand_{b}.log", print_to_console=False,
-                               write_model_file=lpdet_log_base / f"lp_det_rand_{b}.lp" if args.debug else None,
-                               eps_noise=0, approx=False)
-        futures.append(future)
-    result_dict[SolveStrategy.APPROX_DETERMINISTIC_RANDOM_THRESH_ROUND_LP] = get_futures(futures, desc="LP approx det sweep")
 
     ####
     # Plot result_dict

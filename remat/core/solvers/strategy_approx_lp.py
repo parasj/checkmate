@@ -98,3 +98,20 @@ def solve_approx_lp_deterministic_rand_threshold(
     thresholds = [min(1.0, max(0.0, np.random.normal(0.5, 0.5))) for i in range(n_samples)]
     return solve_approx_lp_deterministic(g, budget, seed_s, approx, time_limit, write_log_file, print_to_console,
                                          write_model_file, eps_noise, solver_cores, thresholds=thresholds)
+
+
+def solve_approx_lp_deterministic_05_threshold(
+        g: DFGraph,
+        budget: int,
+        seed_s: Optional[np.ndarray] = None,
+        approx=True,
+        time_limit: Optional[int] = None,
+        write_log_file: Optional[PathLike] = None,
+        print_to_console=True,
+        write_model_file: Optional[PathLike] = None,
+        eps_noise=0.01,
+        solver_cores=os.cpu_count(),
+        n_samples=1,
+):
+    return solve_approx_lp_deterministic(g, budget, seed_s, approx, time_limit, write_log_file, print_to_console,
+                                         write_model_file, eps_noise, solver_cores, thresholds=[0.5])
