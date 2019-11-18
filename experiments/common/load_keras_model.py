@@ -2,7 +2,9 @@ from typing import Optional, List
 
 import keras_segmentation
 import tensorflow as tf
-from nlp import BertModel
+import numpy as np
+import tensorflow.keras as keras
+from tensorflow.keras.layers import LayerNormalization, Dense, Dropout, Activation, Dot, Reshape
 
 KERAS_APPLICATION_MODEL_NAMES = ['InceptionV3', 'VGG16', 'VGG19', 'ResNet50',
                                  'Xception', 'MobileNet', 'MobileNetV2', 'DenseNet121',
@@ -39,7 +41,7 @@ def get_keras_model(model_name: str, input_shape: Optional[List[int]] = None):
     if model_name == "test":
         model = simple_model()
     elif model_name == "bert":
-        model = BertModel(12, input_shape[1], input_shape[2], 12)
+        model = bertModel(12, 16, input_shape)
     elif model_name in KERAS_APPLICATION_MODEL_NAMES:
         model = eval("tf.keras.applications.{}".format(model_name))
         model = model(input_shape=input_shape)
@@ -62,3 +64,44 @@ def get_input_shape(model_name: str, batch_size: Optional[int] = None):
     if batch_size is not None:
         shape[0] = batch_size
     return shape
+
+def bertModel(num_layers,  heads, input_size):
+    
+    hidden_size = input_size[2]
+    intermediate_size = 4 * hidden_size
+    seq_length = input_size[1]
+    batch = input_size[0]
+
+    #config = BertConfig(hidden_size=hidden_size, 
+    #                    num_hidden_layers=num_layers , 
+    #                    num_attention_heads=heads, 
+    #                    intermediate_size=4 * hidden_size,
+    #                   hidden_act = "relu",
+    #                   max_position_embeddings=seq_length)
+    num_layers = num_layers
+    layer = []
+    inputs = keras.Input(shape=input_size)
+    mask = tf.fill(tf.shape(inputs), 1.0)
+    tids = tf.fill(tf.shape(inputs), 0.0)
+    x = inputs
+    for i in range(num_layers):
+        query = Dense(hidden_size, name = "query_{}".format(i))(x)
+        key = Dense(hidden_size, name = "key_{}".format(i))(x)
+        value = Dense(hidden_size, name = "value_{}".format(i))(x)
+        query = tf.reshape(query, (batch, heads, seq_length, hidden_size//heads))
+        key= tf.reshape(key, (batch, heads, hidden_size//heads, seq_length))
+        value = tf.reshape(value, (batch, heads, seq_length, hidden_size//heads))
+        acts = tf.matmul(query, key)
+        fin = tf.matmul(acts, value)
+        fin = tf.reshape(fin, (batch, seq_length, hidden_size))
+        #layer.append(TFBertSelfAttention(config, name="layer_{}".format(i)))
+        att = Dense(hidden_size, name="att_{}".format(i))(fin)
+        relu = Activation("relu", name="relu0_{}".format(i))(x)
+        x = LayerNormalization(name="f_att_{}".format(i))(att + x)
+        inter = Dense(intermediate_size,name = "inter_{}".format(i))(x)
+        relu = Activation("relu", name="relu_{}".format(i))(x)
+        shrink = Dense(hidden_size, name="shrink_{}".format(i))(x)
+        relu = Activation("relu", name="relu2_{}".format(i))(x)
+        x = LayerNormalization(name="layer_out_{}".format(i))(x)
+
+    return keras.Model(inputs=inputs, outputs=x)

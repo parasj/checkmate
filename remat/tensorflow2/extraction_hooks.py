@@ -23,6 +23,7 @@ def conv_transpose_hook(node, inputs, outputs):
     return ops, mem_cost
 
 
+
 def conv_hook(node, inputs, outputs):
     # NOTE: This method assumes shapes are ordered as NHWC
     if None in outputs and None not in inputs and node.padding == "valid":
@@ -179,6 +180,8 @@ hooks = {
     'MaxPooling2D': pool_hook,
     'Dropout': dropout_hook,
     'Concatenate': concat_hook,
+    'TensorFlowOpLayer' : reshape_hook,
+    'LayerNormalization' : bn_hook,
     'Add': add_hook,
     'GlobalAveragePooling2D': pool_hook,
     'AveragePooling2D': pool_hook,
@@ -238,4 +241,5 @@ def op_hook(layer, batch_size=1):
               "input shape:", inputs, "output shape:", outputs)
 
     ops, mem_cost = hooks[layer.__class__.__name__](layer, inputs, outputs)
+
     return ops, mem_cost
