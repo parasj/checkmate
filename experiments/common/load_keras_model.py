@@ -10,7 +10,7 @@ KERAS_APPLICATION_MODEL_NAMES = ['InceptionV3', 'VGG16', 'VGG19', 'ResNet50',
                                  'ResNet101', 'ResNet152', 'ResNet50V2', 'ResNet101V2',
                                  'ResNet152V2']
 SEGMENTATION_MODEL_NAMES = list(keras_segmentation.models.model_from_name.keys())
-LINEAR_MODEL_NAMES = ["linear" + str(i) for i in [4, 8, 16, 32]]
+LINEAR_MODEL_NAMES = ["linear" + str(i) for i in range(32)]
 MODEL_NAMES = KERAS_APPLICATION_MODEL_NAMES + SEGMENTATION_MODEL_NAMES + ["test"] + LINEAR_MODEL_NAMES
 CHAIN_GRAPH_MODELS = ["VGG16", "VGG19", "MobileNet"] + LINEAR_MODEL_NAMES
 NUM_SEGMENTATION_CLASSES = 19  # Cityscapes has 19 evaluation classes
