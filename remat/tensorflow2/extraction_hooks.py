@@ -94,13 +94,16 @@ def pad_hook(node, inputs, outputs):
     ops = 0
     return ops, mem_cost
 
+def nlp_matmul_hook(node, inputs, outputs):
+    return fc_hook(node, inputs[0], outputs)
+
 
 def fc_hook(node, inputs, outputs):
-    batch_size = inputs[0]
-    cin = inputs[-1]
+    #batch_size = inputs[0]
+    cin = np.prod(inputs)
     cout = outputs[-1]
 
-    ops = batch_size * cin * cout
+    ops = cin * cout
     mem_cost = np.prod(outputs) * MEMORY_MULTIPLIER
     return ops, mem_cost
 
@@ -197,7 +200,9 @@ hooks = {
 
     # Model specific hooks
     'Interp': pspnet_interp_hook,
-    'Lambda': pspnet_lambda_hook,
+    #Lambda can vary depending on the implementation
+    #'Lambda': pspnet_lambda_hook,
+    'Lambda' : fc_hook
 }
 
 
