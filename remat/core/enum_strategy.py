@@ -31,7 +31,7 @@ class SolveStrategy(Enum):
             cls.CHECKPOINT_ALL_AP: "Checkpoint all APs",
             cls.GRIEWANK_LOGN: "Griewank et al. $\\log~n$" if is_linear else "AP $\\log~n$",
             cls.APPROX_DET_ROUND_LP_SWEEP: "Approximation via deterministic rounding of LP relaxation w/ threshold sweep",
-            cls.APPROX_DET_ROUND_LP_05_THRESH: "Approximation cia deterministic rounding of LP relaxation w/ 0.5 threshold",
+            cls.APPROX_DET_ROUND_LP_05_THRESH: "Approximation via deterministic rounding of LP relaxation w/ 0.5 threshold",
             cls.APPROX_DET_RANDOM_THRESH_ROUND_LP: "Approximation via deterministic rounding of LP relaxation with random thresholds",
             cls.APPROX_RANDOMIZED_ROUND: "Approximation via randomized rounding of LP relaxation",
         }[val]
@@ -53,7 +53,7 @@ class SolveStrategy(Enum):
             cls.CHECKPOINT_ALL_AP: ("b", "x", fullsize),
             cls.GRIEWANK_LOGN: ("m", "p", fullsize),
             cls.APPROX_DET_ROUND_LP_SWEEP: ("r", "*", fullsize),
-            cls.APPROX_DET_ROUND_LP_05_THRESH: ("r", "s", halfsize),
+            cls.APPROX_DET_ROUND_LP_05_THRESH: ("r", "^", halfsize),
             cls.APPROX_DET_RANDOM_THRESH_ROUND_LP: ("r", "x", fullsize),
             cls.APPROX_RANDOMIZED_ROUND: ("r", "+", fullsize),
         }
