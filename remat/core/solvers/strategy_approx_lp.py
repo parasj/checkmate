@@ -70,7 +70,7 @@ def solve_approx_lp_deterministic_sweep(
     return ScheduledResult(
         solve_strategy=SolveStrategy.APPROX_DET_ROUND_LP_SWEEP,
         solver_budget=budget,
-        feasible=lp_feasible and aux_data,
+        feasible=lp_feasible and aux_data is not None,
         schedule=schedule,
         schedule_aux_data=aux_data,
         solve_time_s=lpsolver.solve_time,
