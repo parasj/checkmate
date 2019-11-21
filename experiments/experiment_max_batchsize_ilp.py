@@ -17,7 +17,7 @@ from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memo
 from experiments.solver_ilp_max_batchsize import MaxBatchILPSolver
 from remat.core.enum_strategy import SolveStrategy
 from remat.core.schedule import ScheduledResult
-from remat.tensorflow2.extraction import dfgraph_from_keras
+from remat.tf2_keras.extraction import dfgraph_from_keras
 
 GB = 1000 * 1000 * 1000
 

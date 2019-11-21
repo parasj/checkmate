@@ -12,7 +12,7 @@ from integration.tf2.TF2ExtractorParams import TF2ExtractorParams
 from experiments.common.load_keras_model import get_keras_model
 from experiments.common.profile.platforms import platform_memory
 from integration.tf2.TF2Runner import TF2Runner
-from remat.tensorflow2.tf_losses import categorical_cross_entropy
+from remat.tf2_keras.tf_losses import categorical_cross_entropy
 from experiments.common.execution_utils import random_batch
 from solvers.result import RSResult
 from experiments.common.redis import RedisCache

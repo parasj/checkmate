@@ -33,7 +33,7 @@ from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_no
 from remat.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
 from remat.core.solvers.strategy_griewank import solve_griewank, clean_griewank_cache
 from remat.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
-from remat.tensorflow2.extraction import dfgraph_from_keras
+from remat.tf2_keras.extraction import dfgraph_from_keras
 
 # ILP solve params
 NUM_ILP_CORES = os.environ.get("ILP_CORES", 12 if os.cpu_count() > 12 else 4)

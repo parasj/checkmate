@@ -3,7 +3,7 @@ import logging
 
 from remat.core.dfgraph import DFGraph
 from remat.core.schedule import Schedule, ScheduledResult, AllocateRegister, DeallocateRegister, OperatorEvaluation
-from remat.tensorflow2.tf_losses import categorical_cross_entropy
+from remat.tf2_keras.tf_losses import categorical_cross_entropy
 
 import tensorflow as tf
 

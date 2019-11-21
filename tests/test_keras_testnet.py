@@ -2,7 +2,7 @@ import logging
 
 from experiments.common.load_keras_model import get_keras_model
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
-from remat.tensorflow2.extraction import dfgraph_from_keras
+from remat.tf2_keras.extraction import dfgraph_from_keras
 
 
 def test_testnet_checkpointall():
