@@ -6,7 +6,7 @@ import tensorflow as tf
 
 from experiments.common.profile.cost_model import CostModel
 from remat.core import dfgraph
-from remat.tensorflow2.extraction_hooks import op_hook, MEMORY_MULTIPLIER
+from remat.tf2_keras.extraction_hooks import op_hook, MEMORY_MULTIPLIER
 
 try:
     from tensorflow.python.keras.utils.layer_utils import count_params  # TF r2.0

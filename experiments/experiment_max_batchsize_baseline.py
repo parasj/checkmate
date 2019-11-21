@@ -24,7 +24,7 @@ from remat.core.enum_strategy import SolveStrategy
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
 from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
 from remat.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
-from remat.tensorflow2.extraction import dfgraph_from_keras
+from remat.tf2_keras.extraction import dfgraph_from_keras
 
 
 def extract_params():

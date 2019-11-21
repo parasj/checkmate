@@ -2,8 +2,8 @@ import os
 
 import tensorflow as tf
 
-from remat.tensorflow2.execution import sort_by_dep_order, match_variables
-from remat.tensorflow2.tf_losses import categorical_cross_entropy
+from remat.tf2_keras.execution import sort_by_dep_order, match_variables
+from remat.tf2_keras.tf_losses import categorical_cross_entropy
 from remat.core.schedule import OperatorEvaluation, AllocateRegister, DeallocateRegister, Schedule
 from remat.core.dfgraph import DFGraph
 from utils.setup_logger import setup_logger

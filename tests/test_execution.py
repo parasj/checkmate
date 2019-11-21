@@ -1,11 +1,11 @@
 # from experiments.common.definitions import remat_data_dir
 # from experiments.common.graph_plotting import render_dfgraph
 # from experiments.common.load_keras_model import get_keras_model
-# from remat.tensorflow2.extraction import dfgraph_from_keras
+# from remat.tf2_keras.extraction import dfgraph_from_keras
 # from experiments.common.execution_utils import random_batch
 # from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
-# from remat.tensorflow2.execution import tfgraph_from_schedule
-# from remat.tensorflow2.tf_losses import categorical_cross_entropy
+# from remat.tf2_keras.execution import tfgraph_from_schedule
+# from remat.tf2_keras.tf_losses import categorical_cross_entropy
 # import tensorflow as tf
 
 
