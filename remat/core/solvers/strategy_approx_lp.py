@@ -2,9 +2,11 @@ import logging
 import math
 import os
 from typing import Optional
+
 import numpy as np
+
 from remat.core.dfgraph import DFGraph
-from remat.core.enum_strategy import SolveStrategy
+from remat.core.enum_strategy import SolveStrategy, ImposedSchedule
 from remat.core.schedule import ILPAuxData, ScheduledResult
 from remat.core.solvers.strategy_optimal_ilp import ILPSolver
 from remat.core.utils.definitions import PathLike
@@ -24,6 +26,7 @@ def solve_approx_lp_deterministic_sweep(
         eps_noise=0.01,
         solver_cores=os.cpu_count(),
         thresholds=(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
+        imposed_schedule: ImposedSchedule = ImposedSchedule.FULL_SCHEDULE,
 ):
     param_dict = {
         "LogToConsole": 1 if print_to_console else 0,
@@ -41,7 +44,9 @@ def solve_approx_lp_deterministic_sweep(
         gurobi_params=param_dict,
         seed_s=seed_s,
         integral=False,
+        solve_r=False,
         eps_noise=eps_noise,
+        imposed_schedule=imposed_schedule,
         write_model_file=write_model_file,
     )
     lpsolver.build_model()
@@ -65,7 +70,7 @@ def solve_approx_lp_deterministic_sweep(
     return ScheduledResult(
         solve_strategy=SolveStrategy.APPROX_DET_ROUND_LP_SWEEP,
         solver_budget=budget,
-        feasible=lp_feasible,
+        feasible=lp_feasible and aux_data is not None,
         schedule=schedule,
         schedule_aux_data=aux_data,
         solve_time_s=lpsolver.solve_time,

@@ -3,7 +3,7 @@ from typing import NamedTuple, Dict, List, Union, Optional
 
 import numpy as np
 
-from remat.core.enum_strategy import SolveStrategy
+from remat.core.enum_strategy import SolveStrategy, ImposedSchedule
 
 
 class OperatorEvaluation(NamedTuple):
@@ -48,6 +48,7 @@ class ILPAuxData(NamedTuple):
     U: Optional[np.ndarray] = None
     Free_E: Optional[np.ndarray] = None
     ilp_time_limit: Optional[int] = None
+    ilp_imposed_schedule: Optional[ImposedSchedule] = None
 
     # approximation results
     approx_deterministic_round_threshold: Optional[float] = None

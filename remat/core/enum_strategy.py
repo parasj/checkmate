@@ -16,6 +16,7 @@ class SolveStrategy(Enum):
     APPROX_DET_ROUND_LP_05_THRESH = 'APPROX_DET_ROUND_LP_05_THRESH'
     APPROX_DET_RANDOM_THRESH_ROUND_LP = 'APPROX_DET_RANDOM_THRESH_ROUND_LP'
     APPROX_RANDOMIZED_ROUND = 'APPROX_RANDOMIZED_ROUND'
+    LB_LP = 'LB_LP'
 
     @classmethod
     def get_description(cls, val, model_name=None):
@@ -31,9 +32,10 @@ class SolveStrategy(Enum):
             cls.CHECKPOINT_ALL_AP: "Checkpoint all APs",
             cls.GRIEWANK_LOGN: "Griewank et al. $\\log~n$" if is_linear else "AP $\\log~n$",
             cls.APPROX_DET_ROUND_LP_SWEEP: "Approximation via deterministic rounding of LP relaxation w/ threshold sweep",
-            cls.APPROX_DET_ROUND_LP_05_THRESH: "Approximation via deterministic rounding of LP relaxation w/ 0.5 threshold",
             cls.APPROX_DET_RANDOM_THRESH_ROUND_LP: "Approximation via deterministic rounding of LP relaxation with random thresholds",
+            cls.APPROX_DET_ROUND_LP_05_THRESH: "Approximation via deterministic rounding of LP relaxation w/ 0.5 threshold",
             cls.APPROX_RANDOMIZED_ROUND: "Approximation via randomized rounding of LP relaxation",
+            cls.LB_LP: "Lower bound via LP relaxation",
         }[val]
 
     # todo move this to experiments codebase
@@ -48,14 +50,15 @@ class SolveStrategy(Enum):
             cls.CHEN_SQRTN_NOAP: ("c", "^", halfsize),
             cls.CHEN_GREEDY: ("g", ".", fullsize),
             cls.CHEN_GREEDY_NOAP: ("g", "+", fullsize),
-            cls.OPTIMAL_ILP_GC: ("r", "s", halfsize),
             cls.CHECKPOINT_ALL: ("k", "*", bigger),
             cls.CHECKPOINT_ALL_AP: ("b", "x", fullsize),
             cls.GRIEWANK_LOGN: ("m", "p", fullsize),
+            cls.OPTIMAL_ILP_GC: ("r", "s", halfsize),
             cls.APPROX_DET_ROUND_LP_SWEEP: ("r", "*", fullsize),
             cls.APPROX_DET_ROUND_LP_05_THRESH: ("r", "^", halfsize),
             cls.APPROX_DET_RANDOM_THRESH_ROUND_LP: ("r", "x", fullsize),
             cls.APPROX_RANDOMIZED_ROUND: ("r", "+", fullsize),
+            cls.LB_LP: ("r", "p", fullsize),
         }
         if val in mapping:
             return mapping[val]
@@ -68,13 +71,23 @@ class SolveStrategy(Enum):
             cls.CHEN_SQRTN_NOAP: "v1.1",
             cls.CHEN_GREEDY: "v1.1",
             cls.CHEN_GREEDY_NOAP: "v1.1",
-            cls.OPTIMAL_ILP_GC: "v3",
             cls.CHECKPOINT_LAST_NODE: "v1.1",
             cls.CHECKPOINT_ALL: "v1.1",
             cls.CHECKPOINT_ALL_AP: "v1.1",
             cls.GRIEWANK_LOGN: "v1.3",  # 1.3 -> fix AP point mapping
+            cls.OPTIMAL_ILP_GC: "v3",
             cls.APPROX_DET_ROUND_LP_SWEEP: "v1.1",
             cls.APPROX_DET_ROUND_LP_05_THRESH: "v1.1",
             cls.APPROX_DET_RANDOM_THRESH_ROUND_LP: "v1.1",
-            cls.APPROX_RANDOMIZED_ROUND: "v1.1"
+            cls.APPROX_RANDOMIZED_ROUND: "v1.1",
+            cls.LB_LP: "v1.1",
         }[val]
+
+
+class ImposedSchedule(Enum):
+    COVER_LAST_NODE = 'COVER_LAST_NODE'
+    COVER_ALL_NODES = 'COVER_ALL_NODES'
+    FULL_SCHEDULE = 'FULL_SCHEDULE'
+
+    def __str__(self):
+        return self.value

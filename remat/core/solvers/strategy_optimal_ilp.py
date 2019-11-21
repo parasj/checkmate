@@ -1,3 +1,4 @@
+from enum import Enum
 import logging
 import math
 import os
@@ -13,12 +14,13 @@ from remat.core.schedule import ScheduledResult, ILPAuxData, SchedulerAuxData
 from remat.core.utils.definitions import PathLike
 from remat.core.utils.solver_common import solve_r_opt
 from remat.core.utils.scheduler import schedule_from_rs
-from remat.core.enum_strategy import SolveStrategy
+from remat.core.enum_strategy import SolveStrategy, ImposedSchedule
 from remat.core.utils.timer import Timer
 
 
 class ILPSolver:
     def __init__(self, g: DFGraph, budget: int, eps_noise=None, seed_s=None, integral=True,
+                 imposed_schedule: ImposedSchedule=ImposedSchedule.FULL_SCHEDULE, solve_r=True,
                  write_model_file: Optional[PathLike] = None, gurobi_params: Dict[str, Any] = None):
         self.GRB_CONSTRAINED_PRESOLVE_TIME_LIMIT = 300  # todo (paras): read this from gurobi_params
         self.gurobi_params = gurobi_params
@@ -26,10 +28,15 @@ class ILPSolver:
         self.model_file = write_model_file
         self.seed_s = seed_s
         self.integral = integral
+        self.imposed_schedule = imposed_schedule
+        self.solve_r = solve_r
         self.eps_noise = eps_noise
         self.budget = budget
         self.g: DFGraph = g
         self.solve_time = None
+
+        if not self.integral:
+            assert not self.solve_r, "Can't solve for R if producing a fractional solution"
 
         self.init_constraints = []  # used for seeding the model
 
@@ -81,9 +88,19 @@ class ILPSolver:
                     GRB.MINIMIZE)
 
             with Timer("Variable initialization", extra_data={'T': str(T), 'budget': str(budget)}):
-                self.m.addLConstr(quicksum(self.R[t, i] for t in range(T) for i in range(t + 1, T)), GRB.EQUAL, 0)
-                self.m.addLConstr(quicksum(self.S[t, i] for t in range(T) for i in range(t, T)), GRB.EQUAL, 0)
-                self.m.addLConstr(quicksum(self.R[t, t] for t in range(T)), GRB.EQUAL, T)
+                if self.imposed_schedule == ImposedSchedule.FULL_SCHEDULE:
+                    self.m.addLConstr(quicksum(self.R[t, i] for t in range(T) for i in range(t + 1, T)), GRB.EQUAL, 0)
+                    self.m.addLConstr(quicksum(self.S[t, i] for t in range(T) for i in range(t, T)), GRB.EQUAL, 0)
+                    self.m.addLConstr(quicksum(self.R[t, t] for t in range(T)), GRB.EQUAL, T)
+                elif self.imposed_schedule == ImposedSchedule.COVER_ALL_NODES:
+                    self.m.addLConstr(quicksum(self.S[0, i] for i in range(T)), GRB.EQUAL, 0)
+                    for i in range(T):
+                        self.m.addLConstr(quicksum(self.R[t, i] for t in range(T)), GRB.GREATER_EQUAL, 1)
+                elif self.imposed_schedule == ImposedSchedule.COVER_LAST_NODE:
+                    self.m.addLConstr(quicksum(self.S[0, i] for i in range(T)), GRB.EQUAL, 0)
+                    # note: the integrality gap is very large as this constraint
+                    # is only applied to the last node (last column of self.R).
+                    self.m.addLConstr(quicksum(self.R[t, T-1] for t in range(T)), GRB.GREATER_EQUAL, 1)
 
             with Timer("Correctness constraints", extra_data={'T': str(T), 'budget': str(budget)}):
                 # ensure all checkpoints are in memory
@@ -191,11 +208,15 @@ class ILPSolver:
             logging.exception(e)
             return None, None, None, None
 
-        Rout = solve_r_opt(self.g, Sout) if self.integral else Rout  # prune R using closed-form solver
+        # prune R using closed-form solver
+        if self.solve_r and self.integral:
+            Rout = solve_r_opt(self.g, Sout)
+
         return Rout, Sout, Uout, Free_Eout
 
 
 def solve_ilp_gurobi(g: DFGraph, budget: int, seed_s: Optional[np.ndarray] = None, approx=True,
+                     imposed_schedule: ImposedSchedule=ImposedSchedule.FULL_SCHEDULE, solve_r=True,
                      time_limit: Optional[int] = None, write_log_file: Optional[PathLike] = None, print_to_console=True,
                      write_model_file: Optional[PathLike] = None, eps_noise=0.01, solver_cores=os.cpu_count()):
     """
@@ -204,6 +225,8 @@ def solve_ilp_gurobi(g: DFGraph, budget: int, seed_s: Optional[np.ndarray] = Non
     :param budget: int -- budget constraint for solving
     :param seed_s: np.ndarray -- optional parameter to set warm-start for solver, defaults to empty S
     :param approx: bool -- set true to return as soon as a solution is found that is within 1% of optimal
+    :param imposed_schedule -- selects a set of constraints on R and S that impose a schedule or require some nodes to be computed
+    :param solve_r -- if set, solve for the optimal R 
     :param time_limit: int -- time limit for solving in seconds
     :param write_log_file: if set, log gurobi to this file
     :param print_to_console: if set, print gurobi logs to the console
@@ -220,7 +243,8 @@ def solve_ilp_gurobi(g: DFGraph, budget: int, seed_s: Optional[np.ndarray] = Non
                   'Presolve': 2,
                   'StartNodeLimit': 10000000}
     ilpsolver = ILPSolver(g, budget, gurobi_params=param_dict, seed_s=seed_s,
-                          eps_noise=eps_noise, write_model_file=write_model_file)
+                          eps_noise=eps_noise, imposed_schedule=imposed_schedule,
+                          solve_r=solve_r, write_model_file=write_model_file)
     ilpsolver.build_model()
     try:
         r, s, u, free_e = ilpsolver.solve()
@@ -230,7 +254,8 @@ def solve_ilp_gurobi(g: DFGraph, budget: int, seed_s: Optional[np.ndarray] = Non
         r, s, u, free_e = (None, None, None, None)
         ilp_feasible = False
     ilp_aux_data = ILPAuxData(U=u, Free_E=free_e, ilp_approx=approx, ilp_time_limit=time_limit, ilp_eps_noise=eps_noise,
-                              ilp_num_constraints=ilpsolver.m.numConstrs, ilp_num_variables=ilpsolver.m.numVars)
+                              ilp_num_constraints=ilpsolver.m.numConstrs, ilp_num_variables=ilpsolver.m.numVars,
+                              ilp_imposed_schedule=imposed_schedule)
     schedule, aux_data = schedule_from_rs(g, r, s)
     return ScheduledResult(
         solve_strategy=SolveStrategy.OPTIMAL_ILP_GC,
@@ -239,5 +264,5 @@ def solve_ilp_gurobi(g: DFGraph, budget: int, seed_s: Optional[np.ndarray] = Non
         schedule=schedule,
         schedule_aux_data=aux_data,
         solve_time_s=ilpsolver.solve_time,
-        ilp_aux_data=ilp_aux_data
+        ilp_aux_data=ilp_aux_data,
     )
