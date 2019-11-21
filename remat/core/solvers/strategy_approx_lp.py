@@ -2,7 +2,9 @@ import logging
 import math
 import os
 from typing import Optional
+
 import numpy as np
+
 from remat.core.dfgraph import DFGraph
 from remat.core.enum_strategy import SolveStrategy, ImposedSchedule
 from remat.core.schedule import ILPAuxData, ScheduledResult
@@ -17,7 +19,6 @@ def solve_approx_lp_deterministic_sweep(
         budget: int,
         seed_s: Optional[np.ndarray] = None,
         approx=True,
-        imposed_schedule: ImposedSchedule=ImposedSchedule.FULL_SCHEDULE,
         time_limit: Optional[int] = None,
         write_log_file: Optional[PathLike] = None,
         print_to_console=True,
@@ -25,6 +26,7 @@ def solve_approx_lp_deterministic_sweep(
         eps_noise=0.01,
         solver_cores=os.cpu_count(),
         thresholds=(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
+        imposed_schedule: ImposedSchedule = ImposedSchedule.FULL_SCHEDULE,
 ):
     param_dict = {
         "LogToConsole": 1 if print_to_console else 0,
