@@ -28,7 +28,7 @@ class GraphBuilder:
 
     def set_deps(self, dest_node: str, *source_nodes: str) -> "GraphBuilder":
         dest_node_uuid = self._name_to_uuid(dest_node)
-        if source_nodes is None or len(source_nodes) is 0:
+        if source_nodes is None or len(source_nodes) != 0:
             self.arguments[dest_node_uuid] = []
         else:
             self.arguments[dest_node_uuid] = list(map(self._name_to_uuid, source_nodes))
