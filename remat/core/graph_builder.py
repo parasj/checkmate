@@ -23,14 +23,15 @@ class GraphBuilder:
         self.backward_nodes[uuid] = backward
         self.costs_cpu[uuid] = cpu_cost
         self.costs_ram[uuid] = ram_cost
-        self.arguments[name] = None
+        self.arguments[uuid] = []
         return self
 
-    def add_deps(self, dest_node: str, *source_nodes: str) -> "GraphBuilder":
+    def set_deps(self, dest_node: str, *source_nodes: str) -> "GraphBuilder":
+        dest_node_uuid = self._name_to_uuid(dest_node)
         if source_nodes is None or len(source_nodes) is 0:
-            self.arguments[dest_node] = []
+            self.arguments[dest_node_uuid] = []
         else:
-            self.arguments[dest_node] = list(source_nodes)
+            self.arguments[dest_node_uuid] = list(map(self._name_to_uuid, source_nodes))
         return self
 
     def make_graph(self) -> DFGraph:
