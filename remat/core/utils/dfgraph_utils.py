@@ -2,8 +2,15 @@ from collections import defaultdict
 
 from remat.core.utils.definitions import EdgeList, AdjList
 
+import numpy as np
+
 
 def toposort(edge_list: EdgeList):
+    """
+    Compute topological ordering of this graph given graph structure
+    :param edge_list: A mapping of (source, dest) pairs
+    :return: list of nodes in topological order
+    """
     E = edge_list
 
     def helper(adj_list_, v, visited_, stack_):
@@ -49,3 +56,11 @@ def adj_to_edge_list(E: AdjList, convert_undirected=False, reverse_edge=False):
             if convert_undirected:
                 edge_list.append(tuple(reversed(edge)))
     return edge_list
+
+
+def gcd(*args):
+    values = np.array(args)
+    intvalues = np.array(values, dtype=int)
+    if not np.allclose(intvalues, values):  # GCD is 1 if values are not integral
+        return 1
+    return np.gcd.reduce(intvalues)

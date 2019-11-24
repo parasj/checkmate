@@ -128,7 +128,7 @@ def get_global_eval_points(g: DFGraph, results: Dict[SolveStrategy, List[Schedul
     :return: list of integral evaluation points
     """
     number_samples = NUM_ILP_GLOBAL * 2 if model_name in DENSE_SOLVE_MODELS else NUM_ILP_GLOBAL
-    min_ram = g.max_degree_ram()
+    min_ram = g.max_degree_ram
 
     # get max point by finding closest matching greedy result
     check_all_result = results[SolveStrategy.CHECKPOINT_ALL][0]

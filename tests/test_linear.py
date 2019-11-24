@@ -1,6 +1,6 @@
 import logging
 
-from remat.core.dfgraph import gen_linear_graph
+from remat.core.graph_builder import gen_linear_graph
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
 from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
 from remat.core.solvers.strategy_chen import solve_chen_greedy, solve_chen_sqrtn

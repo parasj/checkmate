@@ -3,7 +3,7 @@ import logging
 
 from experiments.common.definitions import remat_data_dir
 from experiments.common.graph_plotting import plot
-from remat.core.dfgraph import gen_linear_graph
+from remat.core.graph_builder import gen_linear_graph
 from remat.core.enum_strategy import ImposedSchedule
 from remat.core.solvers.lower_bound_lp import lower_bound_lp_relaxation
 from remat.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic_sweep

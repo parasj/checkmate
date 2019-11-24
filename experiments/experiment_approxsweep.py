@@ -1,4 +1,4 @@
-from remat.core.dfgraph import gen_linear_graph
+from remat.core.graph_builder import gen_linear_graph
 from remat.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic_sweep
 from experiments.common.definitions import remat_data_dir
 from experiments.common.graph_plotting import plot
