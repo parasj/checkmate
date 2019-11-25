@@ -11,14 +11,19 @@ class GraphBuilder:
     def __init__(self):
         self.nodes: Dict[str, uuid.UUID] = {}  # map of user-facing names to internal uuid
         self.backward_nodes: Dict[uuid.UUID, bool] = {}  # map of nodes to if they are backwards nodes
-        self.arguments: Dict[uuid.UUID, List[uuid.UUID]] = {}  # map of internal node uuid to its list of arguments (uuids)
+        self.arguments: Dict[uuid.UUID, List[uuid.UUID]] = {}  # map of internal node uuid to its list of arguments
         self.costs_cpu: Dict[uuid.UUID, int] = {}  # map of per-node CPU costs
         self.costs_ram: Dict[uuid.UUID, int] = {}  # map of per-node RAM costs
+        self.parameter_cost = 0  # store total cost of parameters which is passed along to DFGraph initialization
 
     def _name_to_uuid(self, name: str) -> uuid.UUID:
         if name not in self.nodes.keys():
             self.nodes[name] = uuid.uuid1()
         return self.nodes[name]
+
+    def set_parameter_cost(self, cost: int) -> "GraphBuilder":
+        self.parameter_cost = cost
+        return self
 
     def add_node(self, name: str, cpu_cost: int, ram_cost: int, backward: bool = False) -> "GraphBuilder":
         """
@@ -50,15 +55,16 @@ class GraphBuilder:
         uuid2topo = dict(reversed(pair) for pair in enumerate(uuid.UUID(int=x) for x in toposort(edge_list)))
 
         # step 2 -- map builder data-structures to node position indexed data-structures
-        #           we need (1) list of vertices, (2) per-vertex cpu/ram costs, (3) arg-list and (4) node-name mapping
         vertex_list = list(uuid2topo.values())
         cost_cpu = dict((uuid2topo[idx], self.costs_cpu[idx]) for idx in self.costs_cpu.keys())
         cost_ram = dict((uuid2topo[idx], self.costs_ram[idx]) for idx in self.costs_ram.keys())
         arg_list: AdjList = {uuid2topo[key]: [uuid2topo[arg] for arg in args] for key, args in self.arguments.items()}
         names = {uuid2topo[idx]: name for idx, name in self.nodes.items()}
+        bwd_node_set = set(uuid2topo[v] for v in vertex_list if self.backward_nodes[v])
 
         # step 3 -- make DFGraph
-        pass
+        return DFGraph(v=vertex_list, args=arg_list, backward_nodes=bwd_node_set, node_names=names,
+                        cost_cpu=cost_cpu, cost_ram=cost_ram, cost_ram_parameters=self.parameter_cost)
 
 
 def gen_linear_graph(forward_node_count, **kwargs):
