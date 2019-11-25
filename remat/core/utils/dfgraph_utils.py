@@ -11,34 +11,30 @@ def toposort(edge_list: EdgeList):
     :param edge_list: A mapping of (source, dest) pairs
     :return: list of nodes in topological order
     """
-    E = edge_list
-
-    def helper(adj_list_, v, visited_, stack_):
-        visited_[v] = True
+    def _toposort_helper(adj_list_, v, visited_, stack_):
+        visited_.add(v)
         for i in adj_list_[v]:
-            if not visited_[i]:
-                helper(adj_list_, i, visited_, stack_)
+            if i not in visited_:
+                _toposort_helper(adj_list_, i, visited_, stack_)
         stack_.insert(0, v)
 
-    adj_list = edge_to_adj_list(E, convert_undirected=True)
-    num_nodes = len(adj_list.keys())
-
-    visited = [False] * num_nodes
+    adj_list = edge_to_adj_list(edge_list, convert_undirected=True)
+    visited = set()
     stack = []
-    for i in range(num_nodes):
-        if not visited[i]:
-            helper(adj_list, i, visited, stack)
+    for i in adj_list.keys():
+        if i not in visited:
+            _toposort_helper(adj_list, i, visited, stack)
     return stack
 
 
 def edge_to_adj_list(E: EdgeList, convert_undirected=False):
     """Returns an (undirected / bidirectional) adjacency list"""
     adj_list = defaultdict(set)
-    for (i, j) in list(E):
+    for (i, j) in E:
         adj_list[i].add(j)
         if convert_undirected:
             adj_list[j].add(i)
-    return adj_list
+    return dict(adj_list)
 
 
 def adj_to_edge_list(E: AdjList, convert_undirected=False, reverse_edge=False):

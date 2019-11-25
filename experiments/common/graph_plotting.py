@@ -8,6 +8,7 @@ from remat.core.schedule import Schedule, OperatorEvaluation, ScheduledResult
 from remat.core.utils.definitions import PathLike
 
 
+# TODO (paras) fix this function
 def tensor_plot(g: DFGraph, sched: Schedule, directory, tag=None, format='pdf', quiet=True):
     dot = Digraph(f"!TensorPlot_{tag}", engine="dot")
     if sched is None:
@@ -39,31 +40,14 @@ def tensor_plot(g: DFGraph, sched: Schedule, directory, tag=None, format='pdf', 
 def render_dfgraph(g: DFGraph, directory, format='pdf', quiet=True, name=""):
     """Generate Graphviz-formatted edge list for visualization, and write pdf"""
     dot = Digraph("render_dfgraph" + str(name))
-    dot.attr('graph', ratio='compress')  # rankdir='LR',
-    for u in g.vfwd:
-        with dot.subgraph() as s:
-            s.attr(rank='same')
-            node_name = g.node_names.get(u)
-            node_name = node_name if node_name is None else "{} ({})".format(node_name, str(u))
-            s.node(str(u), node_name)
-
-            v = g.forward_to_backward(u)
-            node_name = "&nabla;{}".format(g.node_names.get(u, u))
-            node_name = node_name if node_name is None else "{} ({})".format(node_name, str(v))
-            s.node(str(v), node_name, style='filled')
-
+    dot.attr('graph')
     for u in g.v:
-        if u not in g.vfwd_map.values() and u not in g.vfwd_map.keys():
-            node_name = g.node_names.get(u)
-            node_name = node_name if node_name is None else "{} ({})".format(node_name, str(u))
-            dot.node(str(u), node_name)
-
+        node_name = g.node_names.get(u)
+        node_name = node_name if node_name is None else "{} ({})".format(node_name, str(u))
+        dot.node(str(u), node_name)
     for edge in g.edge_list:
         dep_order = str(g.args[edge[-1]].index(edge[0]))
-        if edge not in g.edge_list_fwd and g.vloss not in edge:
-            dot.edge(*map(str, edge), constraint='false', label=dep_order)
-        else:
-            dot.edge(*map(str, edge), label=dep_order)
+        dot.edge(*map(str, edge), label=dep_order)
     try:
         dot.render(directory=directory, format=format, quiet=quiet)
     except TypeError:
