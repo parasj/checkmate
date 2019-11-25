@@ -41,12 +41,10 @@ class GraphBuilder:
         self.arguments[uuid] = []
         return self
 
-    def set_deps(self, dest_node: str, *source_nodes: str) -> "GraphBuilder":
+    def add_deps(self, dest_node: str, *source_nodes: str) -> "GraphBuilder":
         dest_node_uuid = self._name_to_uuid(dest_node)
-        if source_nodes is None or len(source_nodes) != 0:
-            self.arguments[dest_node_uuid] = []
-        else:
-            self.arguments[dest_node_uuid] = list(map(self._name_to_uuid, source_nodes))
+        self.arguments[dest_node_uuid] = list(*self.arguments[dest_node_uuid]) + list(
+            map(self._name_to_uuid, source_nodes))
         return self
 
     def make_graph(self) -> DFGraph:
@@ -64,24 +62,25 @@ class GraphBuilder:
 
         # step 3 -- make DFGraph
         return DFGraph(v=vertex_list, args=arg_list, backward_nodes=bwd_node_set, node_names=names,
-                        cost_cpu=cost_cpu, cost_ram=cost_ram, cost_ram_parameters=self.parameter_cost)
+                       cost_cpu=cost_cpu, cost_ram=cost_ram, cost_ram_parameters=self.parameter_cost)
 
 
-def gen_linear_graph(forward_node_count, **kwargs):
+def gen_linear_graph(forward_node_count):
     """
     gen_linear_graph will generate linear-style graphs like VGG and AlexNet.
     Method returns forward and backward graphs. Pass cost_ram and cost_cpu as kwargs.
     :param forward_node_count: number of forward (not backward nodes)
     :return: Graph object containing linear graph
     """
-    args = defaultdict(list)
-    vfwd_map = {}
-    loss_node_idx = forward_node_count
+    gb = GraphBuilder()
+
     for i in range(forward_node_count * 2):
-        args[i + 1].append(i)
-        if i < forward_node_count:
-            corresponding_bwd = (forward_node_count * 2) - i
-            args[corresponding_bwd].append(i)
-            vfwd_map[i] = corresponding_bwd
-    v = list(vfwd_map.keys()) + list(vfwd_map.values()) + [loss_node_idx]
-    return DFGraph(args=args, v=v, vfwd_map=vfwd_map, vloss=loss_node_idx, **kwargs)
+        gb.add_node(f'node{i}', cpu_cost=1, ram_cost=1, backward=(i < forward_node_count))
+        if i > 0:
+            gb.add_deps(f'node{i}', f'node{i - 1}')
+
+    for i in range(forward_node_count):
+        corresponding_bwd = (forward_node_count * 2) - i
+        gb.add_deps(f'node{corresponding_bwd}', f'node{i}')
+
+    return gb.make_graph()
