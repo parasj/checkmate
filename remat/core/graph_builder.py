@@ -68,7 +68,7 @@ class GraphBuilder:
                        cost_cpu=cost_cpu, cost_ram=cost_ram, cost_ram_parameters=self.parameter_cost)
 
 
-def gen_linear_graph(forward_node_count):
+def gen_linear_graph(forward_node_count) -> DFGraph:
     """
     gen_linear_graph will generate linear-style graphs like VGG and AlexNet.
     Method returns forward and backward graphs. Pass cost_ram and cost_cpu as kwargs.

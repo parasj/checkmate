@@ -26,6 +26,10 @@ class DFGraph:
         self.cost_ram_parameters = cost_ram_parameters
 
     @property
+    def vfwd(self):
+        return list(filter(lambda x: x not in self.backward_nodes, self.v))
+
+    @property
     @lru_cache(maxsize=1)
     def edge_list(self):
         return adj_to_edge_list(self.args, reverse_edge=True)

@@ -26,7 +26,7 @@ def gen_s_matrix_fixed_checkpoints(g: DFGraph, segment_set: Set[int]):
     as output S matrices denoting checkpoint schedule, given a set of
     fixed segments (only recompute once).
     """
-    T = g.size_fwd
+    T = len(g.vfwd)
     Ttotal = g.size
     segment_set = list(sorted(segment_set))
     S = setup_implied_s_backwards(g)
@@ -55,7 +55,7 @@ def gen_s_matrix_fixed_checkpoints(g: DFGraph, segment_set: Set[int]):
             for i in range(start, min(t, end)):
                 S[t, i] = 1
 
-    # backward checkpoint block
+    # backward checkpoint bloc
     for start, end in zip(starts, ends):
         for t in filter(lambda _t: _t < Ttotal, range(start, end + 1)):
             back_t = Ttotal - 1 - t

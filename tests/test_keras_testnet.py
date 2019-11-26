@@ -8,7 +8,7 @@ from remat.tf2_keras.extraction import dfgraph_from_keras
 def test_testnet_checkpointall():
     model = get_keras_model("test")
     g = dfgraph_from_keras(mod=model)
-    assert g.size_fwd == 6
+    assert len(g.vfwd) == 6
     scheduler_result = solve_checkpoint_all(g)
     assert scheduler_result.feasible
     assert scheduler_result.schedule_aux_data.cpu == sum(g.cost_cpu.values())
@@ -25,7 +25,7 @@ def test_testnet_optimalilp():
 
     model = get_keras_model("test")
     g = dfgraph_from_keras(mod=model)
-    assert g.size_fwd == 6
+    assert len(g.vfwd) == 6
     budget = sum(g.cost_ram.values()) + g.cost_ram_parameters
     scheduler_result = solve_ilp_gurobi(g, budget)
     assert scheduler_result.feasible
