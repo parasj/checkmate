@@ -15,14 +15,11 @@ def tensor_plot(g: DFGraph, sched: Schedule, directory, tag=None, format='pdf', 
         return
     for op in sched:
         if isinstance(op, OperatorEvaluation):
-            if g.is_loss_node(op.id):
-                node_name = "Loss"
-            elif g.is_forward_node(op.id):
+            if g.is_forward_node(op.id):
                 node_name = g.node_names.get(op.id)
                 node_name = node_name if node_name is None else f"{node_name} ({str(op.id)})"
             elif g.is_backward_node(op.id):
-                fwd_node = g.backward_to_forward(op.id)
-                node_name = "Grad<{}> {} {}".format(g.node_names.get(fwd_node), fwd_node, op.id)
+                node_name = "Grad {}".format(op.id)
             else:
                 raise ValueError("Unknown operation")
             # dot.node("op{}".format(op.id), node_name, shape="diamond")
