@@ -1,10 +1,9 @@
 import uuid
-from collections import defaultdict
 from typing import Dict, List, Set
 
 from experiments.common.graph_plotting import render_dfgraph
 from remat.core.dfgraph import DFGraph
-from remat.core.utils.definitions import EdgeList, AdjList
+from remat.core.utils.definitions import AdjList
 from remat.core.utils.dfgraph_utils import toposort
 
 
