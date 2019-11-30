@@ -4,7 +4,7 @@ from typing import Iterable, Dict, List, Set
 
 from toposort import toposort
 from remat.core.utils.definitions import Vertex, EdgeList, AdjList
-from remat.core.utils.dfgraph_utils import edge_to_adj_list, adj_to_edge_list, gcd
+from remat.core.utils.dfgraph_utils import edge_to_adj_list, adj_to_edge_list, gcd, connected_components
 
 
 class DFGraph:
@@ -84,35 +84,14 @@ class DFGraph:
     @lru_cache(maxsize=None)
     def checkpoint_set(self) -> Set[Vertex]:
         """Determine checkpointable nodes in a forward graph (not backward)"""
-
-        def connected_components(vertex: Iterable[int], edge_list: EdgeList):
-            def dfs(graph, node, visited):
-                if node not in visited:
-                    visited.append(node)
-                    for n in graph[node]:
-                        dfs(graph, n, visited)
-                return visited
-
-            unvisited = set(vertex)
-            adj_list = edge_to_adj_list(edge_list, convert_undirected=True)
-            components = 0
-            while len(unvisited) > 0:
-                vertex = unvisited.pop()
-                visited = dfs(adj_list, vertex, [])
-                for vertex in visited:
-                    unvisited.discard(vertex)
-                components += 1
-            return components
-
         E = list(self.edge_list_fwd)
         V = set([i for (i, j) in E] + [j for (i, j) in E]).union({-1, -2})  # directed to undirected graph
         E = [(i, j) for (i, j) in E if i in V and j in V] + [(-1, 0), (max(V), -2)]
         checkpoint_ok = set()
         for v in filter(lambda v: v >= 0, V):  # ignore placeholders for input and output
             # count connected components in induced subgraph F = G / v
-            Vprime = {x for x in V if x != v}
             Eprime = {e for e in E if v not in e}
-            n_components = connected_components(Vprime, Eprime)
+            n_components = len(list(connected_components(edge_to_adj_list(Eprime, convert_undirected=True))))
             if n_components > 1:
                 checkpoint_ok.add(v)
         return checkpoint_ok

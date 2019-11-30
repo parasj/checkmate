@@ -7,9 +7,11 @@ from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_no
 from remat.core.solvers.strategy_chen import solve_chen_greedy, solve_chen_sqrtn
 from remat.core.solvers.strategy_griewank import solve_griewank
 
+test_points = [2, 4, 6, 8, 9, 11, 13, 16, 32]
+
 
 def test_checkpoint_all():
-    for graph_length in range(8, 32):  # 2, 32
+    for graph_length in test_points:
         g = gen_linear_graph(graph_length)
         assert g.size == 2 * graph_length + 1
         scheduler_result = solve_checkpoint_all(g)
@@ -18,7 +20,7 @@ def test_checkpoint_all():
 
 
 def test_checkpoint_last():
-    for graph_length in range(2, 32):
+    for graph_length in test_points:
         g = gen_linear_graph(graph_length)
         assert g.size == 2 * graph_length + 1
         scheduler_result = solve_checkpoint_last_node(g)
@@ -27,7 +29,7 @@ def test_checkpoint_last():
 
 
 def test_checkpoint_all_ap():
-    for graph_length in range(2, 32):
+    for graph_length in test_points:
         g = gen_linear_graph(graph_length)
         assert g.size == 2 * graph_length + 1
         scheduler_result = solve_checkpoint_all_ap(g)
@@ -72,7 +74,7 @@ def test_ilp():
         logging.warning("Continuing with tests, gurobi not installed")
         return
     from remat.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
-    for graph_length in [2, 4, 8]:
+    for graph_length in test_points:
         g = gen_linear_graph(graph_length)
         assert g.size == 2 * graph_length + 1
         total_cost = sum(g.cost_ram.values())
@@ -81,7 +83,7 @@ def test_ilp():
 
 
 def test_griewank():
-    for graph_length in [2 ** i for i in range(1, 6)]:
+    for graph_length in test_points:
         g = gen_linear_graph(graph_length)
         assert g.size == 2 * graph_length + 1
         total_cost = sum(g.cost_ram.values())

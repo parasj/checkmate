@@ -32,6 +32,36 @@ def adj_to_edge_list(E: AdjList, convert_undirected=False, reverse_edge=False):
     return edge_list
 
 
+def connected_components(adj_list: AdjList):
+    seen = set()
+
+    def component(node):
+        nodes = {node}
+        while nodes:
+            node = nodes.pop()
+            seen.add(node)
+            nodes |= set(adj_list[node]) - seen
+            yield node
+
+    for node in adj_list:
+        if node not in seen:
+            yield component(node)
+
+
+def connected_components(neighbors):
+    seen = set()
+    def component(node):
+        nodes = set([node])
+        while nodes:
+            node = nodes.pop()
+            seen.add(node)
+            nodes |= neighbors[node] - seen
+            yield node
+    for node in neighbors:
+        if node not in seen:
+            yield component(node)
+
+
 def gcd(*args):
     values = np.array(args)
     intvalues = np.array(values, dtype=int)
