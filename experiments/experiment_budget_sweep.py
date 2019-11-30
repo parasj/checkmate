@@ -18,7 +18,7 @@ from matplotlib.lines import Line2D
 from scipy.stats.mstats import gmean
 
 from experiments.common.definitions import remat_data_dir
-from experiments.common.graph_plotting import render_dfgraph
+from experiments.common.graph_plotting import plot_dfgraph
 from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model, CHAIN_GRAPH_MODELS
 from experiments.common.profile.cost_model import CostModel
 from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory, pretty_platform_name
@@ -201,7 +201,7 @@ if __name__ == "__main__":
                                   to_file=log_base / f"plot_{model_name}_keras.png",
                                   show_shapes=True,
                                   show_layer_names=True)
-        render_dfgraph(g, log_base, name=model_name)
+        plot_dfgraph(g, log_base, name=model_name)
 
     # sweep constant baselines
     logger.info(f"Running constant baselines (ALL, ALL_AP, LAST_NODE, SQRTN_NOAP, SQRTN)")

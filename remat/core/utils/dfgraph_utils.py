@@ -5,28 +5,6 @@ from remat.core.utils.definitions import EdgeList, AdjList
 import numpy as np
 
 
-def toposort(edge_list: EdgeList):
-    """
-    Compute topological ordering of this graph given graph structure
-    :param edge_list: A mapping of (source, dest) pairs
-    :return: list of nodes in topological order
-    """
-    def _toposort_helper(adj_list_, v, visited_, stack_):
-        visited_.add(v)
-        for i in adj_list_[v]:
-            if i not in visited_:
-                _toposort_helper(adj_list_, i, visited_, stack_)
-        stack_.insert(0, v)
-
-    adj_list = edge_to_adj_list(edge_list, convert_undirected=True)
-    visited = set()
-    stack = []
-    for i in adj_list.keys():
-        if i not in visited:
-            _toposort_helper(adj_list, i, visited, stack)
-    return stack
-
-
 def edge_to_adj_list(E: EdgeList, convert_undirected=False):
     """Returns an (undirected / bidirectional) adjacency list"""
     adj_list = defaultdict(set)

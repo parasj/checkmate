@@ -1,10 +1,15 @@
 import uuid
 from typing import Dict, List, Set
 
-from experiments.common.graph_plotting import render_dfgraph
+from experiments.common.graph_plotting import plot_dfgraph, plot_schedule
+from experiments.common.load_keras_model import get_keras_model
 from remat.core.dfgraph import DFGraph
+from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
 from remat.core.utils.definitions import AdjList
-from remat.core.utils.dfgraph_utils import toposort
+from toposort import toposort
+
+from remat.core.utils.dfgraph_utils import edge_to_adj_list
+from remat.tf2_keras.extraction import dfgraph_from_keras
 
 
 class GraphBuilder:
@@ -20,6 +25,12 @@ class GraphBuilder:
         if name not in self.nodes.keys():
             self.nodes[name] = uuid.uuid4()
         return self.nodes[name]
+
+    def _uuid_to_name(self, uuid: uuid.UUID) -> str:
+        """convenience method that is quite slow"""
+        for name, idx in self.nodes.items():
+            if idx == uuid:
+                return name
 
     def set_parameter_cost(self, cost: int) -> "GraphBuilder":
         self.parameter_cost = cost
@@ -52,7 +63,8 @@ class GraphBuilder:
     def make_graph(self) -> DFGraph:
         # step 1 -- toposort graph and allocate node positions as a dict({0, ..., n} -> UUID)
         edge_list = [(source, dest) for dest, sources in self.arguments.items() for source in sources]
-        uuid2topo = dict(reversed(pair) for pair in enumerate(x for x in toposort(edge_list)))
+        topo_order = list(reversed([x for st in toposort(edge_to_adj_list(edge_list)) for x in st]))
+        uuid2topo = {uuid: topo_idx for topo_idx, uuid in enumerate(topo_order)}
 
         # step 2 -- map builder data-structures to node position indexed data-structures
         vertex_list = list(uuid2topo.values())
@@ -76,7 +88,7 @@ def gen_linear_graph(forward_node_count) -> DFGraph:
     """
     gb = GraphBuilder()
     for i in range(forward_node_count * 2 + 1):
-        gb.add_node(f'node{i}', cpu_cost=1, ram_cost=1, backward=(i < forward_node_count))
+        gb.add_node(f'node{i}', cpu_cost=1, ram_cost=1, backward=(i >= forward_node_count))
         if i > 0:
             gb.add_deps(f'node{i}', f'node{i - 1}')
 
@@ -84,8 +96,3 @@ def gen_linear_graph(forward_node_count) -> DFGraph:
         corresponding_bwd = (forward_node_count * 2) - i
         gb.add_deps(f'node{corresponding_bwd}', f'node{i}')
     return gb.make_graph()
-
-
-if __name__ == "__main__":
-    g = gen_linear_graph(16)
-    render_dfgraph(g, '/tmp/remat_test_linear/')

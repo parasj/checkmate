@@ -2,8 +2,9 @@ from collections import defaultdict
 from functools import lru_cache
 from typing import Iterable, Dict, List, Set
 
+from toposort import toposort
 from remat.core.utils.definitions import Vertex, EdgeList, AdjList
-from remat.core.utils.dfgraph_utils import edge_to_adj_list, adj_to_edge_list, toposort, gcd
+from remat.core.utils.dfgraph_utils import edge_to_adj_list, adj_to_edge_list, gcd
 
 
 class DFGraph:
@@ -30,15 +31,37 @@ class DFGraph:
         return list(filter(lambda x: x not in self.backward_nodes, self.v))
 
     @property
+    def vbwd(self):
+        return list(filter(lambda x: x in self.backward_nodes, self.v))
+
+    @property
+    @lru_cache(maxsize=1)
+    def adj_list(self):
+        adj_list = defaultdict(list)
+        for v, sources in self.args.items():
+            for u in sources:
+                adj_list[u].append(v)
+        return dict(adj_list)
+
+    @property
+    @lru_cache(maxsize=1)
+    def adj_list_fwd(self):
+        adj_list = defaultdict(list)
+        for v, sources in self.args.items():
+            for u in sources:
+                if v in self.vfwd:
+                    adj_list[u].append(v)
+        return dict(adj_list)
+
+    @property
     @lru_cache(maxsize=1)
     def edge_list(self):
-        return adj_to_edge_list(self.args, reverse_edge=True)
+        return adj_to_edge_list(self.adj_list)
 
     @property
     @lru_cache(maxsize=1)
     def edge_list_fwd(self):
-        args_fwd = {dest: sources for dest, sources in self.args.items() if dest not in self.backward_nodes}
-        return adj_to_edge_list(args_fwd, reverse_edge=True)
+        return adj_to_edge_list(self.adj_list_fwd)
 
     @property
     def size(self):
@@ -101,13 +124,14 @@ class DFGraph:
         return V
 
     @property
+    @lru_cache(maxsize=1)
     def topological_order(self):
-        return toposort(self.edge_list)
+        return list(toposort(self.adj_list))
 
     @property
     @lru_cache(maxsize=1)
     def topological_order_fwd(self):
-        return toposort(self.edge_list_fwd)
+        return list(toposort(self.adj_list_fwd))
 
     @property
     @lru_cache(maxsize=1)
@@ -138,7 +162,7 @@ class DFGraph:
         return self._successor_dict[node]
 
     def induce_subgraph(self, nodes: List[Vertex]) -> EdgeList:
-        return [e for e in self.edge_list if all(map(lambda x: x in nodes, e))]
+        return [e for e in self.edge_list if all([x in nodes for x in e])]
 
     def is_forward_node(self, node: Vertex):
         return node not in self.backward_nodes
