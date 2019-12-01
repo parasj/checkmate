@@ -73,12 +73,12 @@ class DFGraph:
         return int(2 * self.cost_ram_parameters)
 
     def ram_gcd(self, *othervals):
-        values = list(self.cost_ram.values()) + list(othervals)  # + [self.cost_ram_fixed]
-        return gcd(values)
+        values = set(self.cost_ram.values()) | set(othervals)  # + [self.cost_ram_fixed]
+        return gcd(*values)
 
     def cpu_gcd(self, *othervals):
-        values = list(self.cost_cpu.values()) + list(othervals)
-        return gcd(values)
+        values = set(self.cost_cpu.values()) | set(othervals)
+        return gcd(*values)
 
     @property
     @lru_cache(maxsize=None)

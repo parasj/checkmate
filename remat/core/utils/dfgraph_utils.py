@@ -1,4 +1,6 @@
+import fractions
 from collections import defaultdict
+from functools import reduce
 
 from remat.core.utils.definitions import EdgeList, AdjList
 
@@ -48,23 +50,9 @@ def connected_components(adj_list: AdjList):
             yield component(node)
 
 
-def connected_components(neighbors):
-    seen = set()
-    def component(node):
-        nodes = set([node])
-        while nodes:
-            node = nodes.pop()
-            seen.add(node)
-            nodes |= neighbors[node] - seen
-            yield node
-    for node in neighbors:
-        if node not in seen:
-            yield component(node)
-
-
 def gcd(*args):
-    values = np.array(args)
-    intvalues = np.array(values, dtype=int)
+    values = np.array(list(args))
+    intvalues = values.astype(np.int)
     if not np.allclose(intvalues, values):  # GCD is 1 if values are not integral
         return 1
-    return np.gcd.reduce(intvalues)
+    return reduce(fractions.gcd, intvalues)

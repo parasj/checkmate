@@ -55,7 +55,8 @@ class ILPSolver:
             self.R = self.m.addVars(T, T, name="R", vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0)
             self.S = self.m.addVars(T, T, name="S", vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0)
             self.Free_E = self.m.addVars(T, len(self.g.edge_list), name="FREE_E", vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0)
-        self.U = self.m.addVars(T, T, name="U", lb=0.0, ub=float(budget) / self.ram_gcd)
+        gcd = float(budget) / self.ram_gcd
+        self.U = self.m.addVars(T, T, name="U", lb=0.0, ub=gcd)
         for x in range(T):
             for y in range(T):
                 self.m.addLConstr(self.U[x, y], GRB.GREATER_EQUAL, 0)
