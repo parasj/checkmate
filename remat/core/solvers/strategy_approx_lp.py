@@ -149,6 +149,7 @@ def solve_approx_lp_randomized(
         int(0.9 * budget),  # hack to get values under the budget
         gurobi_params=param_dict,
         seed_s=seed_s,
+        solve_r=False,
         integral=False,
         eps_noise=eps_noise,
         write_model_file=write_model_file,
