@@ -1,4 +1,3 @@
-from enum import Enum
 import logging
 import math
 import os
@@ -10,11 +9,11 @@ from gurobipy import GRB, Model, quicksum
 
 import remat.core
 from remat.core.dfgraph import DFGraph
-from remat.core.schedule import ScheduledResult, ILPAuxData, SchedulerAuxData
-from remat.core.utils.definitions import PathLike
-from remat.core.utils.solver_common import solve_r_opt
-from remat.core.utils.scheduler import schedule_from_rs
 from remat.core.enum_strategy import SolveStrategy, ImposedSchedule
+from remat.core.schedule import ScheduledResult, ILPAuxData
+from remat.core.utils.definitions import PathLike
+from remat.core.utils.scheduler import schedule_from_rs
+from remat.core.utils.solver_common import solve_r_opt
 from remat.core.utils.timer import Timer
 
 
