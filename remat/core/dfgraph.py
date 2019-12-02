@@ -82,7 +82,7 @@ class DFGraph:
 
     @property
     @lru_cache(maxsize=None)
-    def checkpoint_set(self) -> Set[Vertex]:
+    def articulation_points(self) -> Set[Vertex]:
         """Determine checkpointable nodes in a forward graph (not backward)"""
         E = list(self.edge_list_fwd)
         V = set([i for (i, j) in E] + [j for (i, j) in E]).union({-1, -2})  # directed to undirected graph
@@ -95,12 +95,6 @@ class DFGraph:
             if n_components > 1:
                 checkpoint_ok.add(v)
         return checkpoint_ok
-
-    @property
-    def checkpoint_set_all(self) -> set:
-        E = list(self.edge_list_fwd)
-        V = set([i for (i, j) in E] + [j for (i, j) in E])
-        return V
 
     @property
     @lru_cache(maxsize=1)

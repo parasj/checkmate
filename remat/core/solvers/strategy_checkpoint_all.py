@@ -24,7 +24,7 @@ def solve_checkpoint_all(g: DFGraph):
 
 def solve_checkpoint_all_ap(g: DFGraph):
     with Timer('solve_checkpoint_all') as timer_solve:
-        s = gen_s_matrix_fixed_checkpoints(g, g.checkpoint_set)
+        s = gen_s_matrix_fixed_checkpoints(g, g.articulation_points)
         r = solve_r_opt(g, s)
     schedule, aux_data = schedule_from_rs(g, r, s)
     return ScheduledResult(
