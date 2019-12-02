@@ -3,6 +3,7 @@ from typing import Set
 import numpy as np
 
 from remat.core.dfgraph import DFGraph
+from remat.core.utils.definitions import Vertex
 
 SOLVER_DTYPE = np.int
 
@@ -19,7 +20,7 @@ def setup_implied_s_backwards(g: DFGraph, s: np.ndarray = None):
     return s
 
 
-def gen_s_matrix_fixed_checkpoints(g: DFGraph, segment_set: Set[int]):
+def gen_s_matrix_fixed_checkpoints(g: DFGraph, segment_set: Set[Vertex]):
     """
     Given a list of checkpoint locations, this function will generate
     as output S matrices denoting checkpoint schedule, given a set of

@@ -10,7 +10,7 @@ from remat.core.utils.timer import Timer
 
 def solve_chen_greedy(g: DFGraph, segment_mem_B: int, use_actuation_points: bool):
     with Timer('solve_chen_greedy') as timer_solve:
-        C = g.checkpoint_set if use_actuation_points else g.checkpoint_set_all
+        C = g.articulation_points if use_actuation_points else g.v
         temp = 0
         x = 0
         checkpoints = set()
@@ -35,7 +35,7 @@ def solve_chen_greedy(g: DFGraph, segment_mem_B: int, use_actuation_points: bool
 
 def solve_chen_sqrtn(g: DFGraph, use_actuation_points: bool) -> ScheduledResult:
     with Timer('solve_chen_sqrtn') as timer_solve:
-        C = g.checkpoint_set if use_actuation_points else g.checkpoint_set_all
+        C = g.articulation_points if use_actuation_points else g.v
         k = int(math.sqrt(len(C)))
         checkpoints = [v for idx, v in enumerate(C) if (idx + 1) % k == 0]
         S = gen_s_matrix_fixed_checkpoints(g, set(checkpoints))

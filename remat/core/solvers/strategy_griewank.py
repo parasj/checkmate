@@ -33,7 +33,7 @@ def _solve_griewank_to_rs(g: DFGraph, budget: int):
     S = setup_implied_s_backwards(g, S)
     np.fill_diagonal(S[1:], 1)
 
-    ap_points = list(sorted(g.checkpoint_set))
+    ap_points = list(sorted(g.articulation_points))
     metaTfwd = len(ap_points)
     ap_points = ap_points + [g.forward_to_backward(p) for p in reversed(ap_points)]
     meta_to_real_v = {ap_points.index(ap_point): ap_point for ap_point in ap_points}
