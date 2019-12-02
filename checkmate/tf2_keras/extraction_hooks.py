@@ -27,10 +27,16 @@ def conv_hook(node, inputs, outputs):
     # NOTE: This method assumes shapes are ordered as NHWC
     if None in outputs and None not in inputs and node.padding == "valid":
         # Fill in unknown height and width. Note that padding = 0 for a "valid" Conv2D.
-        H = int((inputs[1] - node.dilation_rate[0] * (node.kernel_size[0] - 1) - 1) /
-                node.strides[0] + 1)
-        W = int((inputs[2] - node.dilation_rate[1] * (node.kernel_size[1] - 1) - 1) /
-                node.strides[1] + 1)
+        H = int(
+            (inputs[1] - node.dilation_rate[0] * (node.kernel_size[0] - 1) - 1)
+            / node.strides[0]
+            + 1
+        )
+        W = int(
+            (inputs[2] - node.dilation_rate[1] * (node.kernel_size[1] - 1) - 1)
+            / node.strides[1]
+            + 1
+        )
         newshape = (outputs[0], H, W, outputs[3])
         print("Inferred Conv2D shape: {} => {}".format(outputs, newshape))
         outputs = newshape
@@ -118,8 +124,9 @@ def reshape_hook(node, inputs, outputs):
         output_count = np.prod([d for d in outputs if d is not None])
         missing_dim = input_count // output_count
         outputs = tuple(d if d is not None else missing_dim for d in outputs)
-        assert np.prod(outputs) == input_count, \
-            "Could not infer missing dimension in reshape output"
+        assert (
+            np.prod(outputs) == input_count
+        ), "Could not infer missing dimension in reshape output"
 
     mem_cost = np.prod(outputs) * MEMORY_MULTIPLIER
     ops = 0
@@ -169,32 +176,31 @@ def pspnet_lambda_hook(node, inputs, outputs):
 # todo flatten
 hooks = {
     # General hooks
-    'Conv2D': conv_hook,
-    'Conv2DTranspose': conv_transpose_hook,
-    'Cropping2D': pool_hook,  # TODO fix
-    'DepthwiseConv2D': depthwise_conv_hook,
-    'BatchNormalization': bn_hook,
-    'Activation': relu_hook,
-    'ReLU': relu_hook,
-    'MaxPooling2D': pool_hook,
-    'Dropout': dropout_hook,
-    'Concatenate': concat_hook,
-    'Add': add_hook,
-    'GlobalAveragePooling2D': pool_hook,
-    'AveragePooling2D': pool_hook,
+    "Conv2D": conv_hook,
+    "Conv2DTranspose": conv_transpose_hook,
+    "Cropping2D": pool_hook,  # TODO fix
+    "DepthwiseConv2D": depthwise_conv_hook,
+    "BatchNormalization": bn_hook,
+    "Activation": relu_hook,
+    "ReLU": relu_hook,
+    "MaxPooling2D": pool_hook,
+    "Dropout": dropout_hook,
+    "Concatenate": concat_hook,
+    "Add": add_hook,
+    "GlobalAveragePooling2D": pool_hook,
+    "AveragePooling2D": pool_hook,
     # 'Shape': shape_hook,
-    'Flatten': reshape_hook,
-    'Concat': concat_hook,
-    'Reshape': reshape_hook,
-    'UpSampling2D': upsample_hook,
-    'Dense': fc_hook,
+    "Flatten": reshape_hook,
+    "Concat": concat_hook,
+    "Reshape": reshape_hook,
+    "UpSampling2D": upsample_hook,
+    "Dense": fc_hook,
     # 'Gemm': gemm_hook,
     # 'Squeeze' : reshape_hook,
-    'ZeroPadding2D': pad_hook,
-
+    "ZeroPadding2D": pad_hook,
     # Model specific hooks
-    'Interp': pspnet_interp_hook,
-    'Lambda': pspnet_lambda_hook,
+    "Interp": pspnet_interp_hook,
+    "Lambda": pspnet_lambda_hook,
 }
 
 
@@ -230,12 +236,23 @@ def op_hook(layer, batch_size=1):
 
     # Shape checks
     if len(inputs) == 0 or len(outputs) == 0:
-        print("WARN: No inputs or no outputs?", type(layer),
-              "input shape:", inputs, "output shape:", outputs)
+        print(
+            "WARN: No inputs or no outputs?",
+            type(layer),
+            "input shape:",
+            inputs,
+            "output shape:",
+            outputs,
+        )
 
     if None in inputs or None in outputs:
-        print("WARN: Layer of type {} has None in shape".format(type(layer)),
-              "input shape:", inputs, "output shape:", outputs)
+        print(
+            "WARN: Layer of type {} has None in shape".format(type(layer)),
+            "input shape:",
+            inputs,
+            "output shape:",
+            outputs,
+        )
 
     ops, mem_cost = hooks[layer.__class__.__name__](layer, inputs, outputs)
     return ops, mem_cost

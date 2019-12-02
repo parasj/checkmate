@@ -45,7 +45,9 @@ def gen_s_matrix_fixed_checkpoints(g: DFGraph, segment_set: Set[Vertex]):
     starts = [0] + list(map(lambda x: x, segment_set))
     ends = segment_set + [T + 1]
     for start, end in zip(starts, ends):
-        for t in filter(lambda t: t < Ttotal, map(lambda x: Ttotal - x - 1, range(start, end))):
+        for t in filter(
+            lambda t: t < Ttotal, map(lambda x: Ttotal - x - 1, range(start, end))
+        ):
             for i in range(start, min(t, end)):
                 S[t, i] = 1
 

@@ -10,7 +10,7 @@ from checkmate.core.utils.timer import Timer
 
 def solve_checkpoint_last_node(g: DFGraph):
     """Checkpoint only one node between stages"""
-    with Timer('solve_checkpoint_last_node') as timer_solve:
+    with Timer("solve_checkpoint_last_node") as timer_solve:
         s = np.zeros((g.size, g.size), dtype=SOLVER_DTYPE)
         np.fill_diagonal(s[1:], 1)
         r = solve_r_opt(g, s)
@@ -21,5 +21,5 @@ def solve_checkpoint_last_node(g: DFGraph):
         feasible=True,
         schedule=schedule,
         schedule_aux_data=aux_data,
-        solve_time_s=timer_solve.elapsed
+        solve_time_s=timer_solve.elapsed,
     )
