@@ -40,19 +40,19 @@ def gen_s_matrix_fixed_checkpoints(g: DFGraph, segment_set: Set[int]):
             if i < t:
                 S[t, i] = 1
 
-    # # checkpoint ladders
-    # starts = [0] + list(map(lambda x: x, segment_set))
-    # ends = segment_set + [T + 1]
-    # for start, end in zip(starts, ends):
-    #     for t in filter(lambda t: t < Ttotal, map(lambda x: Ttotal - x - 1, range(start, end))):
-    #         for i in range(start, min(t, end)):
-    #             S[t, i] = 1
-    #
-    # # forward checkpoint block
-    # for start, end in zip(starts, ends):
-    #     for t in filter(lambda t: t < Ttotal, range(start, end + 1)):
-    #         for i in range(start, min(t, end)):
-    #             S[t, i] = 1
+    # checkpoint ladders
+    starts = [0] + list(map(lambda x: x, segment_set))
+    ends = segment_set + [T + 1]
+    for start, end in zip(starts, ends):
+        for t in filter(lambda t: t < Ttotal, map(lambda x: Ttotal - x - 1, range(start, end))):
+            for i in range(start, min(t, end)):
+                S[t, i] = 1
+
+    # forward checkpoint block
+    for start, end in zip(starts, ends):
+        for t in filter(lambda t: t < Ttotal, range(start, end + 1)):
+            for i in range(start, min(t, end)):
+                S[t, i] = 1
 
     # backward checkpoint block
     # originally used as baselines will checkpoint whole blocks (e.g. Chen 2016 checkpoints entire backwards blocks),
