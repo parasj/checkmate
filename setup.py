@@ -12,7 +12,6 @@ setup(
         "numpy",
         "pandas",
         "pytest",
-        "python-dotenv",
         "tensorflow>=2.0.0",
         "toposort",
     ],
@@ -20,6 +19,7 @@ setup(
         'gpu': ['tensorflow-gpu>=2.0.0'],
         'eval': [
             "keras_segmentation @ https://github.com/ajayjain/image-segmentation-keras/archive/master.zip#egg=keras_segmentation-0.2.0remat",
+            "python-dotenv",
             "ray>=0.7.5",
             "redis",
             "scipy",
