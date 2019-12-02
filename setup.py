@@ -17,8 +17,8 @@ setup(
     extras_require={
         'gpu': ['tensorflow-gpu>=2.0.0'],
         'eval': [
-            "keras_segmentation @ https://github.com/ajayjain/image-segmentation-keras/archive/master.zip#egg=keras_segmentation-0.2.0remat",
             "graphviz",
+            "keras_segmentation @ https://github.com/ajayjain/image-segmentation-keras/archive/master.zip#egg=keras_segmentation-0.2.0remat",
             "python-dotenv",
             "ray>=0.7.5",
             "redis",
@@ -27,8 +27,8 @@ setup(
             "tqdm",
         ],
         'test': [
-            "keras_segmentation @ https://github.com/ajayjain/image-segmentation-keras/archive/master.zip#egg=keras_segmentation-0.2.0remat",
             "graphviz",
+            "keras_segmentation @ https://github.com/ajayjain/image-segmentation-keras/archive/master.zip#egg=keras_segmentation-0.2.0remat",
         ]
     }
 )
