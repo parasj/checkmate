@@ -3,8 +3,8 @@ from functools import lru_cache
 from typing import Iterable, Dict, List, Set
 
 from toposort import toposort
-from remat.core.utils.definitions import Vertex, EdgeList, AdjList
-from remat.core.utils.dfgraph_utils import edge_to_adj_list, adj_to_edge_list, gcd, connected_components
+from checkmate.core.utils.definitions import Vertex, EdgeList, AdjList
+from checkmate.core.utils.dfgraph_utils import edge_to_adj_list, adj_to_edge_list, gcd, connected_components
 
 
 class DFGraph:

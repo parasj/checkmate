@@ -5,8 +5,8 @@ from typing import Optional, Tuple, NamedTuple
 import dotenv
 from redis import StrictRedis
 
-from remat.core.schedule import ScheduledResult
-from remat.core.enum_strategy import SolveStrategy
+from checkmate.core.schedule import ScheduledResult
+from checkmate.core.enum_strategy import SolveStrategy
 
 
 class RedisCacheKey(NamedTuple):

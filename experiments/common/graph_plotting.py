@@ -4,9 +4,9 @@ from typing import Optional
 import numpy as np
 from graphviz import Digraph
 
-from remat.core.dfgraph import DFGraph
-from remat.core.schedule import Schedule, OperatorEvaluation, ScheduledResult
-from remat.core.utils.definitions import PathLike
+from checkmate.core.dfgraph import DFGraph
+from checkmate.core.schedule import Schedule, OperatorEvaluation, ScheduledResult
+from checkmate.core.utils.definitions import PathLike
 
 
 # TODO (paras) fix this function

@@ -17,22 +17,22 @@ import tensorflow as tf
 from matplotlib.lines import Line2D
 from scipy.stats.mstats import gmean
 
-from experiments.common.definitions import remat_data_dir
+from experiments.common.definitions import checkmate_data_dir
 from experiments.common.graph_plotting import plot_dfgraph
 from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model, CHAIN_GRAPH_MODELS
 from experiments.common.profile.cost_model import CostModel
 from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory, pretty_platform_name
 from experiments.common.ray_utils import get_futures
-from remat.core.dfgraph import DFGraph
-from remat.core.enum_strategy import SolveStrategy
-from remat.core.schedule import ScheduledResult
-from remat.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic_sweep, \
+from checkmate.core.dfgraph import DFGraph
+from checkmate.core.enum_strategy import SolveStrategy
+from checkmate.core.schedule import ScheduledResult
+from checkmate.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic_sweep, \
     solve_approx_lp_deterministic_rand_threshold, solve_approx_lp_deterministic_05_threshold, solve_approx_lp_randomized
-from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
-from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
-from remat.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
-from remat.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
-from remat.tf2_keras.extraction import dfgraph_from_keras
+from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
+from checkmate.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
+from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
+from checkmate.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
+from checkmate.tf2_keras.extraction import dfgraph_from_keras
 
 # ILP solve params
 NUM_ILP_CORES = os.environ.get("ILP_CORES", 12 if os.cpu_count() > 12 else 4)
@@ -163,7 +163,7 @@ if __name__ == "__main__":
              object_store_memory=1024 * 1024 * 1024 if os.cpu_count() < 48 else None)  # include_webui=args.debug
 
     key = "_".join(map(str, [args.platform, args.model_name, args.batch_size, args.input_shape]))
-    log_base = remat_data_dir() / "budget_sweep" / key
+    log_base = checkmate_data_dir() / "budget_sweep" / key
     shutil.rmtree(log_base, ignore_errors=True)
     pathlib.Path(log_base).mkdir(parents=True, exist_ok=True)
 

@@ -6,9 +6,10 @@ import urllib.request
 import numpy as np
 import pandas as pd
 
-from remat.core.dfgraph import DFGraph
-from remat.core.utils.solver_common import solve_r_opt, setup_implied_s_backwards
-from remat.core.utils.timer import Timer
+from checkmate.core.dfgraph import DFGraph
+from checkmate.core.utils.solver_common import solve_r_opt, setup_implied_s_backwards
+from checkmate.core.utils.timer import Timer
+from experiments.common.definitions import checkmate_cache_dir
 
 
 def solve_griewank(g: DFGraph, budget: int):
@@ -64,7 +65,7 @@ def _solve_griewank_to_rs(g: DFGraph, budget: int):
 
 def _load_griewank(graph_size: int) -> pd.DataFrame:
     fname = f'{graph_size}.pkl.gz'
-    local_path_base = pathlib.Path('/tmp') / 'remat_cache' / 'griewank_solutions'
+    local_path_base = checkmate_cache_dir() / 'griewank_solutions'
     local_path = local_path_base / fname
     remote_path = f"https://optimalcheckpointing.s3.amazonaws.com/griewank_solutions/pickle/{fname}"
     if local_path.exists():
@@ -81,5 +82,5 @@ def _load_griewank(graph_size: int) -> pd.DataFrame:
 
 
 def clean_griewank_cache():
-    local_path_base = pathlib.Path('/tmp') / 'remat_cache' / 'griewank_solutions'
+    local_path_base = checkmate_cache_dir() / 'griewank_solutions'
     shutil.rmtree(local_path_base, ignore_errors=True)

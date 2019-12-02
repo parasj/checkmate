@@ -13,18 +13,18 @@ import tensorflow as tf
 import ray
 from tqdm import tqdm
 
-from experiments.common.definitions import remat_data_dir
+from experiments.common.definitions import checkmate_data_dir
 from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model
 from experiments.common.graph_plotting import plot_dfgraph
 from experiments.common.profile.cost_model import CostModel
 from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory
 from experiments.common.ray_utils import get_futures
-from remat.core.schedule import ScheduledResult
-from remat.core.enum_strategy import SolveStrategy
-from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
-from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
-from remat.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
-from remat.tf2_keras.extraction import dfgraph_from_keras
+from checkmate.core.schedule import ScheduledResult
+from checkmate.core.enum_strategy import SolveStrategy
+from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
+from checkmate.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
+from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
+from checkmate.tf2_keras.extraction import dfgraph_from_keras
 
 
 def extract_params():
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     args = extract_params()
 
     key = "_".join(map(str, [args.platform, args.model_name, args.input_shape]))
-    log_base = remat_data_dir() / "max_batch_size" / key
+    log_base = checkmate_data_dir() / "max_batch_size" / key
     shutil.rmtree(log_base, ignore_errors=True)
     pathlib.Path(log_base).mkdir(parents=True, exist_ok=True)
     result_dict: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]] = defaultdict(lambda: defaultdict(list))

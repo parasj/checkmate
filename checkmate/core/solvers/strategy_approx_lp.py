@@ -5,13 +5,13 @@ from typing import Optional
 
 import numpy as np
 
-from remat.core.dfgraph import DFGraph
-from remat.core.enum_strategy import SolveStrategy, ImposedSchedule
-from remat.core.schedule import ILPAuxData, ScheduledResult
-from remat.core.solvers.strategy_optimal_ilp import ILPSolver
-from remat.core.utils.definitions import PathLike
-from remat.core.utils.scheduler import schedule_from_rs
-from remat.core.utils.solver_common import solve_r_opt
+from checkmate.core.dfgraph import DFGraph
+from checkmate.core.enum_strategy import SolveStrategy, ImposedSchedule
+from checkmate.core.schedule import ILPAuxData, ScheduledResult
+from checkmate.core.solvers.strategy_optimal_ilp import ILPSolver
+from checkmate.core.utils.definitions import PathLike
+from checkmate.core.utils.scheduler import schedule_from_rs
+from checkmate.core.utils.solver_common import solve_r_opt
 
 
 def solve_approx_lp_deterministic_sweep(

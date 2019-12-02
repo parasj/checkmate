@@ -3,9 +3,9 @@ import logging
 
 import tensorflow as tf
 
-from remat.core.dfgraph import DFGraph
-from remat.core.schedule import ScheduledResult, AllocateRegister, DeallocateRegister, OperatorEvaluation
-from remat.tf2_keras.tf_losses import categorical_cross_entropy
+from checkmate.core.dfgraph import DFGraph
+from checkmate.core.schedule import ScheduledResult, AllocateRegister, DeallocateRegister, OperatorEvaluation
+from checkmate.tf2_keras.tf_losses import categorical_cross_entropy
 
 logger = logging.getLogger(__name__)
 

@@ -5,8 +5,8 @@ from typing import Optional
 import tensorflow as tf
 
 from experiments.common.profile.cost_model import CostModel  # todo this really shouldn't be in the core package
-from remat.core import dfgraph
-from remat.tf2_keras.extraction_hooks import op_hook, MEMORY_MULTIPLIER
+from checkmate.core import dfgraph
+from checkmate.tf2_keras.extraction_hooks import op_hook, MEMORY_MULTIPLIER
 
 try:
     from tensorflow.python.keras.utils.layer_utils import count_params  # TF r2.0
