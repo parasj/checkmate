@@ -1,10 +1,11 @@
+import logging
+
 from remat.core.graph_builder import gen_linear_graph
 from remat.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic_sweep
 from experiments.common.definitions import remat_data_dir
 from experiments.common.graph_plotting import plot_schedule
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
 from remat.core.solvers.strategy_chen import solve_chen_sqrtn
-from remat.core.solvers.strategy_griewank import solve_griewank
 from remat.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
 from remat.core.utils.timer import Timer
 import pandas as pd
@@ -22,10 +23,8 @@ if __name__ == "__main__":
 
         scheduler_result_all = solve_checkpoint_all(g)
         scheduler_result_sqrtn = solve_chen_sqrtn(g, True)
-        scheduler_result_griewank = solve_griewank(g, B)
         plot_schedule(scheduler_result_all, False, save_file=scratch_dir / "CHECKPOINT_ALL.png")
         plot_schedule(scheduler_result_sqrtn, False, save_file=scratch_dir / "CHEN_SQRTN.png")
-        plot_schedule(scheduler_result_griewank, False, save_file=scratch_dir / "GRIEWANK.png")
         data.append(
             {
                 "Strategy": str(scheduler_result_all.solve_strategy.value),
@@ -42,17 +41,22 @@ if __name__ == "__main__":
                 "Activation RAM": scheduler_result_sqrtn.schedule_aux_data.activation_ram,
             }
         )
-        data.append(
-            {
-                "Strategy": str(scheduler_result_griewank.solve_strategy.value),
-                "Name": "GRIEWANK",
-                "CPU": scheduler_result_griewank.schedule_aux_data.cpu,
-                "Activation RAM": scheduler_result_griewank.schedule_aux_data.activation_ram,
-            }
-        )
+
+
+        logging.error("Skipping Griewank baselines as it was broken in parasj/checkmate#65")
+        # scheduler_result_griewank = solve_griewank(g, B)
+        # plot_schedule(scheduler_result_griewank, False, save_file=scratch_dir / "GRIEWANK.png")
+        # data.append(
+        #     {
+        #         "Strategy": str(scheduler_result_griewank.solve_strategy.value),
+        #         "Name": "GRIEWANK",
+        #         "CPU": scheduler_result_griewank.schedule_aux_data.cpu,
+        #         "Activation RAM": scheduler_result_griewank.schedule_aux_data.activation_ram,
+        #     }
+        # )
 
         with Timer("ilp") as timer_ilp:
-            scheduler_result_ilp = solve_ilp_gurobi(g, B, seed_s=scheduler_result_griewank.schedule_aux_data.S)
+            scheduler_result_ilp = solve_ilp_gurobi(g, B, seed_s=scheduler_result_sqrtn.schedule_aux_data.S)
             plot_schedule(scheduler_result_ilp, False, save_file=scratch_dir / "CHECKMATE_ILP.png")
             data.append(
                 {

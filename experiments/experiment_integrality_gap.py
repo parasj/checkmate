@@ -7,7 +7,6 @@ from remat.core.graph_builder import gen_linear_graph
 from remat.core.enum_strategy import ImposedSchedule
 from remat.core.solvers.lower_bound_lp import lower_bound_lp_relaxation
 from remat.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic_sweep
-from remat.core.solvers.strategy_griewank import solve_griewank
 from remat.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
 
 
@@ -39,7 +38,8 @@ if __name__ == "__main__":
         scratch_dir.mkdir(parents=True, exist_ok=True)
         data = []
 
-        griewank = solve_griewank(g, B)
+        logging.error("Skipping Griewank baselines as it was broken in parasj/checkmate#65")
+        # griewank = solve_griewank(g, B)
 
         logging.info("--- Solving LP relaxation for lower bound")
         lb_lp = lower_bound_lp_relaxation(g, B, approx=APPROX, eps_noise=EPS_NOISE, imposed_schedule=IMPOSED_SCHEDULE)

@@ -31,7 +31,6 @@ from remat.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic_
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
 from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
 from remat.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
-from remat.core.solvers.strategy_griewank import solve_griewank, clean_griewank_cache
 from remat.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
 from remat.tf2_keras.extraction import dfgraph_from_keras
 
@@ -224,14 +223,15 @@ if __name__ == "__main__":
         result_dict[SolveStrategy.CHEN_SQRTN_NOAP] = get_futures(list(futures), desc="Greedy (No AP)")
 
     # sweep griewank baselines
-    if model_name in CHAIN_GRAPH_MODELS:
-        logger.info(f"Running Griewank baseline (APs only)")
-        clean_griewank_cache()
-        solve_griewank(g, 1)  # prefetch griewank solution from s3, otherwise ray will cause race condition
-        griewank_eval_points = range(1, g.size + 1)
-        remote_solve_griewank = ray.remote(num_cpus=1)(solve_griewank).remote
-        futures = [remote_solve_griewank(g, float(b)) for b in griewank_eval_points]
-        result_dict[SolveStrategy.GRIEWANK_LOGN] = get_futures(list(futures), desc="Griewank (APs only)")
+    logger.error("Skipping Griewank baselines as it was broken in parasj/checkmate#65")
+    # if model_name in CHAIN_GRAPH_MODELS:
+    #     logger.info(f"Running Griewank baseline (APs only)")
+    #     clean_griewank_cache()
+    #     solve_griewank(g, 1)  # prefetch griewank solution from s3, otherwise ray will cause race condition
+    #     griewank_eval_points = range(1, g.size + 1)
+    #     remote_solve_griewank = ray.remote(num_cpus=1)(solve_griewank).remote
+    #     futures = [remote_solve_griewank(g, float(b)) for b in griewank_eval_points]
+    #     result_dict[SolveStrategy.GRIEWANK_LOGN] = get_futures(list(futures), desc="Griewank (APs only)")
 
     # sweep optimal ilp baseline
     if not args.skip_ilp:
