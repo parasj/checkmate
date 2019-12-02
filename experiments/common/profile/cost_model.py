@@ -13,6 +13,8 @@ import numpy as np
 from checkmate.core.utils.definitions import PathLike
 
 # BATCH_SIZES_LOAD = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
+from experiments.common.definitions import checkmate_cache_dir
+
 BATCH_SIZES_LOAD = [32, 64, 128, 256, 512, 1024, 2048]
 
 
@@ -169,7 +171,7 @@ class CostModel:
 
     @staticmethod
     def load_profile_s3(model_name: str, batch_size: int, platform: str) -> Optional[str]:
-        local_base = pathlib.Path("/tmp") / "remat_cache" / "profiles"
+        local_base = checkmate_cache_dir() / "profiles"
         local_path = local_base / f"{model_name}_{batch_size}_{platform}.npy"
         remote_path = f"https://optimalcheckpointing.s3.amazonaws.com/profiles/{model_name}/b{batch_size}_{platform}.npy"
         if os.path.exists(local_path):

@@ -2,7 +2,7 @@ import logging
 
 from checkmate.core.graph_builder import gen_linear_graph
 from checkmate.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic_sweep
-from experiments.common.definitions import remat_data_dir
+from experiments.common.definitions import checkmate_data_dir
 from experiments.common.graph_plotting import plot_schedule
 from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
 from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
@@ -17,7 +17,7 @@ if __name__ == "__main__":
         # model = get_keras_model("MobileNet")
         # g = dfgraph_from_keras(mod=model)
         g = gen_linear_graph(N)
-        scratch_dir = remat_data_dir() / f"scratch_linear" / str(N) / str(B)
+        scratch_dir = checkmate_data_dir() / f"scratch_linear" / str(N) / str(B)
         scratch_dir.mkdir(parents=True, exist_ok=True)
         data = []
 

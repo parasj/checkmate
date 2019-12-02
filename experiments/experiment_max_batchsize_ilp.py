@@ -9,7 +9,7 @@ from typing import Dict, List
 
 import tensorflow as tf
 
-from experiments.common.definitions import remat_data_dir
+from experiments.common.definitions import checkmate_data_dir
 from experiments.common.graph_plotting import plot_dfgraph, plot_schedule
 from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model
 from experiments.common.profile.cost_model import CostModel
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     args = extract_params()
 
     key = "_".join(map(str, [args.platform, args.model_name, args.input_shape]))
-    log_base = remat_data_dir() / "max_batch_size_ilp" / key
+    log_base = checkmate_data_dir() / "max_batch_size_ilp" / key
     shutil.rmtree(log_base, ignore_errors=True)
     pathlib.Path(log_base).mkdir(parents=True, exist_ok=True)
     result_dict: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]] = defaultdict(lambda: defaultdict(list))

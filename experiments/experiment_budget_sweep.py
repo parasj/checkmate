@@ -17,7 +17,7 @@ import tensorflow as tf
 from matplotlib.lines import Line2D
 from scipy.stats.mstats import gmean
 
-from experiments.common.definitions import remat_data_dir
+from experiments.common.definitions import checkmate_data_dir
 from experiments.common.graph_plotting import plot_dfgraph
 from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model, CHAIN_GRAPH_MODELS
 from experiments.common.profile.cost_model import CostModel
@@ -163,7 +163,7 @@ if __name__ == "__main__":
              object_store_memory=1024 * 1024 * 1024 if os.cpu_count() < 48 else None)  # include_webui=args.debug
 
     key = "_".join(map(str, [args.platform, args.model_name, args.batch_size, args.input_shape]))
-    log_base = remat_data_dir() / "budget_sweep" / key
+    log_base = checkmate_data_dir() / "budget_sweep" / key
     shutil.rmtree(log_base, ignore_errors=True)
     pathlib.Path(log_base).mkdir(parents=True, exist_ok=True)
 

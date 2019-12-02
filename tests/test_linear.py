@@ -20,7 +20,7 @@ def test_checkpoint_all():
         assert scheduler_result.feasible
         assert scheduler_result.schedule_aux_data.cpu == g.size
         if SAVE_DEBUG_PLOTS:
-            plot_schedule(scheduler_result, save_file=f"/tmp/test_remat/plot_checkpoint_all/{graph_length}.png")
+            plot_schedule(scheduler_result, save_file=f"/tmp/test_checkmate/plot_checkpoint_all/{graph_length}.png")
 
 
 def test_checkpoint_last():
@@ -30,7 +30,7 @@ def test_checkpoint_last():
         scheduler_result = solve_checkpoint_last_node(g)
         assert scheduler_result.feasible
         if SAVE_DEBUG_PLOTS:
-            plot_schedule(scheduler_result, False, save_file=f"/tmp/test_remat/plot_checkmate_last/{graph_length}.png")
+            plot_schedule(scheduler_result, False, save_file=f"/tmp/test_checkmate/plot_checkmate_last/{graph_length}.png")
 
 
 def test_checkpoint_all_ap():
@@ -40,7 +40,7 @@ def test_checkpoint_all_ap():
         scheduler_result = solve_checkpoint_all_ap(g)
         assert scheduler_result.feasible
         if SAVE_DEBUG_PLOTS:
-            plot_schedule(scheduler_result, save_file=f"/tmp/test_remat/plot_checkpoint_all_ap/{graph_length}.png")
+            plot_schedule(scheduler_result, save_file=f"/tmp/test_checkmate/plot_checkpoint_all_ap/{graph_length}.png")
 
 
 def test_chen_sqrtn():
@@ -51,7 +51,7 @@ def test_chen_sqrtn():
         scheduler_result = solve_chen_sqrtn(g, total_cost)
         assert scheduler_result.feasible
         if SAVE_DEBUG_PLOTS:
-            plot_schedule(scheduler_result, save_file=f"/tmp/test_remat/plot_chen_sqrtn/{graph_length}.png")
+            plot_schedule(scheduler_result, save_file=f"/tmp/test_checkmate/plot_chen_sqrtn/{graph_length}.png")
 
 
 def test_chen_greedy():
@@ -65,7 +65,7 @@ def test_chen_greedy():
             for budget in np.arange(0, 1, 0.1):
                 scheduler_result = solve_chen_greedy(g, total_cost * budget, False)
                 if scheduler_result.feasible:
-                    plot_schedule(scheduler_result, save_file=f"/tmp/test_remat/plot_chen_greedy/{graph_length}_{budget}.png")
+                    plot_schedule(scheduler_result, save_file=f"/tmp/test_checkmate/plot_chen_greedy/{graph_length}_{budget}.png")
 
 
 def test_chen_greedy_ap():
@@ -79,7 +79,7 @@ def test_chen_greedy_ap():
             for budget in np.arange(0, 1, 0.1):
                 scheduler_result = solve_chen_greedy(g, total_cost * budget, False)
                 if scheduler_result.feasible:
-                    plot_schedule(scheduler_result, save_file=f"/tmp/test_remat/plot_chen_greedy_ap/{graph_length}_{budget}.png")
+                    plot_schedule(scheduler_result, save_file=f"/tmp/test_checkmate/plot_chen_greedy_ap/{graph_length}_{budget}.png")
 
 
 def test_ilp():
@@ -100,7 +100,7 @@ def test_ilp():
             for budget in np.arange(0, 1, 0.25):
                 scheduler_result = solve_ilp_gurobi(g, total_cost * budget, print_to_console=False, write_log_file=None, time_limit=15)
                 if scheduler_result.feasible:
-                    plot_schedule(scheduler_result, save_file=f"/tmp/test_remat/plot_ilp/{graph_length}_{budget}.png")
+                    plot_schedule(scheduler_result, save_file=f"/tmp/test_checkmate/plot_ilp/{graph_length}_{budget}.png")
 
 
 # NOTE: Griewank test is disabled as the solver does not support nonlinear graphs.

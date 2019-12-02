@@ -1,7 +1,7 @@
 import argparse
 import logging
 
-from experiments.common.definitions import remat_data_dir
+from experiments.common.definitions import checkmate_data_dir
 from experiments.common.graph_plotting import plot_schedule
 from checkmate.core.graph_builder import gen_linear_graph
 from checkmate.core.enum_strategy import ImposedSchedule
@@ -33,7 +33,7 @@ if __name__ == "__main__":
     # Compute integrality gap for each budget
     for B in reversed(range(4, N + 3)):  # Try several budgets
         g = gen_linear_graph(N)
-        scratch_dir = remat_data_dir() / f"scratch_integrality_gap_linear" / f"{N}_layers" / str(
+        scratch_dir = checkmate_data_dir() / f"scratch_integrality_gap_linear" / f"{N}_layers" / str(
             IMPOSED_SCHEDULE) / f"{B}_budget"
         scratch_dir.mkdir(parents=True, exist_ok=True)
         data = []
