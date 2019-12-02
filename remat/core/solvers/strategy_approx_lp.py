@@ -48,6 +48,7 @@ def solve_approx_lp_deterministic_sweep(
         eps_noise=eps_noise,
         imposed_schedule=imposed_schedule,
         write_model_file=write_model_file,
+        solve_r=False,
     )
     lpsolver.build_model()
     try:
@@ -152,6 +153,7 @@ def solve_approx_lp_randomized(
         integral=False,
         eps_noise=eps_noise,
         write_model_file=write_model_file,
+        solve_r=False,
     )
     lpsolver.build_model()
     try:
