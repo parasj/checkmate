@@ -1,7 +1,7 @@
+import logging
 import re
 from typing import Optional, List
 
-import keras_segmentation
 import tensorflow as tf
 
 KERAS_APPLICATION_MODEL_NAMES = ['InceptionV3', 'VGG16', 'VGG19', 'ResNet50',
@@ -9,11 +9,19 @@ KERAS_APPLICATION_MODEL_NAMES = ['InceptionV3', 'VGG16', 'VGG19', 'ResNet50',
                                  'DenseNet169', 'DenseNet201', 'NASNetMobile', 'NASNetLarge',
                                  'ResNet101', 'ResNet152', 'ResNet50V2', 'ResNet101V2',
                                  'ResNet152V2']
-SEGMENTATION_MODEL_NAMES = list(keras_segmentation.models.model_from_name.keys())
 LINEAR_MODEL_NAMES = ["linear" + str(i) for i in range(32)]
-MODEL_NAMES = KERAS_APPLICATION_MODEL_NAMES + SEGMENTATION_MODEL_NAMES + ["test"] + LINEAR_MODEL_NAMES
+MODEL_NAMES = KERAS_APPLICATION_MODEL_NAMES + ["test"] + LINEAR_MODEL_NAMES
 CHAIN_GRAPH_MODELS = ["VGG16", "VGG19", "MobileNet"] + LINEAR_MODEL_NAMES
-NUM_SEGMENTATION_CLASSES = 19  # Cityscapes has 19 evaluation classes
+
+try:
+    import keras_segmentation
+    SEGMENTATION_MODEL_NAMES = list(keras_segmentation.models.model_from_name.keys())
+    MODEL_NAMES.extend(SEGMENTATION_MODEL_NAMES)
+    NUM_SEGMENTATION_CLASSES = 19  # Cityscapes has 19 evaluation classes
+except ImportError as e:
+    logging.exception(e)
+    logging.error("Failed to load segmentation model names, skipping...")
+    SEGMENTATION_MODEL_NAMES = []
 
 
 def pretty_model_name(model_name: str):
