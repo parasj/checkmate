@@ -97,8 +97,8 @@ def test_ilp():
         scheduler_result = solve_ilp_gurobi(g, total_cost, print_to_console=False, write_log_file=None)
         assert scheduler_result.feasible
         if SAVE_DEBUG_PLOTS:
-            for budget in np.arange(0, 1, 0.1):
-                scheduler_result = solve_ilp_gurobi(g, total_cost * budget, print_to_console=False, write_log_file=None)
+            for budget in np.arange(0, 1, 0.25):
+                scheduler_result = solve_ilp_gurobi(g, total_cost * budget, print_to_console=False, write_log_file=None, time_limit=15)
                 if scheduler_result.feasible:
                     plot_schedule(scheduler_result, save_file=f"/tmp/test_remat/plot_ilp/{graph_length}_{budget}.png")
 
