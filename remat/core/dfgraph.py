@@ -105,12 +105,16 @@ class DFGraph:
     @property
     @lru_cache(maxsize=1)
     def topological_order(self):
-        return list(toposort(self.adj_list))
+        adj_set = {k: set(v) for k, v in self.adj_list.items()}
+        topo_sets = list(toposort(adj_set))
+        return [x for topo_set in topo_sets for x in topo_set]
 
     @property
     @lru_cache(maxsize=1)
     def topological_order_fwd(self):
-        return list(toposort(self.adj_list_fwd))
+        adj_set = {k: set(v) for k, v in self.adj_list_fwd.items()}
+        topo_sets = list(toposort(adj_set))
+        return [x for topo_set in topo_sets for x in topo_set]
 
     @property
     @lru_cache(maxsize=1)

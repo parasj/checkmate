@@ -38,22 +38,20 @@ def test_checkpoint_all_ap():
 
 def test_chen_sqrtn():
     for graph_length in test_points:
-        for budget in range(1, min(graph_length, 4)):
-            g = gen_linear_graph(graph_length)
-            assert g.size == 2 * graph_length + 1
-            total_cost = sum(g.cost_ram.values())
-            scheduler_result = solve_chen_sqrtn(g, total_cost)
-            assert scheduler_result.feasible
+        g = gen_linear_graph(graph_length)
+        assert g.size == 2 * graph_length + 1
+        total_cost = sum(g.cost_ram.values())
+        scheduler_result = solve_chen_sqrtn(g, total_cost)
+        assert scheduler_result.feasible
 
 
 def test_chen_greedy():
     for graph_length in test_points:
-        for budget in range(1, min(graph_length, 4)):
-            g = gen_linear_graph(graph_length)
-            assert g.size == 2 * graph_length + 1
-            total_cost = sum(g.cost_ram.values())
-            scheduler_result = solve_chen_greedy(g, total_cost, False)
-            assert scheduler_result.feasible
+        g = gen_linear_graph(graph_length)
+        assert g.size == 2 * graph_length + 1
+        total_cost = sum(g.cost_ram.values())
+        scheduler_result = solve_chen_greedy(g, total_cost, False)
+        assert scheduler_result.feasible
 
 
 def test_chen_greedy_ap():
