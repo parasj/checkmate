@@ -7,6 +7,7 @@ setup(
     packages=['remat'],  # find_packages()
     python_requires='>=3.6',
     install_requires=[
+        "graphviz",
         "matplotlib",  # this is only used once in the core remat package
         "numpy",
         "pandas",
@@ -18,7 +19,6 @@ setup(
     extras_requires={
         'gpu': ['tensorflow-gpu>=2.0.0'],
         'eval': [
-            "graphviz",
             "keras_segmentation @ https://github.com/ajayjain/image-segmentation-keras/archive/master.zip#egg=keras_segmentation-0.2.0remat",
             "ray>=0.7.5",
             "redis",
