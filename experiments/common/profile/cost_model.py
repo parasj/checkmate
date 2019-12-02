@@ -8,11 +8,7 @@ import urllib.error
 from collections import defaultdict
 from typing import Optional
 
-import matplotlib.pyplot as plt
 import numpy as np
-import scipy
-import scipy.stats
-import seaborn as sns
 
 from remat.core.utils.definitions import PathLike
 
@@ -46,6 +42,7 @@ class CostModel:
         self.intercepts_np: Optional[np.ndarray] = None
 
     def fit(self):
+        import scipy.stats
         self.logger.info("Loading measured costs")
         costs_by_layer = defaultdict(list)
         batch_sizes_by_layer = defaultdict(list)
@@ -118,6 +115,8 @@ class CostModel:
         return cost_list
 
     def plot_costs(self):
+        import matplotlib.pyplot as plt
+        import seaborn as sns
         self.logger.info("Plotting cost model")
         data_by_layer = defaultdict(lambda: ([], [], []))
         for batch_size, cost_file in zip(self.batch_sizes_to_load, self.cost_files_to_load):

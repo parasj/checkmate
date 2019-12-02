@@ -7,11 +7,12 @@
 ```bash
 $  git clone https://github.com/parasj/checkmate.git
 $  cd checkmate
-$  pip install -e .
+$  pip install -e .[eval,test]
 $  py.test
 ```
+If you are evaluating on a GPU instance, run `pip install -e .[eval,gpu,test]` to install `tensorflow-gpu`.
 
-If you are evaluating on a GPU instance, you can install `tensorflow-gpu` as a dependency in order to enable GPU support.
+ZSH complains with the extras syntax on local directories so you may need to escape square brackets e.g. `pip install -e .\[eval,test\]`.
 
 # Citation
 If you use Checkmate in your work, please cite us with:

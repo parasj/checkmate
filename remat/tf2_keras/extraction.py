@@ -4,7 +4,7 @@ from typing import Optional
 
 import tensorflow as tf
 
-from experiments.common.profile.cost_model import CostModel
+from experiments.common.profile.cost_model import CostModel  # todo this really shouldn't be in the core package
 from remat.core import dfgraph
 from remat.tf2_keras.extraction_hooks import op_hook, MEMORY_MULTIPLIER
 
