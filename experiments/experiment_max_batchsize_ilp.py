@@ -10,14 +10,14 @@ from typing import Dict, List
 import tensorflow as tf
 
 from experiments.common.definitions import remat_data_dir
-from experiments.common.graph_plotting import render_dfgraph, plot
+from experiments.common.graph_plotting import plot_dfgraph, plot_schedule
 from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model
 from experiments.common.profile.cost_model import CostModel
 from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory
 from experiments.solver_ilp_max_batchsize import MaxBatchILPSolver
 from remat.core.enum_strategy import SolveStrategy
 from remat.core.schedule import ScheduledResult
-from remat.tensorflow2.extraction import dfgraph_from_keras
+from remat.tf2_keras.extraction import dfgraph_from_keras
 
 GB = 1000 * 1000 * 1000
 
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     bs_fwd2xcost: Dict[int, int] = {}
     # load model at batch size
     g = dfgraph_from_keras(model, batch_size=1, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4))
-    render_dfgraph(g, log_base, name=model_name)
+    plot_dfgraph(g, log_base, name=model_name)
 
     model_file = str(log_base / f"max_bs_{model_name}.mps")
     param_dict = {'LogToConsole': 1,
@@ -80,4 +80,4 @@ if __name__ == "__main__":
     logging.info(f"Max batch size = {batch_size}")
 
     save_file = log_base / f'{model}_plot.png'
-    plot(result, plot_mem_usage=True, save_file=save_file)
+    plot_schedule(result, plot_mem_usage=True, save_file=save_file)

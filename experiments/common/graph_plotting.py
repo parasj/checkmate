@@ -1,3 +1,4 @@
+import pathlib
 from typing import Optional
 
 import numpy as np
@@ -8,20 +9,18 @@ from remat.core.schedule import Schedule, OperatorEvaluation, ScheduledResult
 from remat.core.utils.definitions import PathLike
 
 
+# TODO (paras) fix this function
 def tensor_plot(g: DFGraph, sched: Schedule, directory, tag=None, format='pdf', quiet=True):
     dot = Digraph(f"!TensorPlot_{tag}", engine="dot")
     if sched is None:
         return
     for op in sched:
         if isinstance(op, OperatorEvaluation):
-            if g.is_loss_node(op.id):
-                node_name = "Loss"
-            elif g.is_forward_node(op.id):
+            if g.is_forward_node(op.id):
                 node_name = g.node_names.get(op.id)
                 node_name = node_name if node_name is None else f"{node_name} ({str(op.id)})"
             elif g.is_backward_node(op.id):
-                fwd_node = g.backward_to_forward(op.id)
-                node_name = "Grad<{}> {} {}".format(g.node_names.get(fwd_node), fwd_node, op.id)
+                node_name = "Grad {}".format(op.id)
             else:
                 raise ValueError("Unknown operation")
             # dot.node("op{}".format(op.id), node_name, shape="diamond")
@@ -36,61 +35,48 @@ def tensor_plot(g: DFGraph, sched: Schedule, directory, tag=None, format='pdf', 
         dot.render(directory=directory, format=format)
 
 
-def render_dfgraph(g: DFGraph, directory, format='pdf', quiet=True, name=""):
+def plot_dfgraph(g: DFGraph, directory, format='pdf', quiet=True, name=""):
     """Generate Graphviz-formatted edge list for visualization, and write pdf"""
     dot = Digraph("render_dfgraph" + str(name))
-    dot.attr('graph', ratio='compress')  # rankdir='LR',
-    for u in g.vfwd:
-        with dot.subgraph() as s:
-            s.attr(rank='same')
-            node_name = g.node_names.get(u)
-            node_name = node_name if node_name is None else "{} ({})".format(node_name, str(u))
-            s.node(str(u), node_name)
-
-            v = g.forward_to_backward(u)
-            node_name = "&nabla;{}".format(g.node_names.get(u, u))
-            node_name = node_name if node_name is None else "{} ({})".format(node_name, str(v))
-            s.node(str(v), node_name, style='filled')
-
+    dot.attr('graph')
     for u in g.v:
-        if u not in g.vfwd_map.values() and u not in g.vfwd_map.keys():
-            node_name = g.node_names.get(u)
-            node_name = node_name if node_name is None else "{} ({})".format(node_name, str(u))
-            dot.node(str(u), node_name)
-
+        node_name = g.node_names.get(u)
+        node_name = node_name if node_name is None else "{} ({})".format(node_name, str(u))
+        attrs = {} if g.is_backward_node(u) else {'style': 'filled'}
+        dot.node(str(u), node_name, **attrs)
     for edge in g.edge_list:
         dep_order = str(g.args[edge[-1]].index(edge[0]))
-        if edge not in g.edge_list_fwd and g.vloss not in edge:
-            dot.edge(*map(str, edge), constraint='false', label=dep_order)
-        else:
-            dot.edge(*map(str, edge), label=dep_order)
+        dot.edge(*map(str, edge), label=dep_order)
     try:
         dot.render(directory=directory, format=format, quiet=quiet)
     except TypeError:
         dot.render(directory=directory, format=format)
 
 
-def plot(sched_result: ScheduledResult, plot_mem_usage=False, save_file: Optional[PathLike] = None, show=False,
-         plt=None):
+def plot_schedule(sched_result: ScheduledResult, plot_mem_usage=False, save_file: Optional[PathLike] = None, show=False,
+                  plt=None):
     assert sched_result.feasible
     R = sched_result.schedule_aux_data.R
     S = sched_result.schedule_aux_data.S
+    U = None if sched_result.ilp_aux_data is None else sched_result.ilp_aux_data.U
+    mem_grid = None if sched_result.schedule_aux_data is None else sched_result.schedule_aux_data.mem_grid
+    _plot_schedule_from_rs(R, S, plot_mem_usage, mem_grid, U, save_file, show, plt)
 
+
+def _plot_schedule_from_rs(R, S, plot_mem_usage=False, mem_grid=None, U=None, save_file: Optional[PathLike] = None,
+                           show=False, plt=None):
     if plt is None:
         import matplotlib.pyplot as plt
 
     if plot_mem_usage:
+        assert mem_grid is not None
         fig, axs = plt.subplots(1, 4)
-        vmax = sched_result.schedule_aux_data.mem_grid
-        if sched_result.ilp_aux_data is not None:
-            U = sched_result.ilp_aux_data.U
-            vmax = vmax if (U is None) else max(vmax, np.max(U))
-        else:
-            U = None
+        vmax = mem_grid
+        vmax = vmax if U is None else max(vmax, np.max(U))
 
         # Plot slow verifier memory usage
         axs[2].invert_yaxis()
-        axs[2].pcolormesh(sched_result.schedule_aux_data.mem_grid, cmap="Greys", vmin=0, vmax=vmax)
+        axs[2].pcolormesh(mem_grid, cmap="Greys", vmin=0, vmax=vmax)
         axs[2].set_title("Memory usage (verifier)")
 
         # Plot solver memory usage variables
@@ -115,5 +101,7 @@ def plot(sched_result: ScheduledResult, plot_mem_usage=False, save_file: Optiona
     if show:
         plt.show()
     if save_file:
-        fig.savefig(save_file)
+        path = pathlib.Path(save_file)
+        path.parents[0].mkdir(parents=True, exist_ok=True)
+        fig.savefig(path)
         plt.close(fig)

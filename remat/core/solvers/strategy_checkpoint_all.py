@@ -1,3 +1,4 @@
+from experiments.common.graph_plotting import _plot_schedule_from_rs
 from remat.core.dfgraph import DFGraph
 from remat.core.schedule import ScheduledResult
 from remat.core.utils.solver_common import gen_s_matrix_fixed_checkpoints, solve_r_opt

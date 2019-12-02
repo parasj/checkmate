@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 from experiments.common.definitions import remat_data_dir
 from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model
-from experiments.common.graph_plotting import render_dfgraph
+from experiments.common.graph_plotting import plot_dfgraph
 from experiments.common.profile.cost_model import CostModel
 from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory
 from experiments.common.ray_utils import get_futures
@@ -24,7 +24,7 @@ from remat.core.enum_strategy import SolveStrategy
 from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
 from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
 from remat.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
-from remat.tensorflow2.extraction import dfgraph_from_keras
+from remat.tf2_keras.extraction import dfgraph_from_keras
 
 
 def extract_params():
@@ -83,7 +83,7 @@ if __name__ == "__main__":
         g = dfgraph_from_keras(model, batch_size=bs, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4 * bs))
         bs_fwd2xcost[bs] = sum(g.cost_cpu_fwd.values()) + sum(g.cost_cpu.values())
         bs_param_ram_cost[bs] = g.cost_ram_fixed
-        render_dfgraph(g, log_base, name=model_name)
+        plot_dfgraph(g, log_base, name=model_name)
 
         # run constant baselines
         result_dict[bs][SolveStrategy.CHEN_SQRTN_NOAP] = [solve_chen_sqrtn(g, False)]

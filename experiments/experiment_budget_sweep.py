@@ -18,7 +18,7 @@ from matplotlib.lines import Line2D
 from scipy.stats.mstats import gmean
 
 from experiments.common.definitions import remat_data_dir
-from experiments.common.graph_plotting import render_dfgraph
+from experiments.common.graph_plotting import plot_dfgraph
 from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model, CHAIN_GRAPH_MODELS
 from experiments.common.profile.cost_model import CostModel
 from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory, pretty_platform_name
@@ -33,7 +33,7 @@ from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_no
 from remat.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
 from remat.core.solvers.strategy_griewank import solve_griewank, clean_griewank_cache
 from remat.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
-from remat.tensorflow2.extraction import dfgraph_from_keras
+from remat.tf2_keras.extraction import dfgraph_from_keras
 
 # ILP solve params
 NUM_ILP_CORES = os.environ.get("ILP_CORES", 12 if os.cpu_count() > 12 else 4)
@@ -128,7 +128,7 @@ def get_global_eval_points(g: DFGraph, results: Dict[SolveStrategy, List[Schedul
     :return: list of integral evaluation points
     """
     number_samples = NUM_ILP_GLOBAL * 2 if model_name in DENSE_SOLVE_MODELS else NUM_ILP_GLOBAL
-    min_ram = g.max_degree_ram()
+    min_ram = g.max_degree_ram
 
     # get max point by finding closest matching greedy result
     check_all_result = results[SolveStrategy.CHECKPOINT_ALL][0]
@@ -201,7 +201,7 @@ if __name__ == "__main__":
                                   to_file=log_base / f"plot_{model_name}_keras.png",
                                   show_shapes=True,
                                   show_layer_names=True)
-        render_dfgraph(g, log_base, name=model_name)
+        plot_dfgraph(g, log_base, name=model_name)
 
     # sweep constant baselines
     logger.info(f"Running constant baselines (ALL, ALL_AP, LAST_NODE, SQRTN_NOAP, SQRTN)")

@@ -53,6 +53,7 @@ class ILPAuxData(NamedTuple):
     # approximation results
     approx_deterministic_round_threshold: Optional[float] = None
 
+
 class ScheduledResult(NamedTuple):
     solve_strategy: SolveStrategy
     solver_budget: float

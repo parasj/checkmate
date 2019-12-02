@@ -1,11 +1,11 @@
 import itertools
 import logging
 
-from remat.core.dfgraph import DFGraph
-from remat.core.schedule import Schedule, ScheduledResult, AllocateRegister, DeallocateRegister, OperatorEvaluation
-from remat.tensorflow2.tf_losses import categorical_cross_entropy
-
 import tensorflow as tf
+
+from remat.core.dfgraph import DFGraph
+from remat.core.schedule import ScheduledResult, AllocateRegister, DeallocateRegister, OperatorEvaluation
+from remat.tf2_keras.tf_losses import categorical_cross_entropy
 
 logger = logging.getLogger(__name__)
 

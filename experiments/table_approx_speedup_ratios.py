@@ -1,9 +1,9 @@
-from experiments.common.definitions import remat_data_dir
+import re
+
 import numpy as np
 import pandas as pd
 
-import glob
-import re
+from experiments.common.definitions import remat_data_dir
 
 # compute aggregated tables of max and geomean lp approximation ratios
 exp_name_re = re.compile(r"^(?P<platform>.+?)_(?P<model_name>.+?)_(?P<batch_size>[0-9]+?)_(?P<input_shape>None|.+?)$")

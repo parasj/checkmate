@@ -1,4 +1,3 @@
-from enum import Enum
 import logging
 import math
 import os
@@ -10,11 +9,11 @@ from gurobipy import GRB, Model, quicksum
 
 import remat.core
 from remat.core.dfgraph import DFGraph
-from remat.core.schedule import ScheduledResult, ILPAuxData, SchedulerAuxData
-from remat.core.utils.definitions import PathLike
-from remat.core.utils.solver_common import solve_r_opt
-from remat.core.utils.scheduler import schedule_from_rs
 from remat.core.enum_strategy import SolveStrategy, ImposedSchedule
+from remat.core.schedule import ScheduledResult, ILPAuxData
+from remat.core.utils.definitions import PathLike
+from remat.core.utils.scheduler import schedule_from_rs
+from remat.core.utils.solver_common import solve_r_opt
 from remat.core.utils.timer import Timer
 
 
@@ -55,7 +54,8 @@ class ILPSolver:
             self.R = self.m.addVars(T, T, name="R", vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0)
             self.S = self.m.addVars(T, T, name="S", vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0)
             self.Free_E = self.m.addVars(T, len(self.g.edge_list), name="FREE_E", vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0)
-        self.U = self.m.addVars(T, T, name="U", lb=0.0, ub=float(budget) / self.ram_gcd)
+        gcd = float(budget) / self.ram_gcd
+        self.U = self.m.addVars(T, T, name="U", lb=0.0, ub=gcd)
         for x in range(T):
             for y in range(T):
                 self.m.addLConstr(self.U[x, y], GRB.GREATER_EQUAL, 0)

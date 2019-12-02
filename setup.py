@@ -18,6 +18,8 @@ setup(
         "python-dotenv",
         "tensorflow>=2.0.0",
         "pytest",
-        "keras_segmentation @ https://github.com/ajayjain/image-segmentation-keras/archive/master.zip#egg=keras_segmentation-0.2.0remat"
+        "toposort",
+        "keras_segmentation @ https://github.com/ajayjain/image-segmentation-keras/archive/master.zip#egg=keras_segmentation-0.2.0remat",
+        'scipy'
     ]
 )

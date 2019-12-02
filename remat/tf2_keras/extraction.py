@@ -6,7 +6,7 @@ import tensorflow as tf
 
 from experiments.common.profile.cost_model import CostModel
 from remat.core import dfgraph
-from remat.tensorflow2.extraction_hooks import op_hook, MEMORY_MULTIPLIER
+from remat.tf2_keras.extraction_hooks import op_hook, MEMORY_MULTIPLIER
 
 try:
     from tensorflow.python.keras.utils.layer_utils import count_params  # TF r2.0
@@ -84,18 +84,19 @@ def dfgraph_from_keras(mod: tf.keras.models.Model, input_dep=False, output_dep=T
             logging.error("Wrong cost file!")
 
     vfwd = list(range(len(layers)))
-    vfwd_map = {u_fwd: fwd_to_bwd(u_fwd) for u_fwd in vfwd}
     vback = [fwd_to_bwd(u_fwd) for u_fwd in vfwd]
     idx_to_name = {v: u for u, v in name_to_idx.items()}
-    names = {u: idx_to_name[u] for u in vfwd}
+    fwd_names = {u: idx_to_name[u] for u in vfwd}
+    loss_names = {loss_node_idx: "Loss"}
+    bwd_names = {fwd_to_bwd(key): f"Grad <{val}>" for key, val in fwd_names.items()}
+    total_names = {**fwd_names, **loss_names, **bwd_names}
 
     # Get parameter and gradient momentum memory usage
     total_params = sum(count_params_keras(mod))
     total_mem_params = total_params * MEMORY_MULTIPLIER
 
-    return dfgraph.DFGraph(args=args, v=vfwd + [loss_node_idx] + vback, vfwd_map=vfwd_map,
-                           vloss=loss_node_idx, cost_cpu=costs, cost_ram=mems, node_names=names,
-                           cost_ram_parameters=total_mem_params)
+    return dfgraph.DFGraph(args=args, v=vfwd + [loss_node_idx] + vback, backward_nodes=[loss_node_idx] + vback,
+                           cost_cpu=costs, cost_ram=mems, node_names=total_names, cost_ram_parameters=total_mem_params)
 
 
 # noinspection PyProtectedMember
