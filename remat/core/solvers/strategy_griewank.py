@@ -16,18 +16,19 @@ from remat.core.utils.timer import Timer
 
 def solve_griewank(g: DFGraph, budget: int):
     # todo check graph is chain graph
-    with Timer('solve_griewank') as timer_solve:
-        r, s = _solve_griewank_to_rs(g, budget)
-    schedule, aux_data = schedule_from_rs(g, r, s)
-    griewank_feasible = (r is not None and s is not None)  # griewank load from FS
-    return ScheduledResult(
-        solve_strategy=SolveStrategy.GRIEWANK_LOGN,
-        solver_budget=budget,
-        feasible=griewank_feasible,
-        schedule=schedule,
-        schedule_aux_data=aux_data,
-        solve_time_s=timer_solve.elapsed  # this is technically just filesystem load time
-    )
+    raise NotImplementedError("Griewank's checkpointing strategy does not support the nonlinear structure of low-level Tensorflow graphs.")
+    # with Timer('solve_griewank') as timer_solve:
+    #     r, s = _solve_griewank_to_rs(g, budget)
+    # schedule, aux_data = schedule_from_rs(g, r, s)
+    # griewank_feasible = (r is not None and s is not None)  # griewank load from FS
+    # return ScheduledResult(
+    #     solve_strategy=SolveStrategy.GRIEWANK_LOGN,
+    #     solver_budget=budget,
+    #     feasible=griewank_feasible,
+    #     schedule=schedule,
+    #     schedule_aux_data=aux_data,
+    #     solve_time_s=timer_solve.elapsed  # this is technically just filesystem load time
+    # )
 
 
 def _solve_griewank_to_rs(g: DFGraph, budget: int):

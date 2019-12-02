@@ -1,3 +1,4 @@
+import pathlib
 from typing import Optional
 
 import numpy as np
@@ -62,7 +63,8 @@ def plot_schedule(sched_result: ScheduledResult, plot_mem_usage=False, save_file
     _plot_schedule_from_rs(R, S, plot_mem_usage, mem_grid, U, save_file, show, plt)
 
 
-def _plot_schedule_from_rs(R, S, plot_mem_usage=False, mem_grid=None, U=None, save_file=None, show=False, plt=None):
+def _plot_schedule_from_rs(R, S, plot_mem_usage=False, mem_grid=None, U=None, save_file: Optional[PathLike] = None,
+                           show=False, plt=None):
     if plt is None:
         import matplotlib.pyplot as plt
 
@@ -99,5 +101,7 @@ def _plot_schedule_from_rs(R, S, plot_mem_usage=False, mem_grid=None, U=None, sa
     if show:
         plt.show()
     if save_file:
-        fig.savefig(save_file)
+        path = pathlib.Path(save_file)
+        path.parents[0].mkdir(parents=True, exist_ok=True)
+        fig.savefig(path)
         plt.close(fig)
