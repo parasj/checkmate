@@ -6,9 +6,9 @@ import urllib.request
 import numpy as np
 import pandas as pd
 
-from remat.core.dfgraph import DFGraph
-from remat.core.utils.solver_common import solve_r_opt, setup_implied_s_backwards
-from remat.core.utils.timer import Timer
+from checkmate.core.dfgraph import DFGraph
+from checkmate.core.utils.solver_common import solve_r_opt, setup_implied_s_backwards
+from checkmate.core.utils.timer import Timer
 
 
 def solve_griewank(g: DFGraph, budget: int):

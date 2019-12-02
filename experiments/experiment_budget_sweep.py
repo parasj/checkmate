@@ -23,16 +23,16 @@ from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model, CH
 from experiments.common.profile.cost_model import CostModel
 from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory, pretty_platform_name
 from experiments.common.ray_utils import get_futures
-from remat.core.dfgraph import DFGraph
-from remat.core.enum_strategy import SolveStrategy
-from remat.core.schedule import ScheduledResult
-from remat.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic_sweep, \
+from checkmate.core.dfgraph import DFGraph
+from checkmate.core.enum_strategy import SolveStrategy
+from checkmate.core.schedule import ScheduledResult
+from checkmate.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic_sweep, \
     solve_approx_lp_deterministic_rand_threshold, solve_approx_lp_deterministic_05_threshold, solve_approx_lp_randomized
-from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
-from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
-from remat.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
-from remat.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
-from remat.tf2_keras.extraction import dfgraph_from_keras
+from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
+from checkmate.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
+from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
+from checkmate.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
+from checkmate.tf2_keras.extraction import dfgraph_from_keras
 
 # ILP solve params
 NUM_ILP_CORES = os.environ.get("ILP_CORES", 12 if os.cpu_count() > 12 else 4)

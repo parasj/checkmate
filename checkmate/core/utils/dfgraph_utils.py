@@ -2,7 +2,7 @@ import fractions
 from collections import defaultdict
 from functools import reduce
 
-from remat.core.utils.definitions import EdgeList, AdjList
+from checkmate.core.utils.definitions import EdgeList, AdjList
 
 import numpy as np
 

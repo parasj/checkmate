@@ -6,7 +6,7 @@ from tensorflow.keras import layers
 from copy import deepcopy
 
 #from tensorflow.python.ops import gradients_util as tfg
-from remat.core.schedule import OperatorEvaluation, AllocateRegister, DeallocateRegister, Schedule
+from checkmate.core.schedule import OperatorEvaluation, AllocateRegister, DeallocateRegister, Schedule
 
 #tf.compat.v1.disable_eager_execution()
 logging.basicConfig(level=logging.DEBUG)

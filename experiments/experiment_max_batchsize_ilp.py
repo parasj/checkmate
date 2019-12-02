@@ -15,9 +15,9 @@ from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model
 from experiments.common.profile.cost_model import CostModel
 from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory
 from experiments.solver_ilp_max_batchsize import MaxBatchILPSolver
-from remat.core.enum_strategy import SolveStrategy
-from remat.core.schedule import ScheduledResult
-from remat.tf2_keras.extraction import dfgraph_from_keras
+from checkmate.core.enum_strategy import SolveStrategy
+from checkmate.core.schedule import ScheduledResult
+from checkmate.tf2_keras.extraction import dfgraph_from_keras
 
 GB = 1000 * 1000 * 1000
 

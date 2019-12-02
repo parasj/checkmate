@@ -7,14 +7,14 @@ import numpy as np
 # noinspection PyPackageRequirements
 from gurobipy import GRB, Model, quicksum
 
-import remat.core
-from remat.core.dfgraph import DFGraph
-from remat.core.enum_strategy import SolveStrategy, ImposedSchedule
-from remat.core.schedule import ScheduledResult, ILPAuxData
-from remat.core.utils.definitions import PathLike
-from remat.core.utils.scheduler import schedule_from_rs
-from remat.core.utils.solver_common import solve_r_opt
-from remat.core.utils.timer import Timer
+import checkmate.core
+from checkmate.core.dfgraph import DFGraph
+from checkmate.core.enum_strategy import SolveStrategy, ImposedSchedule
+from checkmate.core.schedule import ScheduledResult, ILPAuxData
+from checkmate.core.utils.definitions import PathLike
+from checkmate.core.utils.scheduler import schedule_from_rs
+from checkmate.core.utils.solver_common import solve_r_opt
+from checkmate.core.utils.timer import Timer
 
 
 class ILPSolver:
@@ -177,10 +177,10 @@ class ILPSolver:
         if self.m.solCount < 1:
             raise ValueError(f"Model status is {self.m.status} (not infeasible), but solCount is {self.m.solCount}")
 
-        Rout = np.zeros((T, T), dtype=remat.core.utils.solver_common.SOLVER_DTYPE if self.integral else np.float)
-        Sout = np.zeros((T, T), dtype=remat.core.utils.solver_common.SOLVER_DTYPE if self.integral else np.float)
-        Uout = np.zeros((T, T), dtype=remat.core.utils.solver_common.SOLVER_DTYPE if self.integral else np.float)
-        Free_Eout = np.zeros((T, len(self.g.edge_list)), dtype=remat.core.utils.solver_common.SOLVER_DTYPE)
+        Rout = np.zeros((T, T), dtype=checkmate.core.utils.solver_common.SOLVER_DTYPE if self.integral else np.float)
+        Sout = np.zeros((T, T), dtype=checkmate.core.utils.solver_common.SOLVER_DTYPE if self.integral else np.float)
+        Uout = np.zeros((T, T), dtype=checkmate.core.utils.solver_common.SOLVER_DTYPE if self.integral else np.float)
+        Free_Eout = np.zeros((T, len(self.g.edge_list)), dtype=checkmate.core.utils.solver_common.SOLVER_DTYPE)
         solver_dtype_cast = int if self.integral else float
         try:
             for t in range(T):

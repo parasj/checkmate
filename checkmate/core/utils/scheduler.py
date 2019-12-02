@@ -3,9 +3,9 @@ from typing import List, Dict, Tuple, Optional
 
 import numpy as np
 
-from remat.core.dfgraph import DFGraph
-from remat.core.schedule import OperatorEvaluation, AllocateRegister, DeallocateRegister, Schedule, SchedulerAuxData
-from remat.core.utils.timer import Timer
+from checkmate.core.dfgraph import DFGraph
+from checkmate.core.schedule import OperatorEvaluation, AllocateRegister, DeallocateRegister, Schedule, SchedulerAuxData
+from checkmate.core.utils.timer import Timer
 
 
 class ScheduleBuilder:

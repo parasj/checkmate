@@ -5,11 +5,11 @@ from typing import Optional
 
 import numpy as np
 
-from remat.core.dfgraph import DFGraph
-from remat.core.enum_strategy import SolveStrategy, ImposedSchedule
-from remat.core.schedule import ILPAuxData, ScheduledResult, SchedulerAuxData
-from remat.core.solvers.strategy_optimal_ilp import ILPSolver
-from remat.core.utils.definitions import PathLike
+from checkmate.core.dfgraph import DFGraph
+from checkmate.core.enum_strategy import SolveStrategy, ImposedSchedule
+from checkmate.core.schedule import ILPAuxData, ScheduledResult, SchedulerAuxData
+from checkmate.core.solvers.strategy_optimal_ilp import ILPSolver
+from checkmate.core.utils.definitions import PathLike
 
 
 def lower_bound_lp_relaxation(

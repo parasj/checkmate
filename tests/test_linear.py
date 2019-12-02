@@ -3,10 +3,10 @@ import logging
 import numpy as np
 
 from experiments.common.graph_plotting import plot_schedule
-from remat.core.graph_builder import gen_linear_graph
-from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
-from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
-from remat.core.solvers.strategy_chen import solve_chen_greedy, solve_chen_sqrtn
+from checkmate.core.graph_builder import gen_linear_graph
+from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
+from checkmate.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
+from checkmate.core.solvers.strategy_chen import solve_chen_greedy, solve_chen_sqrtn
 
 test_points = [2, 4, 6, 8, 9, 11, 13, 16, 32]
 SAVE_DEBUG_PLOTS = False
@@ -89,7 +89,7 @@ def test_ilp():
         logging.exception(e)
         logging.warning("Continuing with tests, gurobi not installed")
         return
-    from remat.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
+    from checkmate.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
     for graph_length in test_points:
         g = gen_linear_graph(graph_length)
         assert g.size == 2 * graph_length + 1

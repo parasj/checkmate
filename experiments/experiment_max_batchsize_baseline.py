@@ -19,12 +19,12 @@ from experiments.common.graph_plotting import plot_dfgraph
 from experiments.common.profile.cost_model import CostModel
 from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory
 from experiments.common.ray_utils import get_futures
-from remat.core.schedule import ScheduledResult
-from remat.core.enum_strategy import SolveStrategy
-from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
-from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
-from remat.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
-from remat.tf2_keras.extraction import dfgraph_from_keras
+from checkmate.core.schedule import ScheduledResult
+from checkmate.core.enum_strategy import SolveStrategy
+from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
+from checkmate.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
+from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
+from checkmate.tf2_keras.extraction import dfgraph_from_keras
 
 
 def extract_params():

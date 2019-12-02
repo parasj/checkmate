@@ -1,13 +1,13 @@
 from setuptools import setup
 
 setup(
-    name='remat',
+    name='checkmate',
     version='0.1.0',
-    description='Optimal tensor rematerialization research project',
-    packages=['remat'],  # find_packages()
+    description='Checkmate prevents you from OOMing when training big deep neural nets',
+    packages=['checkmate'],  # find_packages()
     python_requires='>=3.6',
     install_requires=[
-        "matplotlib",  # this is only used once in the core remat package
+        "matplotlib",  # this is only used once in the core checkmate package
         "numpy",
         "pandas",
         "tensorflow>=2.0.0",

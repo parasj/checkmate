@@ -3,11 +3,11 @@ import logging
 
 from experiments.common.definitions import remat_data_dir
 from experiments.common.graph_plotting import plot_schedule
-from remat.core.graph_builder import gen_linear_graph
-from remat.core.enum_strategy import ImposedSchedule
-from remat.core.solvers.lower_bound_lp import lower_bound_lp_relaxation
-from remat.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic_sweep
-from remat.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
+from checkmate.core.graph_builder import gen_linear_graph
+from checkmate.core.enum_strategy import ImposedSchedule
+from checkmate.core.solvers.lower_bound_lp import lower_bound_lp_relaxation
+from checkmate.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic_sweep
+from checkmate.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
 
 
 def parse_args():

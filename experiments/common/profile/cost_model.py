@@ -10,7 +10,7 @@ from typing import Optional
 
 import numpy as np
 
-from remat.core.utils.definitions import PathLike
+from checkmate.core.utils.definitions import PathLike
 
 # BATCH_SIZES_LOAD = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
 BATCH_SIZES_LOAD = [32, 64, 128, 256, 512, 1024, 2048]

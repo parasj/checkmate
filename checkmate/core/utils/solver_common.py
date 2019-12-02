@@ -2,8 +2,8 @@ from typing import Set
 
 import numpy as np
 
-from remat.core.dfgraph import DFGraph
-from remat.core.utils.definitions import Vertex
+from checkmate.core.dfgraph import DFGraph
+from checkmate.core.utils.definitions import Vertex
 
 SOLVER_DTYPE = np.int
 

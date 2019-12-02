@@ -3,7 +3,7 @@ from typing import NamedTuple, Dict, List, Union, Optional
 
 import numpy as np
 
-from remat.core.enum_strategy import SolveStrategy, ImposedSchedule
+from checkmate.core.enum_strategy import SolveStrategy, ImposedSchedule
 
 
 class OperatorEvaluation(NamedTuple):
