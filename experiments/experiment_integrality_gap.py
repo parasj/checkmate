@@ -2,8 +2,8 @@ import argparse
 import logging
 
 from experiments.common.definitions import remat_data_dir
-from experiments.common.graph_plotting import plot
-from remat.core.dfgraph import gen_linear_graph
+from experiments.common.graph_plotting import plot_schedule
+from remat.core.graph_builder import gen_linear_graph
 from remat.core.enum_strategy import ImposedSchedule
 from remat.core.solvers.lower_bound_lp import lower_bound_lp_relaxation
 from remat.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic_sweep
@@ -43,13 +43,13 @@ if __name__ == "__main__":
 
         logging.info("--- Solving LP relaxation for lower bound")
         lb_lp = lower_bound_lp_relaxation(g, B, approx=APPROX, eps_noise=EPS_NOISE, imposed_schedule=IMPOSED_SCHEDULE)
-        plot(lb_lp, False, save_file=scratch_dir / "CHECKMATE_LB_LP.png")
+        plot_schedule(lb_lp, False, save_file=scratch_dir / "CHECKMATE_LB_LP.png")
 
         logging.info("--- Solving ILP")
         ilp = solve_ilp_gurobi(g, B, approx=APPROX, eps_noise=EPS_NOISE, imposed_schedule=IMPOSED_SCHEDULE,
                                solve_r=SOLVE_R)
         ilp_feasible = ilp.schedule_aux_data.activation_ram <= B
-        plot(ilp, False, save_file=scratch_dir / "CHECKMATE_ILP.png")
+        plot_schedule(ilp, False, save_file=scratch_dir / "CHECKMATE_ILP.png")
 
         integrality_gap = ilp.schedule_aux_data.cpu / lb_lp.schedule_aux_data.cpu
         speedup = ilp.solve_time_s / lb_lp.solve_time_s
