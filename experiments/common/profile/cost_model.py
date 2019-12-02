@@ -8,9 +8,7 @@ import urllib.error
 from collections import defaultdict
 from typing import Optional
 
-import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 
 from remat.core.utils.definitions import PathLike
 
@@ -117,6 +115,8 @@ class CostModel:
         return cost_list
 
     def plot_costs(self):
+        import matplotlib.pyplot as plt
+        import seaborn as sns
         self.logger.info("Plotting cost model")
         data_by_layer = defaultdict(lambda: ([], [], []))
         for batch_size, cost_file in zip(self.batch_sizes_to_load, self.cost_files_to_load):
