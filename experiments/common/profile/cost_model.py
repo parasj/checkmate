@@ -10,8 +10,6 @@ from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy
-import scipy.stats
 import seaborn as sns
 
 from remat.core.utils.definitions import PathLike
@@ -46,6 +44,7 @@ class CostModel:
         self.intercepts_np: Optional[np.ndarray] = None
 
     def fit(self):
+        import scipy.stats
         self.logger.info("Loading measured costs")
         costs_by_layer = defaultdict(list)
         batch_sizes_by_layer = defaultdict(list)
