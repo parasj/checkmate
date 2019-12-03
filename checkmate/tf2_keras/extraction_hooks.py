@@ -171,7 +171,6 @@ def pspnet_lambda_hook(node, inputs, outputs):
 # todo flatten
 hooks = {
     # General hooks
-<<<<<<< HEAD:remat/tensorflow2/extraction_hooks.py
     'Conv2D': conv_hook,
     'Conv2DTranspose': conv_transpose_hook,
     'Cropping2D': pool_hook,  # TODO fix
@@ -187,20 +186,6 @@ hooks = {
     'Add': add_hook,
     'GlobalAveragePooling2D': pool_hook,
     'AveragePooling2D': pool_hook,
-=======
-    "Conv2D": conv_hook,
-    "Conv2DTranspose": conv_transpose_hook,
-    "Cropping2D": pool_hook,  # TODO fix
-    "DepthwiseConv2D": depthwise_conv_hook,
-    "BatchNormalization": bn_hook,
-    "Activation": relu_hook,
-    "ReLU": relu_hook,
-    "MaxPooling2D": pool_hook,
-    "Dropout": dropout_hook,
-    "Concatenate": concat_hook,
-    "Add": add_hook,
-    "GlobalAveragePooling2D": pool_hook,
-    "AveragePooling2D": pool_hook,
     # 'Shape': shape_hook,
     "Flatten": reshape_hook,
     "Concat": concat_hook,
