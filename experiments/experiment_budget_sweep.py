@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import logging
 import os
 import pathlib
@@ -17,23 +18,26 @@ import tensorflow as tf
 from matplotlib.lines import Line2D
 from scipy.stats.mstats import gmean
 
-from experiments.common.definitions import remat_data_dir
-from experiments.common.graph_plotting import render_dfgraph
+from experiments.common.definitions import checkmate_data_dir
+from experiments.common.graph_plotting import plot_dfgraph
 from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model, CHAIN_GRAPH_MODELS
 from experiments.common.profile.cost_model import CostModel
 from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory, pretty_platform_name
 from experiments.common.ray_utils import get_futures
-from remat.core.dfgraph import DFGraph
-from remat.core.enum_strategy import SolveStrategy
-from remat.core.schedule import ScheduledResult
-from remat.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic_sweep, \
-    solve_approx_lp_deterministic_rand_threshold, solve_approx_lp_deterministic_05_threshold, solve_approx_lp_randomized
-from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
-from remat.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
-from remat.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
-from remat.core.solvers.strategy_griewank import solve_griewank, clean_griewank_cache
-from remat.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
-from remat.tensorflow2.extraction import dfgraph_from_keras
+from checkmate.core.dfgraph import DFGraph
+from checkmate.core.enum_strategy import SolveStrategy
+from checkmate.core.schedule import ScheduledResult
+from checkmate.core.solvers.strategy_approx_lp import (
+    solve_approx_lp_deterministic_sweep,
+    solve_approx_lp_deterministic_rand_threshold,
+    solve_approx_lp_deterministic_05_threshold,
+    solve_approx_lp_randomized,
+)
+from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
+from checkmate.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
+from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
+from checkmate.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
+from checkmate.tf2_keras.extraction import dfgraph_from_keras
 
 # ILP solve params
 NUM_ILP_CORES = os.environ.get("ILP_CORES", 12 if os.cpu_count() > 12 else 4)
@@ -49,39 +53,39 @@ ADDITIONAL_ILP_LOCAL_POINTS = {  # additional budgets to add to ILP local search
     # measured in GB, including fixed parameters.
     ("ResNet50", 256): [9.25, 9.5, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
     ("MobileNet", 512): [15.9, 15, 14, 17, 18, 19, 38, 37, 36, 39],
-    ("vgg_unet", 32): [20, 21, 22, 23, 24, 25, 26, 6, 7, 8, 9, 10, 11, 12, 16, 15.9]
+    ("vgg_unet", 32): [20, 21, 22, 23, 24, 25, 26, 6, 7, 8, 9, 10, 11, 12, 16, 15.9],
 }
 
 # Plotting parameters
-XLIM = {
-    ("ResNet50", 256): [8, 42],
-    ("MobileNet", 512): [4, 48],
-    ("vgg_unet", 32): [4, 32],
-    ("VGG16", 256): [13, 22]
-}
+XLIM = {("ResNet50", 256): [8, 42], ("MobileNet", 512): [4, 48], ("vgg_unet", 32): [4, 32], ("VGG16", 256): [13, 22]}
 
 YLIM = {
     ("ResNet50", 256): [0.95, 1.5],
     ("MobileNet", 512): [0.95, 1.5],
     ("vgg_unet", 32): [0.95, 1.5],
-    ("VGG16", 256): [0.95, 1.5]
+    ("VGG16", 256): [0.95, 1.5],
 }
 
 
 def extract_params():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--platform', default="flops", choices=PLATFORM_CHOICES)
-    parser.add_argument('--model-name', default="VGG16", choices=list(sorted(MODEL_NAMES)))
-    parser.add_argument('--ilp-eval-points', nargs='+', type=int, default=[],
-                        help="If set, will only search a specific set of ILP points in MB, else perform global search.")
+    parser.add_argument("--platform", default="flops", choices=PLATFORM_CHOICES)
+    parser.add_argument("--model-name", default="VGG16", choices=list(sorted(MODEL_NAMES)))
+    parser.add_argument(
+        "--ilp-eval-points",
+        nargs="+",
+        type=int,
+        default=[],
+        help="If set, will only search a specific set of ILP points in MB, else perform global search.",
+    )
     parser.add_argument("-b", "--batch-size", type=int, default=1)
     parser.add_argument("-s", "--input-shape", type=int, nargs="+", default=[])
 
-    parser.add_argument('--debug', action='store_true', help="If set, write debug files like model files.")
-    parser.add_argument('--exact-ilp-solve', action='store_true', help="If set, disable approx in ILP solve.")
-    parser.add_argument('--skip-ilp', action='store_true', help="If set, skip running the ILP during evaluation.")
-    parser.add_argument('--ilp-time-limit', type=int, default=3600, help="Time limit for individual ILP solves, in sec")
-    parser.add_argument('--hide-points', action="store_true")
+    parser.add_argument("--debug", action="store_true", help="If set, write debug files like model files.")
+    parser.add_argument("--exact-ilp-solve", action="store_true", help="If set, disable approx in ILP solve.")
+    parser.add_argument("--skip-ilp", action="store_true", help="If set, skip running the ILP during evaluation.")
+    parser.add_argument("--ilp-time-limit", type=int, default=3600, help="Time limit for individual ILP solves, in sec")
+    parser.add_argument("--hide-points", action="store_true")
 
     _args = parser.parse_args()
     if _args.skip_ilp and len(_args.ilp_eval_points) > 0:
@@ -112,7 +116,7 @@ def roundup(round_factor: int, number: float) -> int:
 def dist_points(start, stop, n, min_val=0.0):
     assert start < stop, "Start range must be below end of range"
     assert start > 0 and stop > 0, "Start and stop ranges must be positive"
-    pts = sorted(start + np.arange(0, 1, 1. / n) * (stop - start))
+    pts = sorted(start + np.arange(0, 1, 1.0 / n) * (stop - start))
     return [p for p in pts if p > min_val]
 
 
@@ -128,7 +132,7 @@ def get_global_eval_points(g: DFGraph, results: Dict[SolveStrategy, List[Schedul
     :return: list of integral evaluation points
     """
     number_samples = NUM_ILP_GLOBAL * 2 if model_name in DENSE_SOLVE_MODELS else NUM_ILP_GLOBAL
-    min_ram = g.max_degree_ram()
+    min_ram = g.max_degree_ram
 
     # get max point by finding closest matching greedy result
     check_all_result = results[SolveStrategy.CHECKPOINT_ALL][0]
@@ -153,20 +157,31 @@ def get_global_eval_points(g: DFGraph, results: Dict[SolveStrategy, List[Schedul
 
 
 if __name__ == "__main__":
+    args = extract_params()
+    key = "_".join(map(str, [args.platform, args.model_name, args.batch_size, args.input_shape]))
+    log_base = checkmate_data_dir() / "budget_sweep" / key / str(datetime.datetime.now().isoformat())
+    shutil.rmtree(log_base, ignore_errors=True)
+    pathlib.Path(log_base).mkdir(parents=True, exist_ok=True)
+
+    logging.basicConfig(
+        filename=log_base / "budget_sweep.log",
+        filemode="a",
+        format="%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s",
+        datefmt="%H:%M:%S",
+        level=logging.DEBUG,
+    )
     logger = logging.getLogger("budget_sweep")
-    logger.setLevel(logging.DEBUG)
+
     # due to bug on havoc, limit parallelism on high-core machines
     if os.cpu_count() > 48:
         os.environ["OMP_NUM_THREADS"] = "1"
-    args = extract_params()
 
-    ray.init(temp_dir="/tmp/ray_checkpoint", redis_password=str(uuid.uuid1()), num_cpus=os.cpu_count(),
-             object_store_memory=1024 * 1024 * 1024 if os.cpu_count() < 48 else None)  # include_webui=args.debug
-
-    key = "_".join(map(str, [args.platform, args.model_name, args.batch_size, args.input_shape]))
-    log_base = remat_data_dir() / "budget_sweep" / key
-    shutil.rmtree(log_base, ignore_errors=True)
-    pathlib.Path(log_base).mkdir(parents=True, exist_ok=True)
+    ray.init(
+        temp_dir="/tmp/ray_checkpoint",
+        redis_password=str(uuid.uuid1()),
+        num_cpus=os.cpu_count(),
+        object_store_memory=1024 * 1024 * 1024 if os.cpu_count() < 48 else None,
+    )  # include_webui=args.debug
 
     ####
     # Begin budget_sweep data collection
@@ -184,24 +199,17 @@ if __name__ == "__main__":
         if args.debug:
             cost_model.plot_costs()
 
-    # gen redis key
-    if cost_model is None:
-        key_list = ["flops", args.batch_size]
-    else:
-        key_list = [cost_model.platform, cost_model.quantization, args.batch_size]
-    redis_cost_key = "_".join(map(str, key_list))
-
     # load model from Keras
     logger.info(f"Loading model {model_name}")
     model = get_keras_model(model_name, input_shape=args.input_shape)
-    g = dfgraph_from_keras(model, batch_size=args.batch_size, cost_model=cost_model,
-                           loss_cpu_cost=0, loss_ram_cost=(4 * args.batch_size))
+    g = dfgraph_from_keras(
+        model, batch_size=args.batch_size, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4 * args.batch_size)
+    )
     if args.debug:
-        tf.keras.utils.plot_model(model,
-                                  to_file=log_base / f"plot_{model_name}_keras.png",
-                                  show_shapes=True,
-                                  show_layer_names=True)
-        render_dfgraph(g, log_base, name=model_name)
+        tf.keras.utils.plot_model(
+            model, to_file=log_base / f"plot_{model_name}_keras.png", show_shapes=True, show_layer_names=True
+        )
+        plot_dfgraph(g, log_base, name=model_name)
 
     # sweep constant baselines
     logger.info(f"Running constant baselines (ALL, ALL_AP, LAST_NODE, SQRTN_NOAP, SQRTN)")
@@ -214,7 +222,7 @@ if __name__ == "__main__":
     # sweep chen's greedy baseline
     logger.info(f"Running Chen's greedy baseline (APs only)")
     chen_sqrtn_noap = result_dict[SolveStrategy.CHEN_SQRTN_NOAP][0]
-    greedy_eval_points = chen_sqrtn_noap.schedule_aux_data.activation_ram * (1. + np.arange(-1, 2, 0.01))
+    greedy_eval_points = chen_sqrtn_noap.schedule_aux_data.activation_ram * (1.0 + np.arange(-1, 2, 0.01))
     remote_solve_chen_greedy = ray.remote(num_cpus=1)(solve_chen_greedy).remote
     futures = [remote_solve_chen_greedy(g, float(b), False) for b in greedy_eval_points]
     result_dict[SolveStrategy.CHEN_GREEDY] = get_futures(list(futures), desc="Greedy (APs only)")
@@ -224,14 +232,15 @@ if __name__ == "__main__":
         result_dict[SolveStrategy.CHEN_SQRTN_NOAP] = get_futures(list(futures), desc="Greedy (No AP)")
 
     # sweep griewank baselines
-    if model_name in CHAIN_GRAPH_MODELS:
-        logger.info(f"Running Griewank baseline (APs only)")
-        clean_griewank_cache()
-        solve_griewank(g, 1)  # prefetch griewank solution from s3, otherwise ray will cause race condition
-        griewank_eval_points = range(1, g.size + 1)
-        remote_solve_griewank = ray.remote(num_cpus=1)(solve_griewank).remote
-        futures = [remote_solve_griewank(g, float(b)) for b in griewank_eval_points]
-        result_dict[SolveStrategy.GRIEWANK_LOGN] = get_futures(list(futures), desc="Griewank (APs only)")
+    logger.error("Skipping Griewank baselines as it was broken in parasj/checkmate#65")
+    # if model_name in CHAIN_GRAPH_MODELS:
+    #     logger.info(f"Running Griewank baseline (APs only)")
+    #     clean_griewank_cache()
+    #     solve_griewank(g, 1)  # prefetch griewank solution from s3, otherwise ray will cause race condition
+    #     griewank_eval_points = range(1, g.size + 1)
+    #     remote_solve_griewank = ray.remote(num_cpus=1)(solve_griewank).remote
+    #     futures = [remote_solve_griewank(g, float(b)) for b in griewank_eval_points]
+    #     result_dict[SolveStrategy.GRIEWANK_LOGN] = get_futures(list(futures), desc="Griewank (APs only)")
 
     # sweep optimal ilp baseline
     if not args.skip_ilp:
@@ -249,16 +258,30 @@ if __name__ == "__main__":
             for b in global_eval_points:
                 seed_result = get_closest_budget_result(result_dict, b)
                 seed_s = seed_result.schedule_aux_data.S if seed_result is not None else None
-                future = remote_ilp(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES, seed_s=seed_s,
-                                    write_log_file=ilp_log_base / f"ilp_{b}.log", print_to_console=False,
-                                    write_model_file=ilp_log_base / f"ilp_{b}.lp" if args.debug else None,
-                                    eps_noise=0 if args.exact_ilp_solve else 0.01, approx=args.exact_ilp_solve)
+                future = remote_ilp(
+                    g,
+                    b,
+                    time_limit=args.ilp_time_limit,
+                    solver_cores=NUM_ILP_CORES,
+                    seed_s=seed_s,
+                    write_log_file=ilp_log_base / f"ilp_{b}.log",
+                    print_to_console=False,
+                    write_model_file=ilp_log_base / f"ilp_{b}.lp" if args.debug else None,
+                    eps_noise=0 if args.exact_ilp_solve else 0.01,
+                    approx=args.exact_ilp_solve,
+                )
                 futures.append(future)
             result_dict[SolveStrategy.OPTIMAL_ILP_GC] = get_futures(futures, desc="Global optimal ILP sweep")
 
             # sample n local points around minimum feasible ram (all methods)
-            min_r = min([r.schedule_aux_data.activation_ram or np.inf for l in result_dict.values() for r in l if
-                         r is not None and r.schedule_aux_data is not None])
+            min_r = min(
+                [
+                    r.schedule_aux_data.activation_ram or np.inf
+                    for l in result_dict.values()
+                    for r in l
+                    if r is not None and r.schedule_aux_data is not None
+                ]
+            )
             logger.debug(f"Minimum feasible ILP solution at {min_r}")
             nlocal_samples = NUM_ILP_LOCAL * 2 if model_name in DENSE_SOLVE_MODELS else NUM_ILP_LOCAL
             min_ram = ILP_SEARCH_RANGE[0] * min_r
@@ -271,10 +294,18 @@ if __name__ == "__main__":
         for b in local_ilp_eval_points:
             seed_result = get_closest_budget_result(result_dict, b)
             seed_s = seed_result.schedule_aux_data.S if seed_result is not None else None
-            future = remote_ilp(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES, seed_s=seed_s,
-                                write_log_file=ilp_log_base / f"ilp_{b}.log", print_to_console=False,
-                                write_model_file=ilp_log_base / f"ilp_{b}.lp" if args.debug else None,
-                                eps_noise=0 if args.exact_ilp_solve else 0.01, approx=args.exact_ilp_solve)
+            future = remote_ilp(
+                g,
+                b,
+                time_limit=args.ilp_time_limit,
+                solver_cores=NUM_ILP_CORES,
+                seed_s=seed_s,
+                write_log_file=ilp_log_base / f"ilp_{b}.log",
+                print_to_console=False,
+                write_model_file=ilp_log_base / f"ilp_{b}.lp" if args.debug else None,
+                eps_noise=0 if args.exact_ilp_solve else 0.01,
+                approx=args.exact_ilp_solve,
+            )
             futures.append(future)
         result_dict[SolveStrategy.OPTIMAL_ILP_GC].extend(get_futures(futures, desc="Local optimal ILP sweep"))
 
@@ -289,13 +320,19 @@ if __name__ == "__main__":
     remote_lp_det_05 = ray.remote(num_cpus=NUM_ILP_CORES)(solve_approx_lp_deterministic_05_threshold).remote
     futures = []
     for b in approx_eval_points:
-        future = remote_lp_det_05(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES,
-                                  write_log_file=lpdet05_log_base / f"lp_det_rand_{b}.log", print_to_console=False,
-                                  write_model_file=lpdet05_log_base / f"lp_det_rand_{b}.lp" if args.debug else None,
-                                  eps_noise=0, approx=False)
+        future = remote_lp_det_05(
+            g,
+            b,
+            time_limit=args.ilp_time_limit,
+            solver_cores=NUM_ILP_CORES,
+            write_log_file=lpdet05_log_base / f"lp_det_rand_{b}.log",
+            print_to_console=False,
+            write_model_file=lpdet05_log_base / f"lp_det_rand_{b}.lp" if args.debug else None,
+            eps_noise=0,
+            approx=False,
+        )
         futures.append(future)
-    result_dict[SolveStrategy.APPROX_DET_ROUND_LP_05_THRESH] = get_futures(futures,
-                                                                           desc="LP approx det 0.5")
+    result_dict[SolveStrategy.APPROX_DET_ROUND_LP_05_THRESH] = get_futures(futures, desc="LP approx det 0.5")
 
     # sweep LP rounding (deterministic w/ randomly sampled threshold)
     lpdetrand_log_base = log_base / "lp_det_rand"
@@ -303,13 +340,19 @@ if __name__ == "__main__":
     remote_lp_det_rand = ray.remote(num_cpus=NUM_ILP_CORES)(solve_approx_lp_deterministic_rand_threshold).remote
     futures = []
     for b in approx_eval_points:
-        future = remote_lp_det_rand(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES,
-                                    write_log_file=lpdetrand_log_base / f"lp_det_05_{b}.log", print_to_console=False,
-                                    write_model_file=lpdetrand_log_base / f"lp_det_05_{b}.lp" if args.debug else None,
-                                    eps_noise=0, approx=False)
+        future = remote_lp_det_rand(
+            g,
+            b,
+            time_limit=args.ilp_time_limit,
+            solver_cores=NUM_ILP_CORES,
+            write_log_file=lpdetrand_log_base / f"lp_det_05_{b}.log",
+            print_to_console=False,
+            write_model_file=lpdetrand_log_base / f"lp_det_05_{b}.lp" if args.debug else None,
+            eps_noise=0,
+            approx=False,
+        )
         futures.append(future)
-    result_dict[SolveStrategy.APPROX_DET_RANDOM_THRESH_ROUND_LP] = get_futures(futures,
-                                                                               desc="LP approx det rand")
+    result_dict[SolveStrategy.APPROX_DET_RANDOM_THRESH_ROUND_LP] = get_futures(futures, desc="LP approx det rand")
 
     # sweep LP rounding (deterministic sweep)
     lpdet_log_base = log_base / "lp_det_sweep"
@@ -317,10 +360,17 @@ if __name__ == "__main__":
     remote_lp_det_sweep = ray.remote(num_cpus=NUM_ILP_CORES)(solve_approx_lp_deterministic_sweep).remote
     futures = []
     for b in approx_eval_points:
-        future = remote_lp_det_sweep(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES,
-                                     write_log_file=lpdet_log_base / f"lp_det_{b}.log", print_to_console=False,
-                                     write_model_file=lpdet_log_base / f"lp_det_{b}.lp" if args.debug else None,
-                                     eps_noise=0, approx=False)
+        future = remote_lp_det_sweep(
+            g,
+            b,
+            time_limit=args.ilp_time_limit,
+            solver_cores=NUM_ILP_CORES,
+            write_log_file=lpdet_log_base / f"lp_det_{b}.log",
+            print_to_console=False,
+            write_model_file=lpdet_log_base / f"lp_det_{b}.lp" if args.debug else None,
+            eps_noise=0,
+            approx=False,
+        )
         futures.append(future)
     result_dict[SolveStrategy.APPROX_DET_ROUND_LP_SWEEP] = get_futures(futures, desc="LP approx det sweep")
 
@@ -330,10 +380,17 @@ if __name__ == "__main__":
     remote_lp_rand = ray.remote(num_cpus=NUM_ILP_CORES)(solve_approx_lp_randomized).remote
     futures = []
     for b in approx_eval_points:
-        future = remote_lp_rand(g, b, time_limit=args.ilp_time_limit, solver_cores=NUM_ILP_CORES,
-                                write_log_file=lprand_log_base / f"lp_rand_{b}.log", print_to_console=False,
-                                write_model_file=lprand_log_base / f"lp_rand_{b}.lp" if args.debug else None,
-                                eps_noise=0, approx=False)
+        future = remote_lp_rand(
+            g,
+            b,
+            time_limit=args.ilp_time_limit,
+            solver_cores=NUM_ILP_CORES,
+            write_log_file=lprand_log_base / f"lp_rand_{b}.log",
+            print_to_console=False,
+            write_model_file=lprand_log_base / f"lp_rand_{b}.lp" if args.debug else None,
+            eps_noise=0,
+            approx=False,
+        )
         futures.append(future)
     result_dict[SolveStrategy.APPROX_RANDOMIZED_ROUND] = get_futures(futures, desc="LP approx rand")
 
@@ -349,8 +406,13 @@ if __name__ == "__main__":
     ax.set_xlabel("Memory budget (GB)")
     ax.set_ylabel("Overhead (x)")
     xmax = max(
-        [r.schedule_aux_data.peak_ram or 0 for rlist in result_dict.values() for r in rlist if
-         r is not None and r.schedule_aux_data is not None])
+        [
+            r.schedule_aux_data.peak_ram or 0
+            for rlist in result_dict.values()
+            for r in rlist
+            if r is not None and r.schedule_aux_data is not None
+        ]
+    )
     logger.info(f"xmax value = {xmax}")
     legend_elements = []
 
@@ -358,7 +420,8 @@ if __name__ == "__main__":
 
     for solve_strategy, results in result_dict.items():
         # checkpoint last node has too high compute, checkpoint all is plotted later
-        if solve_strategy in [SolveStrategy.CHECKPOINT_LAST_NODE, SolveStrategy.CHECKPOINT_ALL]:  continue
+        if solve_strategy in [SolveStrategy.CHECKPOINT_LAST_NODE, SolveStrategy.CHECKPOINT_ALL]:
+            continue
 
         label = SolveStrategy.get_description(solve_strategy, model_name=model_name)
         color, marker, markersize = SolveStrategy.get_plot_params(solve_strategy)
@@ -377,15 +440,21 @@ if __name__ == "__main__":
 
         # Plot best solution over budgets <= x
         # Add a point to the right of the plot, so ax.step can draw a horizontal line
-        ax.step(x_step, y_step, where='post', zorder=1, color=color)
+        ax.step(x_step, y_step, where="post", zorder=1, color=color)
         scatter_zorder = 3 if solve_strategy == SolveStrategy.CHECKPOINT_ALL_AP else 2
         if args.hide_points:
             # Plot only the first and last points
-            ax.scatter([x[0], x[-1]], [y[0], y[-1]], label="", zorder=scatter_zorder, s=markersize ** 2,
-                       color=color, marker=marker)
+            ax.scatter(
+                [x[0], x[-1]],
+                [y[0], y[-1]],
+                label="",
+                zorder=scatter_zorder,
+                s=markersize ** 2,
+                color=color,
+                marker=marker,
+            )
         else:
-            ax.scatter(x, np.array(y), label="", zorder=scatter_zorder, s=markersize ** 2, color=color,
-                       marker=marker)
+            ax.scatter(x, np.array(y), label="", zorder=scatter_zorder, s=markersize ** 2, color=color, marker=marker)
         legend_elements.append(Line2D([0], [0], lw=2, label=label, markersize=markersize, color=color, marker=marker))
 
         export_prefix_min[solve_strategy.name] = list(zip(x_step, y_step))
@@ -410,8 +479,8 @@ if __name__ == "__main__":
     if xlim_min <= mem_gb <= xlim_max:
         ax.vlines(x=mem_gb, ymin=ylim_min, ymax=ylim_max, linestyles="dotted", color="b")
         legend_elements.append(
-            Line2D([0], [0], lw=2, label=f"{pretty_platform_name(args.platform)} memory", color="b",
-                   linestyle="dotted"))
+            Line2D([0], [0], lw=2, label=f"{pretty_platform_name(args.platform)} memory", color="b", linestyle="dotted")
+        )
         ax.set_ylim([ylim_min, ylim_max])
 
     if (model_name, args.batch_size) in XLIM:
@@ -423,25 +492,33 @@ if __name__ == "__main__":
     # Make legend
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
-    ax.legend(handles=legend_elements, loc='upper center', bbox_to_anchor=(0.5, -0.2),
-              fancybox=False, shadow=False, ncol=2)
+    ax.legend(
+        handles=legend_elements, loc="upper center", bbox_to_anchor=(0.5, -0.2), fancybox=False, shadow=False, ncol=2
+    )
 
-    fig.savefig(log_base / f"plot_budget_sweep_{model_name}_{args.platform}_b{args.batch_size}.pdf",
-                format='pdf', bbox_inches='tight')
-    fig.savefig(log_base / f"plot_budget_sweep_{model_name}_{args.platform}_b{args.batch_size}.png",
-                bbox_inches='tight', dpi=300)
+    fig.savefig(
+        log_base / f"plot_budget_sweep_{model_name}_{args.platform}_b{args.batch_size}.pdf",
+        format="pdf",
+        bbox_inches="tight",
+    )
+    fig.savefig(
+        log_base / f"plot_budget_sweep_{model_name}_{args.platform}_b{args.batch_size}.png",
+        bbox_inches="tight",
+        dpi=300,
+    )
 
     # export list of budget, CPU tuples for each strategy
-    pickle.dump(export_prefix_min, (log_base / f"export_prefix_min_data.pickle").open('wb'),
-                protocol=pickle.HIGHEST_PROTOCOL)
+    pickle.dump(
+        export_prefix_min, (log_base / f"export_prefix_min_data.pickle").open("wb"), protocol=pickle.HIGHEST_PROTOCOL
+    )
 
     if not args.skip_ilp:
-        optimal_ilp_budgets = [x[0] for x in export_prefix_min['OPTIMAL_ILP_GC']]
-        optimal_ilp_cpu = [x[1] for x in export_prefix_min['OPTIMAL_ILP_GC']]
+        optimal_ilp_budgets = [x[0] for x in export_prefix_min["OPTIMAL_ILP_GC"]]
+        optimal_ilp_cpu = [x[1] for x in export_prefix_min["OPTIMAL_ILP_GC"]]
 
         slowdowns = defaultdict(list)
-        for key in [x for x in export_prefix_min.keys() if x != 'OPTIMAL_ILP_GC']:
-            for budget, optimal_cpu in export_prefix_min['OPTIMAL_ILP_GC']:
+        for key in [x for x in export_prefix_min.keys() if x != "OPTIMAL_ILP_GC"]:
+            for budget, optimal_cpu in export_prefix_min["OPTIMAL_ILP_GC"]:
                 filtered_budgets = [x for x in export_prefix_min[key] if x[0] <= budget]
                 if len(filtered_budgets) == 0:
                     continue
@@ -453,6 +530,6 @@ if __name__ == "__main__":
         for key, slowdown_list in slowdowns.items():
             max_slowdown = max(slowdown_list)
             gmean_slowdown = gmean(slowdown_list)
-            df_data.append({'method': key, 'max': max_slowdown, 'geomean_slowdown': gmean_slowdown})
+            df_data.append({"method": key, "max": max_slowdown, "geomean_slowdown": gmean_slowdown})
         df = pd.DataFrame(df_data)
         df.to_csv(log_base / "slowdowns.csv")
