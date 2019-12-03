@@ -17,17 +17,17 @@ def conv_transpose_hook(node, inputs, outputs):
     mem_cost = np.prod(outputs) * MEMORY_MULTIPLIER
     weight = node.weights[0].shape
     cin = weight[3]
-    cout = weight[2]
+    #cout = weight[2]
     ops_per_output = cin
     ops = ops_per_output * np.prod(outputs)
     return ops, mem_cost
 
 
-
 def conv_hook(node, inputs, outputs):
     # NOTE: This method assumes shapes are ordered as NHWC
     if None in outputs and None not in inputs and node.padding == "valid":
-        # Fill in unknown height and width. Note that padding = 0 for a "valid" Conv2D.
+        # Fill in unknown height and width.
+        # Note that padding = 0 for a "valid" Conv2D.
         H = int((inputs[1] - node.dilation_rate[0] * (node.kernel_size[0] - 1) - 1) / node.strides[0] + 1)
         W = int((inputs[2] - node.dilation_rate[1] * (node.kernel_size[1] - 1) - 1) / node.strides[1] + 1)
         newshape = (outputs[0], H, W, outputs[3])
@@ -37,10 +37,10 @@ def conv_hook(node, inputs, outputs):
     mem_cost = np.prod(outputs) * MEMORY_MULTIPLIER
     weight = node.weights[0].shape
     # NHWC
-    cout = weight[3]
+    #cout = weight[3]
     cin = weight[2]
     kernel = weight[:2]
-    batch = inputs[0]
+    #batch = inputs[0]
     ops_per_output = np.prod(kernel) * cin
     ops = ops_per_output * np.prod(outputs)
     return ops, mem_cost
@@ -48,10 +48,10 @@ def conv_hook(node, inputs, outputs):
 
 def depthwise_conv_hook(node, inputs, outputs):
     weight = node.weights[0].shape
-    cout = weight[3]
-    cin = weight[2]
+    #cout = weight[3]
+    #cin = weight[2]
     kernel = weight[:2]
-    batch = inputs[0]
+    #batch = inputs[0]
     ops_per_output = np.prod(kernel)  # don't look at rest of input
     ops = ops_per_output * np.prod(outputs)
 
@@ -92,12 +92,13 @@ def pad_hook(node, inputs, outputs):
     ops = 0
     return ops, mem_cost
 
+
 def nlp_matmul_hook(node, inputs, outputs):
     return fc_hook(node, inputs[0], outputs)
 
 
 def fc_hook(node, inputs, outputs):
-    #batch_size = inputs[0]
+    # batch_size = inputs[0]
     cin = np.prod(inputs)
     cout = outputs[-1]
 
@@ -181,8 +182,8 @@ hooks = {
     'MaxPooling2D': pool_hook,
     'Dropout': dropout_hook,
     'Concatenate': concat_hook,
-    'TensorFlowOpLayer' : reshape_hook,
-    'LayerNormalization' : bn_hook,
+    'TensorFlowOpLayer': reshape_hook,
+    'LayerNormalization': bn_hook,
     'Add': add_hook,
     'GlobalAveragePooling2D': pool_hook,
     'AveragePooling2D': pool_hook,
@@ -197,11 +198,10 @@ hooks = {
     "ZeroPadding2D": pad_hook,
     # Model specific hooks
     'Interp': pspnet_interp_hook,
-    #Lambda can vary depending on the implementation
-    #'Lambda': pspnet_lambda_hook,
-    'Lambda' : fc_hook
+    # Lambda can vary depending on the implementation
+    # 'Lambda': pspnet_lambda_hook,
+    'Lambda': fc_hook,
     "Interp": pspnet_interp_hook,
-    #"Lambda": pspnet_lambda_hook,
 }
 
 
