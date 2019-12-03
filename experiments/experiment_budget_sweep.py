@@ -156,12 +156,24 @@ def get_global_eval_points(g: DFGraph, results: Dict[SolveStrategy, List[Schedul
 
 
 if __name__ == "__main__":
+    args = extract_params()
+    key = "_".join(map(str, [args.platform, args.model_name, args.batch_size, args.input_shape]))
+    log_base = checkmate_data_dir() / "budget_sweep" / key
+    shutil.rmtree(log_base, ignore_errors=True)
+    pathlib.Path(log_base).mkdir(parents=True, exist_ok=True)
+
+    logging.basicConfig(
+        filename=log_base / "budget_sweep.log",
+        filemode="a",
+        format="%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s",
+        datefmt="%H:%M:%S",
+        level=logging.DEBUG,
+    )
     logger = logging.getLogger("budget_sweep")
-    logger.setLevel(logging.DEBUG)
+
     # due to bug on havoc, limit parallelism on high-core machines
     if os.cpu_count() > 48:
         os.environ["OMP_NUM_THREADS"] = "1"
-    args = extract_params()
 
     ray.init(
         temp_dir="/tmp/ray_checkpoint",
@@ -169,11 +181,6 @@ if __name__ == "__main__":
         num_cpus=os.cpu_count(),
         object_store_memory=1024 * 1024 * 1024 if os.cpu_count() < 48 else None,
     )  # include_webui=args.debug
-
-    key = "_".join(map(str, [args.platform, args.model_name, args.batch_size, args.input_shape]))
-    log_base = checkmate_data_dir() / "budget_sweep" / key
-    shutil.rmtree(log_base, ignore_errors=True)
-    pathlib.Path(log_base).mkdir(parents=True, exist_ok=True)
 
     ####
     # Begin budget_sweep data collection
