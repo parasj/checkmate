@@ -29,8 +29,8 @@ from checkmate.tf2_keras.extraction import dfgraph_from_keras
 
 def extract_params():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--platform', default="flops", choices=PLATFORM_CHOICES)
-    parser.add_argument('--model-name', default="VGG16", choices=list(sorted(MODEL_NAMES)))
+    parser.add_argument("--platform", default="flops", choices=PLATFORM_CHOICES)
+    parser.add_argument("--model-name", default="VGG16", choices=list(sorted(MODEL_NAMES)))
     parser.add_argument("-s", "--input-shape", type=int, nargs="+", default=[])
     parser.add_argument("--batch-size-min", type=int, default=4)
     parser.add_argument("--batch-size-max", type=int, default=512)
@@ -65,8 +65,9 @@ if __name__ == "__main__":
         cost_model.plot_costs()
 
     model = get_keras_model(model_name, input_shape=args.input_shape)
-    tf.keras.utils.plot_model(model, to_file=log_base / f"plot_{model_name}.png",
-                              show_shapes=True, show_layer_names=True)
+    tf.keras.utils.plot_model(
+        model, to_file=log_base / f"plot_{model_name}.png", show_shapes=True, show_layer_names=True
+    )
 
     platform_ram = platform_memory("p32xlarge")
     bs_futures: Dict[int, List] = defaultdict(list)
@@ -75,8 +76,11 @@ if __name__ == "__main__":
     rg = list(range(args.batch_size_min, args.batch_size_max, args.batch_size_increment))
     for bs in tqdm(rg, desc="Event dispatch"):
         while not ray.is_initialized():
-            ray.init(temp_dir="/tmp/ray_checkpoint_" + str(str(uuid.uuid4())[:8]), redis_password=str(uuid.uuid1()),
-                     num_cpus=os.cpu_count() - 2)
+            ray.init(
+                temp_dir="/tmp/ray_checkpoint_" + str(str(uuid.uuid4())[:8]),
+                redis_password=str(uuid.uuid1()),
+                num_cpus=os.cpu_count() - 2,
+            )
         futures = []
 
         # load model at batch size
@@ -87,17 +91,19 @@ if __name__ == "__main__":
 
         # run constant baselines
         result_dict[bs][SolveStrategy.CHEN_SQRTN_NOAP] = [solve_chen_sqrtn(g, False)]
-        futures.extend([
-            ray.remote(num_cpus=1)(solve_checkpoint_all).remote(g),
-            ray.remote(num_cpus=1)(solve_checkpoint_all_ap).remote(g),
-            ray.remote(num_cpus=1)(solve_checkpoint_last_node).remote(g),
-            ray.remote(num_cpus=1)(solve_chen_sqrtn).remote(g, True),
-            ray.remote(num_cpus=1)(solve_chen_sqrtn).remote(g, False)
-        ])
+        futures.extend(
+            [
+                ray.remote(num_cpus=1)(solve_checkpoint_all).remote(g),
+                ray.remote(num_cpus=1)(solve_checkpoint_all_ap).remote(g),
+                ray.remote(num_cpus=1)(solve_checkpoint_last_node).remote(g),
+                ray.remote(num_cpus=1)(solve_chen_sqrtn).remote(g, True),
+                ray.remote(num_cpus=1)(solve_chen_sqrtn).remote(g, False),
+            ]
+        )
 
         # sweep chen's greedy baseline
         chen_sqrtn_noap = result_dict[bs][SolveStrategy.CHEN_SQRTN_NOAP][0]
-        greedy_eval_points = chen_sqrtn_noap.schedule_aux_data.activation_ram * (1. + np.arange(-1, 2, 0.05))
+        greedy_eval_points = chen_sqrtn_noap.schedule_aux_data.activation_ram * (1.0 + np.arange(-1, 2, 0.05))
         remote_solve_chen_greedy = ray.remote(num_cpus=1)(solve_chen_greedy).remote
         futures.extend([remote_solve_chen_greedy(g, float(b), False) for b in greedy_eval_points])
         futures.extend([remote_solve_chen_greedy(g, float(b), True) for b in greedy_eval_points])
@@ -117,13 +123,15 @@ if __name__ == "__main__":
     max_batch_sizes = defaultdict(int)
     for bs, strategy_results in result_dict.items():
         for strategy, results in strategy_results.items():
-            is_valid = lambda r: r.schedule_aux_data is not None \
-                                 and r.schedule_aux_data.peak_ram <= platform_ram - bs_param_ram_cost[bs] \
-                                 and r.schedule_aux_data.cpu <= bs_fwd2xcost[bs]
+            is_valid = (
+                lambda r: r.schedule_aux_data is not None
+                and r.schedule_aux_data.peak_ram <= platform_ram - bs_param_ram_cost[bs]
+                and r.schedule_aux_data.cpu <= bs_fwd2xcost[bs]
+            )
             if any(map(is_valid, results)):
                 max_batch_sizes[strategy] = max(bs, max_batch_sizes[strategy])
                 logging.info(f"SolveStrategy {strategy} succeeded at batch size {bs}")
 
-    df = pandas.DataFrame([{'strategy': k, 'batch_size': v} for k, v in max_batch_sizes.items()])
-    df.to_csv(log_base / 'max_batch_size.csv')
+    df = pandas.DataFrame([{"strategy": k, "batch_size": v} for k, v in max_batch_sizes.items()])
+    df.to_csv(log_base / "max_batch_size.csv")
     print(df)

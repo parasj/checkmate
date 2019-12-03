@@ -8,9 +8,16 @@ from checkmate.core.utils.dfgraph_utils import edge_to_adj_list, adj_to_edge_lis
 
 
 class DFGraph:
-    def __init__(self, args: AdjList, v: Iterable[Vertex], backward_nodes: Iterable[Vertex] = None,
-                 cost_cpu: Dict[Vertex, int] = None, cost_ram: Dict[Vertex, int] = None,
-                 node_names: Dict[Vertex, str] = None, cost_ram_parameters: int = 0):
+    def __init__(
+        self,
+        args: AdjList,
+        v: Iterable[Vertex],
+        backward_nodes: Iterable[Vertex] = None,
+        cost_cpu: Dict[Vertex, int] = None,
+        cost_ram: Dict[Vertex, int] = None,
+        node_names: Dict[Vertex, str] = None,
+        cost_ram_parameters: int = 0,
+    ):
         """
         Graph defines the forward and backward graph for a neural network
         :param args (Dict[int, List[int]]): Dependency listing, where arguments ordered

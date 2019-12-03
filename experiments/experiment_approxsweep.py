@@ -42,7 +42,6 @@ if __name__ == "__main__":
             }
         )
 
-
         logging.error("Skipping Griewank baselines as it was broken in parasj/checkmate#65")
         # scheduler_result_griewank = solve_griewank(g, B)
         # plot_schedule(scheduler_result_griewank, False, save_file=scratch_dir / "GRIEWANK.png")
@@ -70,8 +69,12 @@ if __name__ == "__main__":
         with Timer("det_lp") as timer_lp_det:
             scheduler_lp_deterministicround = solve_approx_lp_deterministic_sweep(g, B)
             if scheduler_lp_deterministicround.schedule_aux_data is not None:
-                plot_schedule(scheduler_lp_deterministicround, False,
-                              save_file=scratch_dir / f"CHECKMATE_LP_DETERMINISTICROUND_{scheduler_lp_deterministicround.ilp_aux_data.approx_deterministic_round_threshold}.png")
+                plot_schedule(
+                    scheduler_lp_deterministicround,
+                    False,
+                    save_file=scratch_dir
+                    / f"CHECKMATE_LP_DETERMINISTICROUND_{scheduler_lp_deterministicround.ilp_aux_data.approx_deterministic_round_threshold}.png",
+                )
                 data.append(
                     {
                         "Strategy": str(scheduler_lp_deterministicround.solve_strategy.value),
@@ -81,7 +84,7 @@ if __name__ == "__main__":
                     }
                 )
 
-        with (scratch_dir / "times.log").open('w') as f:
+        with (scratch_dir / "times.log").open("w") as f:
             f.write(timer_ilp._format_results())
             f.write(timer_lp_det._format_results())
 

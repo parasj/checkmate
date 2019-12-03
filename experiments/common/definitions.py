@@ -14,4 +14,4 @@ def checkmate_data_dir() -> Path:
 
 def checkmate_cache_dir() -> Path:
     """Returns cache dir"""
-    return pathlib.Path('/tmp') / 'remat_cache'
+    return pathlib.Path("/tmp") / "remat_cache"

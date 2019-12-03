@@ -24,8 +24,9 @@ def sort_by_dep_order(nodes, deps_list, is_backward=False):
     return list(sorted(input_nodes, key=layers_to_dep_position.get)) + output_nodes
 
 
-def tfgraph_from_schedule(model, g: DFGraph, scheduled_result: ScheduledResult,
-                          loss=categorical_cross_entropy, debug: bool = False):
+def tfgraph_from_schedule(
+    model, g: DFGraph, scheduled_result: ScheduledResult, loss=categorical_cross_entropy, debug: bool = False
+):
     def _eager_eval(input_val: tf.Tensor, label_val: tf.Tensor):
         layers = model.layers[1:]  # ignore input layer
         param_grads = {}

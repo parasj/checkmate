@@ -46,22 +46,21 @@ class Timer:
     def print_results(self):
         print(self._format_results())
 
-    def _format_results(self, indent='  '):
+    def _format_results(self, indent="  "):
         children = self._children.values()
         elapsed = self._elapsed or sum(c._elapsed for c in children)
-        result = '%s: %.3fs' % (self._name, elapsed)
+        result = "%s: %.3fs" % (self._name, elapsed)
         max_count = max(c._count for c in children) if children else 0
         count_digits = 0 if max_count <= 1 else int(ceil(log10(max_count + 1)))
         for child in sorted(children, key=lambda c: c._elapsed, reverse=True):
-            lines = child._format_results(indent).split('\n')
+            lines = child._format_results(indent).split("\n")
             child_percent = child._elapsed / elapsed * 100
-            lines[0] += ' (%d%%)' % child_percent
+            lines[0] += " (%d%%)" % child_percent
             if count_digits:
                 # `+2` for the 'x' and the space ' ' after it:
-                lines[0] = ('%dx ' % child._count).rjust(count_digits + 2) \
-                           + lines[0]
+                lines[0] = ("%dx " % child._count).rjust(count_digits + 2) + lines[0]
             for line in lines:
-                result += '\n' + indent + line
+                result += "\n" + indent + line
         return result
 
     @staticmethod

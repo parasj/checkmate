@@ -24,8 +24,8 @@ GB = 1000 * 1000 * 1000
 
 def extract_params():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--platform', default="flops", choices=PLATFORM_CHOICES)
-    parser.add_argument('--model-name', default="VGG16", choices=list(sorted(MODEL_NAMES)))
+    parser.add_argument("--platform", default="flops", choices=PLATFORM_CHOICES)
+    parser.add_argument("--model-name", default="VGG16", choices=list(sorted(MODEL_NAMES)))
     parser.add_argument("-s", "--input-shape", type=int, nargs="+", default=[])
     parser.add_argument("--batch-size-min", type=int, default=1)
 
@@ -58,8 +58,9 @@ if __name__ == "__main__":
         cost_model.plot_costs()
 
     model = get_keras_model(model_name, input_shape=args.input_shape)
-    tf.keras.utils.plot_model(model, to_file=log_base / f"plot_{model_name}.png", show_shapes=True,
-                              show_layer_names=True)
+    tf.keras.utils.plot_model(
+        model, to_file=log_base / f"plot_{model_name}.png", show_shapes=True, show_layer_names=True
+    )
 
     platform_ram = platform_memory("p32xlarge")
     bs_futures: Dict[int, List] = defaultdict(list)
@@ -69,15 +70,22 @@ if __name__ == "__main__":
     plot_dfgraph(g, log_base, name=model_name)
 
     model_file = str(log_base / f"max_bs_{model_name}.mps")
-    param_dict = {'LogToConsole': 1,
-                  'LogFile': str(log_base / f"max_bs_{model_name}.solve.log"),
-                  'Threads': os.cpu_count(),
-                  'TimeLimit': math.inf}
-    ilp_solver = MaxBatchILPSolver(g, budget=platform_memory("p32xlarge") - g.cost_ram_fixed, model_file=model_file,
-                                   gurobi_params=param_dict, cpu_fwd_factor=2)
+    param_dict = {
+        "LogToConsole": 1,
+        "LogFile": str(log_base / f"max_bs_{model_name}.solve.log"),
+        "Threads": os.cpu_count(),
+        "TimeLimit": math.inf,
+    }
+    ilp_solver = MaxBatchILPSolver(
+        g,
+        budget=platform_memory("p32xlarge") - g.cost_ram_fixed,
+        model_file=model_file,
+        gurobi_params=param_dict,
+        cpu_fwd_factor=2,
+    )
     ilp_solver.build_model()
     result, batch_size = ilp_solver.solve()
     logging.info(f"Max batch size = {batch_size}")
 
-    save_file = log_base / f'{model}_plot.png'
+    save_file = log_base / f"{model}_plot.png"
     plot_schedule(result, plot_mem_usage=True, save_file=save_file)

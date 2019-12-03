@@ -1,13 +1,8 @@
-PLATFORM_CHOICES = ['p32xlarge', 'p32xlarge_fp16', 'p2xlarge', 'c524xlarge', 'flops']
+PLATFORM_CHOICES = ["p32xlarge", "p32xlarge_fp16", "p2xlarge", "c524xlarge", "flops"]
 
 
 def pretty_platform_name(platform: str):
-    mapping = {
-        "p32xlarge": "V100",
-        "p32xlarge_fp16": "V100, fp16",
-        "p2xlarge": "K80",
-        "flops": "FLOPs",
-    }
+    mapping = {"p32xlarge": "V100", "p32xlarge_fp16": "V100, fp16", "p2xlarge": "K80", "flops": "FLOPs"}
     if platform in mapping:
         return mapping[platform]
     return platform

@@ -75,8 +75,15 @@ class GraphBuilder:
         bwd_node_set = set(uuid2topo[v] for v in self.nodes.values() if v in self.backward_nodes)
 
         # step 3 -- make DFGraph
-        return DFGraph(v=vertex_list, args=arg_list, backward_nodes=bwd_node_set, node_names=names,
-                       cost_cpu=cost_cpu, cost_ram=cost_ram, cost_ram_parameters=self.parameter_cost)
+        return DFGraph(
+            v=vertex_list,
+            args=arg_list,
+            backward_nodes=bwd_node_set,
+            node_names=names,
+            cost_cpu=cost_cpu,
+            cost_ram=cost_ram,
+            cost_ram_parameters=self.parameter_cost,
+        )
 
 
 def gen_linear_graph(forward_node_count) -> DFGraph:
@@ -88,11 +95,11 @@ def gen_linear_graph(forward_node_count) -> DFGraph:
     """
     gb = GraphBuilder()
     for i in range(forward_node_count * 2 + 1):
-        gb.add_node(f'node{i}', cpu_cost=1, ram_cost=1, backward=(i >= forward_node_count))
+        gb.add_node(f"node{i}", cpu_cost=1, ram_cost=1, backward=(i >= forward_node_count))
         if i > 0:
-            gb.add_deps(f'node{i}', f'node{i - 1}')
+            gb.add_deps(f"node{i}", f"node{i - 1}")
 
     for i in range(forward_node_count):
         corresponding_bwd = (forward_node_count * 2) - i
-        gb.add_deps(f'node{corresponding_bwd}', f'node{i}')
+        gb.add_deps(f"node{corresponding_bwd}", f"node{i}")
     return gb.make_graph()

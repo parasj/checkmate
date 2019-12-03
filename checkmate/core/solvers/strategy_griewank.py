@@ -14,7 +14,9 @@ from experiments.common.definitions import checkmate_cache_dir
 
 def solve_griewank(g: DFGraph, budget: int):
     # todo check graph is chain graph
-    raise NotImplementedError("Griewank's checkpointing strategy does not support the nonlinear structure of low-level Tensorflow graphs.")
+    raise NotImplementedError(
+        "Griewank's checkpointing strategy does not support the nonlinear structure of low-level Tensorflow graphs."
+    )
     # with Timer('solve_griewank') as timer_solve:
     #     r, s = _solve_griewank_to_rs(g, budget)
     # schedule, aux_data = schedule_from_rs(g, r, s)
@@ -56,16 +58,16 @@ def _solve_griewank_to_rs(g: DFGraph, budget: int):
         return min(meta_to_real_v.get(_t, np.inf), g.size)
 
     for index, reg_range in regranges.iterrows():
-        for t in range(map_time(reg_range['timestart']), map_time(reg_range['timeend'] + 1)):
-            if reg_range['nodeid'] > 0:
-                S[t, meta_to_real_v[reg_range['nodeid']]] = 1
+        for t in range(map_time(reg_range["timestart"]), map_time(reg_range["timeend"] + 1)):
+            if reg_range["nodeid"] > 0:
+                S[t, meta_to_real_v[reg_range["nodeid"]]] = 1
     R = solve_r_opt(g, S)
     return R, S
 
 
 def _load_griewank(graph_size: int) -> pd.DataFrame:
-    fname = f'{graph_size}.pkl.gz'
-    local_path_base = checkmate_cache_dir() / 'griewank_solutions'
+    fname = f"{graph_size}.pkl.gz"
+    local_path_base = checkmate_cache_dir() / "griewank_solutions"
     local_path = local_path_base / fname
     remote_path = f"https://optimalcheckpointing.s3.amazonaws.com/griewank_solutions/pickle/{fname}"
     if local_path.exists():
@@ -74,7 +76,7 @@ def _load_griewank(graph_size: int) -> pd.DataFrame:
         except Exception as e:
             logging.exception(e)
             logging.warning("Error loading cached griewank solution, corrupt file? Reloading from S3")
-    with Timer('griewank_dl') as dl_timer:
+    with Timer("griewank_dl") as dl_timer:
         local_path_base.mkdir(parents=True, exist_ok=True)
         urllib.request.urlretrieve(remote_path, local_path)
     logging.info(f"Loaded graph from {remote_path} and saving to {local_path} in {dl_timer.elapsed:.2f}s")
@@ -82,5 +84,5 @@ def _load_griewank(graph_size: int) -> pd.DataFrame:
 
 
 def clean_griewank_cache():
-    local_path_base = checkmate_cache_dir() / 'griewank_solutions'
+    local_path_base = checkmate_cache_dir() / "griewank_solutions"
     shutil.rmtree(local_path_base, ignore_errors=True)
