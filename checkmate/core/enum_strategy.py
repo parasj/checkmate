@@ -65,25 +65,6 @@ class SolveStrategy(Enum):
             return mapping[val]
         raise NotImplementedError(f"No plotting parameters for strategy {val}")
 
-    @classmethod
-    def get_version(cls, val):
-        return {
-            cls.CHEN_SQRTN: "v1.1",
-            cls.CHEN_SQRTN_NOAP: "v1.1",
-            cls.CHEN_GREEDY: "v1.1",
-            cls.CHEN_GREEDY_NOAP: "v1.1",
-            cls.CHECKPOINT_LAST_NODE: "v1.1",
-            cls.CHECKPOINT_ALL: "v1.1",
-            cls.CHECKPOINT_ALL_AP: "v1.1",
-            cls.GRIEWANK_LOGN: "v1.3",  # 1.3 -> fix AP point mapping
-            cls.OPTIMAL_ILP_GC: "v3",
-            cls.APPROX_DET_ROUND_LP_SWEEP: "v1.1",
-            cls.APPROX_DET_ROUND_LP_05_THRESH: "v1.1",
-            cls.APPROX_DET_RANDOM_THRESH_ROUND_LP: "v1.1",
-            cls.APPROX_RANDOMIZED_ROUND: "v1.1",
-            cls.LB_LP: "v1.1",
-        }[val]
-
 
 class ImposedSchedule(Enum):
     COVER_LAST_NODE = "COVER_LAST_NODE"
