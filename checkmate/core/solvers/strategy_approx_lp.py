@@ -63,9 +63,7 @@ def solve_approx_lp_deterministic_sweep(
             s_ = (s >= threshold).astype(np.int)
             r_ = solve_r_opt(g, s_)
             schedule_, aux_data_ = schedule_from_rs(g, r_, s_)
-            if aux_data_.activation_ram <= budget and (
-                aux_data is None or aux_data_.cpu <= aux_data.cpu
-            ):
+            if aux_data_.activation_ram <= budget and (aux_data is None or aux_data_.cpu <= aux_data.cpu):
                 aux_data = aux_data_
                 schedule = schedule_
                 min_threshold = threshold
@@ -102,9 +100,7 @@ def solve_approx_lp_deterministic_rand_threshold(
     solver_cores=os.cpu_count(),
     n_samples=1,
 ):
-    thresholds = [
-        min(1.0, max(0.0, np.random.normal(0.5, 0.5))) for i in range(n_samples)
-    ]
+    thresholds = [min(1.0, max(0.0, np.random.normal(0.5, 0.5))) for i in range(n_samples)]
     return solve_approx_lp_deterministic_sweep(
         g,
         budget,

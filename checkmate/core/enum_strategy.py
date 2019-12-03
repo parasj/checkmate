@@ -24,17 +24,13 @@ class SolveStrategy(Enum):
         return {
             cls.CHEN_SQRTN: "AP $\\sqrt{n}$",
             cls.CHEN_GREEDY: "AP greedy",
-            cls.CHEN_SQRTN_NOAP: "Generalized $\\sqrt{n}$"
-            if not is_linear
-            else "Chen et al. $\\sqrt{n}$",
+            cls.CHEN_SQRTN_NOAP: "Generalized $\\sqrt{n}$" if not is_linear else "Chen et al. $\\sqrt{n}$",
             cls.CHEN_GREEDY_NOAP: "Generalized greedy",
             cls.OPTIMAL_ILP_GC: "Optimal MILP (proposed)",
             cls.CHECKPOINT_LAST_NODE: "Checkpoint last node",
             cls.CHECKPOINT_ALL: "Checkpoint all (ideal)",
             cls.CHECKPOINT_ALL_AP: "Checkpoint all APs",
-            cls.GRIEWANK_LOGN: "Griewank et al. $\\log~n$"
-            if is_linear
-            else "AP $\\log~n$",
+            cls.GRIEWANK_LOGN: "Griewank et al. $\\log~n$" if is_linear else "AP $\\log~n$",
             cls.APPROX_DET_ROUND_LP_SWEEP: "Approximation via deterministic rounding of LP relaxation w/ threshold sweep",
             cls.APPROX_DET_RANDOM_THRESH_ROUND_LP: "Approximation via deterministic rounding of LP relaxation with random thresholds",
             cls.APPROX_DET_ROUND_LP_05_THRESH: "Approximation via deterministic rounding of LP relaxation w/ 0.5 threshold",

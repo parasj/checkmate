@@ -4,13 +4,7 @@ from typing import List, Dict, Tuple, Optional
 import numpy as np
 
 from checkmate.core.dfgraph import DFGraph
-from checkmate.core.schedule import (
-    OperatorEvaluation,
-    AllocateRegister,
-    DeallocateRegister,
-    Schedule,
-    SchedulerAuxData,
-)
+from checkmate.core.schedule import OperatorEvaluation, AllocateRegister, DeallocateRegister, Schedule, SchedulerAuxData
 from checkmate.core.utils.timer import Timer
 
 
@@ -42,9 +36,7 @@ class ScheduleBuilder:
                     )
                 )
             return self.live_registers[op_id]
-        reg = AllocateRegister(
-            self.next_free_register_id, op_id, self.g.cost_ram[op_id]
-        )
+        reg = AllocateRegister(self.next_free_register_id, op_id, self.g.cost_ram[op_id])
         self.live_registers[op_id] = reg.register_id
         self.schedule.append(reg)
         self.next_free_register_id += 1
@@ -56,14 +48,9 @@ class ScheduleBuilder:
         debug_str = "Dependency not fulfilled for op #{}, ops in ram now are {} but I need {}".format(
             op_id, set(self.live_registers.keys()), self.g.predecessors(op_id)
         )
-        assert all(
-            [pred in self.live_registers.keys() for pred in self.g.predecessors(op_id)]
-        ), debug_str
+        assert all([pred in self.live_registers.keys() for pred in self.g.predecessors(op_id)]), debug_str
         out_reg = self.allocate_register(op_id)
-        in_regs = {
-            pred_id: self.live_registers[pred_id]
-            for pred_id in self.g.predecessors(op_id)
-        }
+        in_regs = {pred_id: self.live_registers[pred_id] for pred_id in self.g.predecessors(op_id)}
         eval_op = OperatorEvaluation(
             op_id,
             in_regs,
@@ -91,9 +78,7 @@ class ScheduleBuilder:
         return sum(map(self.g.cost_ram.get, self.live_registers.keys()))
 
 
-def schedule_from_rs(
-    g: DFGraph, r: np.ndarray, s: np.ndarray
-) -> Tuple[Optional[Schedule], Optional[SchedulerAuxData]]:
+def schedule_from_rs(g: DFGraph, r: np.ndarray, s: np.ndarray) -> Tuple[Optional[Schedule], Optional[SchedulerAuxData]]:
     if r is None or s is None:
         return None, None  # infeasible
     T = g.size
@@ -101,9 +86,7 @@ def schedule_from_rs(
     def _used_after(t_, u_, i_):
         """Returns True if v_u is used after v_i in stage t"""
         is_retained_snapshot = t_ < T - 1 and s[t_ + 1, u_] == 1
-        is_used_by_successor = not all(
-            [r[t_, v] == 0 or v <= i_ for v in g.successors(u_)]
-        )
+        is_used_by_successor = not all([r[t_, v] == 0 or v <= i_ for v in g.successors(u_)])
         return is_retained_snapshot or is_used_by_successor
 
     with Timer("schedule_rs_matrix") as schedule_timer:
@@ -123,10 +106,7 @@ def schedule_from_rs(
                 mem_usage[t, i] = sb.current_mem() + g.cost_ram_fixed
 
                 # Free memory
-                for u in filter(
-                    lambda x: sb.is_op_cached(x),
-                    itertools.chain(g.predecessors(i), [i]),
-                ):
+                for u in filter(lambda x: sb.is_op_cached(x), itertools.chain(g.predecessors(i), [i])):
                     if not _used_after(t, u, i):
                         sb.deallocate_register(u)
         total_ram = sb.max_ram + g.cost_ram_fixed

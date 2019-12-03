@@ -58,13 +58,7 @@ def lower_bound_lp_relaxation(
     total_ram = u.max()
     total_cpu = lpsolver.m.getObjective().getValue()
     aux_data = SchedulerAuxData(
-        R=r,
-        S=s,
-        cpu=total_cpu,
-        peak_ram=total_ram,
-        activation_ram=total_ram,
-        mem_timeline=None,
-        mem_grid=None,
+        R=r, S=s, cpu=total_cpu, peak_ram=total_ram, activation_ram=total_ram, mem_timeline=None, mem_grid=None
     )
 
     return ScheduledResult(

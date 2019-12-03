@@ -4,12 +4,7 @@ import logging
 import tensorflow as tf
 
 from checkmate.core.dfgraph import DFGraph
-from checkmate.core.schedule import (
-    ScheduledResult,
-    AllocateRegister,
-    DeallocateRegister,
-    OperatorEvaluation,
-)
+from checkmate.core.schedule import ScheduledResult, AllocateRegister, DeallocateRegister, OperatorEvaluation
 from checkmate.tf2_keras.tf_losses import categorical_cross_entropy
 
 logger = logging.getLogger(__name__)
@@ -25,18 +20,12 @@ def match_variables(_param_grads_dict, _model):
 def sort_by_dep_order(nodes, deps_list, is_backward=False):
     output_nodes = [] if not is_backward else [i for i in nodes if i not in deps_list]
     input_nodes = [i for i in nodes if i not in output_nodes]
-    layers_to_dep_position = {
-        layer_id: position for position, layer_id in enumerate(deps_list)
-    }
+    layers_to_dep_position = {layer_id: position for position, layer_id in enumerate(deps_list)}
     return list(sorted(input_nodes, key=layers_to_dep_position.get)) + output_nodes
 
 
 def tfgraph_from_schedule(
-    model,
-    g: DFGraph,
-    scheduled_result: ScheduledResult,
-    loss=categorical_cross_entropy,
-    debug: bool = False,
+    model, g: DFGraph, scheduled_result: ScheduledResult, loss=categorical_cross_entropy, debug: bool = False
 ):
     def _eager_eval(input_val: tf.Tensor, label_val: tf.Tensor):
         layers = model.layers[1:]  # ignore input layer
@@ -55,17 +44,11 @@ def tfgraph_from_schedule(
             elif isinstance(op, OperatorEvaluation) and g.is_forward_node(op.id):
                 idx = op.id
                 layer = layers[idx]
-                with tf.GradientTape(
-                    persistent=True, watch_accessed_variables=False
-                ) as tape:
+                with tf.GradientTape(persistent=True, watch_accessed_variables=False) as tape:
                     input_layers = sort_by_dep_order(op.arg_regs.keys(), g.args[idx])
-                    inputs = [
-                        regs[op.arg_regs[arg_layer_id]] for arg_layer_id in input_layers
-                    ]
+                    inputs = [regs[op.arg_regs[arg_layer_id]] for arg_layer_id in input_layers]
                     inputs = inputs if len(inputs) > 0 else [input_val]  # if first node
-                    logger.debug(
-                        f"reg[{op.out_register}] ⟵ {layer.name}({[op.arg_regs[x] for x in input_layers]})"
-                    )
+                    logger.debug(f"reg[{op.out_register}] ⟵ {layer.name}({[op.arg_regs[x] for x in input_layers]})")
                     for var in itertools.chain(inputs, layer.variables):
                         tape.watch(var)
                     if len(inputs) > 1:
@@ -74,13 +57,8 @@ def tfgraph_from_schedule(
                         regs[op.out_register] = tf.stop_gradient(layer(*inputs))
                 tapes[op.out_register] = tape
             elif isinstance(op, OperatorEvaluation) and g.is_loss_node(op.id):
-                with tf.GradientTape(
-                    persistent=True, watch_accessed_variables=False
-                ) as tape:
-                    inputs = [
-                        regs[op.arg_regs[arg_idx]]
-                        for arg_idx in sorted(op.arg_regs.keys())
-                    ]
+                with tf.GradientTape(persistent=True, watch_accessed_variables=False) as tape:
+                    inputs = [regs[op.arg_regs[arg_idx]] for arg_idx in sorted(op.arg_regs.keys())]
                     inputs += [label_val]
                     for x in inputs:
                         tape.watch(x)

@@ -53,9 +53,7 @@ class RedisCache:
         self.port = port or int(os.environ.get("REDIS_PORT", 6379))
         self.db = db or int(os.environ.get("REDIS_DB", 0))
         self.password = password or os.environ.get("REDIS_PASSWORD", "")
-        self.redis_conn = StrictRedis(
-            host=self.host, port=self.port, db=self.db, password=self.password
-        )
+        self.redis_conn = StrictRedis(host=self.host, port=self.port, db=self.db, password=self.password)
 
     # def query_results(self, key_pattern: str) -> Tuple[List[ScheduledResult], List[str]]:
     #     result_list = []
@@ -74,25 +72,19 @@ class RedisCache:
     #     print("key pattern", key_pattern)
     #     return self.query_results(key_pattern)
 
-    def read_result(
-        self, cache_key: RedisCacheKey, ilp_time_limit: int = -1
-    ) -> Optional[ScheduledResult]:
+    def read_result(self, cache_key: RedisCacheKey, ilp_time_limit: int = -1) -> Optional[ScheduledResult]:
         key = cache_key.key(ilp_time_limit)
         result_bytes = self.redis_conn.get(key)
         if result_bytes:
             res = ScheduledResult.loads(result_bytes)
             if res.solve_strategy == SolveStrategy.OPTIMAL_ILP_GC:
-                if res.ilp_aux_data is not None and (
-                    res.ilp_aux_data.ilp_time_limit >= ilp_time_limit
-                ):
+                if res.ilp_aux_data is not None and (res.ilp_aux_data.ilp_time_limit >= ilp_time_limit):
                     return res
             elif res.schedule_aux_data is not None:
                 return res
         return None
 
-    def write_result(
-        self, key: RedisCacheKey, result: ScheduledResult, ilp_time_limit: int = -1
-    ):
+    def write_result(self, key: RedisCacheKey, result: ScheduledResult, ilp_time_limit: int = -1):
         return self.redis_conn.set(key.key(ilp_time_limit), result.dumps())
 
     def __del__(self):

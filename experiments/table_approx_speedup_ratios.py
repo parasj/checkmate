@@ -6,9 +6,7 @@ import pandas as pd
 from experiments.common.definitions import checkmate_data_dir
 
 # compute aggregated tables of max and geomean lp approximation ratios
-exp_name_re = re.compile(
-    r"^(?P<platform>.+?)_(?P<model_name>.+?)_(?P<batch_size>[0-9]+?)_(?P<input_shape>None|.+?)$"
-)
+exp_name_re = re.compile(r"^(?P<platform>.+?)_(?P<model_name>.+?)_(?P<batch_size>[0-9]+?)_(?P<input_shape>None|.+?)$")
 dfs = []
 for path in (checkmate_data_dir() / "budget_sweep").glob("**/slowdowns.csv"):
     slowdown_df = pd.read_csv(path)
@@ -19,9 +17,7 @@ for path in (checkmate_data_dir() / "budget_sweep").glob("**/slowdowns.csv"):
 df = pd.concat(dfs)
 del df["Unnamed: 0"]
 for valuekey in ["geomean_slowdown", "max"]:
-    pivot_df = pd.pivot_table(
-        df, values=valuekey, index=["Model name"], columns=["method"]
-    )
+    pivot_df = pd.pivot_table(df, values=valuekey, index=["Model name"], columns=["method"])
     pivot_df.to_csv(checkmate_data_dir() / "budget_sweep" / f"{valuekey}_aggr.csv")
 
 # compute lp relaxation speedups
@@ -37,13 +33,9 @@ for model in [
     ilp_matcher = re.compile(
         r"Explored [0-9]+ nodes \([0-9]+ simplex iterations\) in (?P<ilp_runtime>[0-9\.]+) seconds"
     )
-    lp_matcher = re.compile(
-        r"Solved in [0-9]+ iterations and (?P<lp_runtime>[0-9\.]+) seconds"
-    )
+    lp_matcher = re.compile(r"Solved in [0-9]+ iterations and (?P<lp_runtime>[0-9\.]+) seconds")
     ilp_runtimes = []
-    for path in (checkmate_data_dir() / "budget_sweep" / model / "ilp_log").glob(
-        "./*.log"
-    ):
+    for path in (checkmate_data_dir() / "budget_sweep" / model / "ilp_log").glob("./*.log"):
         with path.open("r") as f:
             file_contents = f.read()
         if "Model is infeasible" in file_contents:
@@ -52,12 +44,7 @@ for model in [
         ilp_runtimes.append(float(match.group("ilp_runtime")))
 
     lp_runtimes = []
-    for path in (
-        checkmate_data_dir()
-        / "budget_sweep"
-        / "p32xlarge_vgg_unet_32_None"
-        / "lp_det_05"
-    ).glob("./*.log"):
+    for path in (checkmate_data_dir() / "budget_sweep" / "p32xlarge_vgg_unet_32_None" / "lp_det_05").glob("./*.log"):
         with path.open("r") as f:
             file_contents = f.read()
         if "Model is infeasible" in file_contents:

@@ -31,9 +31,7 @@ class ILPSolver:
         write_model_file: Optional[PathLike] = None,
         gurobi_params: Dict[str, Any] = None,
     ):
-        self.GRB_CONSTRAINED_PRESOLVE_TIME_LIMIT = (
-            300
-        )  # todo (paras): read this from gurobi_params
+        self.GRB_CONSTRAINED_PRESOLVE_TIME_LIMIT = 300  # todo (paras): read this from gurobi_params
         self.gurobi_params = gurobi_params
         self.num_threads = self.gurobi_params.get("Threads", 1)
         self.model_file = write_model_file
@@ -47,9 +45,7 @@ class ILPSolver:
         self.solve_time = None
 
         if not self.integral:
-            assert (
-                not self.solve_r
-            ), "Can't solve for R if producing a fractional solution"
+            assert not self.solve_r, "Can't solve for R if producing a fractional solution"
 
         self.init_constraints = []  # used for seeding the model
 
@@ -63,135 +59,68 @@ class ILPSolver:
         if self.integral:
             self.R = self.m.addVars(T, T, name="R", vtype=GRB.BINARY)
             self.S = self.m.addVars(T, T, name="S", vtype=GRB.BINARY)
-            self.Free_E = self.m.addVars(
-                T, len(self.g.edge_list), name="FREE_E", vtype=GRB.BINARY
-            )
+            self.Free_E = self.m.addVars(T, len(self.g.edge_list), name="FREE_E", vtype=GRB.BINARY)
         else:
-            self.R = self.m.addVars(
-                T, T, name="R", vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0
-            )
-            self.S = self.m.addVars(
-                T, T, name="S", vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0
-            )
-            self.Free_E = self.m.addVars(
-                T,
-                len(self.g.edge_list),
-                name="FREE_E",
-                vtype=GRB.CONTINUOUS,
-                lb=0.0,
-                ub=1.0,
-            )
+            self.R = self.m.addVars(T, T, name="R", vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0)
+            self.S = self.m.addVars(T, T, name="S", vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0)
+            self.Free_E = self.m.addVars(T, len(self.g.edge_list), name="FREE_E", vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0)
         gcd = float(budget) / self.ram_gcd
         self.U = self.m.addVars(T, T, name="U", lb=0.0, ub=gcd)
         for x in range(T):
             for y in range(T):
                 self.m.addLConstr(self.U[x, y], GRB.GREATER_EQUAL, 0)
-                self.m.addLConstr(
-                    self.U[x, y], GRB.LESS_EQUAL, float(budget) / self.ram_gcd
-                )
+                self.m.addLConstr(self.U[x, y], GRB.LESS_EQUAL, float(budget) / self.ram_gcd)
 
     def build_model(self):
         T = self.g.size
-        dict_val_div = lambda cost_dict, divisor: {
-            k: v / divisor for k, v in cost_dict.items()
-        }
+        dict_val_div = lambda cost_dict, divisor: {k: v / divisor for k, v in cost_dict.items()}
         permute_ram = dict_val_div(self.g.cost_ram, self.ram_gcd)
         budget = self.budget / self.ram_gcd
 
-        permute_eps = lambda cost_dict, eps: {
-            k: v * (1.0 + eps * np.random.randn()) for k, v in cost_dict.items()
-        }
+        permute_eps = lambda cost_dict, eps: {k: v * (1.0 + eps * np.random.randn()) for k, v in cost_dict.items()}
         permute_cpu = dict_val_div(self.g.cost_cpu, self.g.cpu_gcd())
         if self.eps_noise:
             permute_cpu = permute_eps(permute_cpu, self.eps_noise)
 
-        with Timer(
-            "Gurobi model construction", extra_data={"T": str(T), "budget": str(budget)}
-        ):
-            with Timer(
-                "Objective construction",
-                extra_data={"T": str(T), "budget": str(budget)},
-            ):
+        with Timer("Gurobi model construction", extra_data={"T": str(T), "budget": str(budget)}):
+            with Timer("Objective construction", extra_data={"T": str(T), "budget": str(budget)}):
                 # seed solver with a baseline strategy
                 if self.seed_s is not None:
                     for x in range(T):
                         for y in range(T):
                             if self.seed_s[x, y] < 1:
-                                self.init_constraints.append(
-                                    self.m.addLConstr(self.S[x, y], GRB.EQUAL, 0)
-                                )
+                                self.init_constraints.append(self.m.addLConstr(self.S[x, y], GRB.EQUAL, 0))
                     self.m.update()
 
                 # define objective function
                 self.m.setObjective(
-                    quicksum(
-                        self.R[t, i] * permute_cpu[i]
-                        for t in range(T)
-                        for i in range(T)
-                    ),
-                    GRB.MINIMIZE,
+                    quicksum(self.R[t, i] * permute_cpu[i] for t in range(T) for i in range(T)), GRB.MINIMIZE
                 )
 
-            with Timer(
-                "Variable initialization",
-                extra_data={"T": str(T), "budget": str(budget)},
-            ):
+            with Timer("Variable initialization", extra_data={"T": str(T), "budget": str(budget)}):
                 if self.imposed_schedule == ImposedSchedule.FULL_SCHEDULE:
-                    self.m.addLConstr(
-                        quicksum(
-                            self.R[t, i] for t in range(T) for i in range(t + 1, T)
-                        ),
-                        GRB.EQUAL,
-                        0,
-                    )
-                    self.m.addLConstr(
-                        quicksum(self.S[t, i] for t in range(T) for i in range(t, T)),
-                        GRB.EQUAL,
-                        0,
-                    )
-                    self.m.addLConstr(
-                        quicksum(self.R[t, t] for t in range(T)), GRB.EQUAL, T
-                    )
+                    self.m.addLConstr(quicksum(self.R[t, i] for t in range(T) for i in range(t + 1, T)), GRB.EQUAL, 0)
+                    self.m.addLConstr(quicksum(self.S[t, i] for t in range(T) for i in range(t, T)), GRB.EQUAL, 0)
+                    self.m.addLConstr(quicksum(self.R[t, t] for t in range(T)), GRB.EQUAL, T)
                 elif self.imposed_schedule == ImposedSchedule.COVER_ALL_NODES:
-                    self.m.addLConstr(
-                        quicksum(self.S[0, i] for i in range(T)), GRB.EQUAL, 0
-                    )
+                    self.m.addLConstr(quicksum(self.S[0, i] for i in range(T)), GRB.EQUAL, 0)
                     for i in range(T):
-                        self.m.addLConstr(
-                            quicksum(self.R[t, i] for t in range(T)),
-                            GRB.GREATER_EQUAL,
-                            1,
-                        )
+                        self.m.addLConstr(quicksum(self.R[t, i] for t in range(T)), GRB.GREATER_EQUAL, 1)
                 elif self.imposed_schedule == ImposedSchedule.COVER_LAST_NODE:
-                    self.m.addLConstr(
-                        quicksum(self.S[0, i] for i in range(T)), GRB.EQUAL, 0
-                    )
+                    self.m.addLConstr(quicksum(self.S[0, i] for i in range(T)), GRB.EQUAL, 0)
                     # note: the integrality gap is very large as this constraint
                     # is only applied to the last node (last column of self.R).
-                    self.m.addLConstr(
-                        quicksum(self.R[t, T - 1] for t in range(T)),
-                        GRB.GREATER_EQUAL,
-                        1,
-                    )
+                    self.m.addLConstr(quicksum(self.R[t, T - 1] for t in range(T)), GRB.GREATER_EQUAL, 1)
 
-            with Timer(
-                "Correctness constraints",
-                extra_data={"T": str(T), "budget": str(budget)},
-            ):
+            with Timer("Correctness constraints", extra_data={"T": str(T), "budget": str(budget)}):
                 # ensure all checkpoints are in memory
                 for t in range(T - 1):
                     for i in range(T):
-                        self.m.addLConstr(
-                            self.S[t + 1, i],
-                            GRB.LESS_EQUAL,
-                            self.S[t, i] + self.R[t, i],
-                        )
+                        self.m.addLConstr(self.S[t + 1, i], GRB.LESS_EQUAL, self.S[t, i] + self.R[t, i])
                 # ensure all computations are possible
                 for (u, v) in self.g.edge_list:
                     for t in range(T):
-                        self.m.addLConstr(
-                            self.R[t, v], GRB.LESS_EQUAL, self.R[t, u] + self.S[t, u]
-                        )
+                        self.m.addLConstr(self.R[t, v], GRB.LESS_EQUAL, self.R[t, u] + self.S[t, u])
 
             # define memory constraints
             def _num_hazards(t, i, k):
@@ -202,11 +131,7 @@ class ILPSolver:
                         + self.S[t + 1, i]
                         + quicksum(self.R[t, j] for j in self.g.successors(i) if j > k)
                     )
-                return (
-                    1
-                    - self.R[t, k]
-                    + quicksum(self.R[t, j] for j in self.g.successors(i) if j > k)
-                )
+                return 1 - self.R[t, k] + quicksum(self.R[t, j] for j in self.g.successors(i) if j > k)
 
             def _max_num_hazards(t, i, k):
                 num_uses_after_k = sum(1 for j in self.g.successors(i) if j > k)
@@ -214,21 +139,11 @@ class ILPSolver:
                     return 2 + num_uses_after_k
                 return 1 + num_uses_after_k
 
-            with Timer(
-                "Constraint: upper bound for 1 - Free_E",
-                extra_data={"T": str(T), "budget": str(budget)},
-            ):
+            with Timer("Constraint: upper bound for 1 - Free_E", extra_data={"T": str(T), "budget": str(budget)}):
                 for t in range(T):
                     for eidx, (i, k) in enumerate(self.g.edge_list):
-                        self.m.addLConstr(
-                            1 - self.Free_E[t, eidx],
-                            GRB.LESS_EQUAL,
-                            _num_hazards(t, i, k),
-                        )
-            with Timer(
-                "Constraint: lower bound for 1 - Free_E",
-                extra_data={"T": str(T), "budget": str(budget)},
-            ):
+                        self.m.addLConstr(1 - self.Free_E[t, eidx], GRB.LESS_EQUAL, _num_hazards(t, i, k))
+            with Timer("Constraint: lower bound for 1 - Free_E", extra_data={"T": str(T), "budget": str(budget)}):
                 for t in range(T):
                     for eidx, (i, k) in enumerate(self.g.edge_list):
                         self.m.addLConstr(
@@ -244,40 +159,28 @@ class ILPSolver:
                     self.m.addLConstr(
                         self.U[t, 0],
                         GRB.EQUAL,
-                        self.R[t, 0] * permute_ram[0]
-                        + quicksum(self.S[t, i] * permute_ram[i] for i in range(T)),
+                        self.R[t, 0] * permute_ram[0] + quicksum(self.S[t, i] * permute_ram[i] for i in range(T)),
                     )
-            with Timer(
-                "Constraint: memory recurrence",
-                extra_data={"T": str(T), "budget": str(budget)},
-            ):
+            with Timer("Constraint: memory recurrence", extra_data={"T": str(T), "budget": str(budget)}):
                 for t in range(T):
                     for k in range(T - 1):
                         mem_freed = quicksum(
-                            permute_ram[i] * self.Free_E[t, eidx]
-                            for (eidx, i) in self.g.predecessors_indexed(k)
+                            permute_ram[i] * self.Free_E[t, eidx] for (eidx, i) in self.g.predecessors_indexed(k)
                         )
                         self.m.addLConstr(
                             self.U[t, k + 1],
                             GRB.EQUAL,
-                            self.U[t, k]
-                            + self.R[t, k + 1] * permute_ram[k + 1]
-                            - mem_freed,
+                            self.U[t, k] + self.R[t, k + 1] * permute_ram[k + 1] - mem_freed,
                         )
 
-        if (
-            self.model_file is not None and self.g.size < 200
-        ):  # skip for big models to save runtime
+        if self.model_file is not None and self.g.size < 200:  # skip for big models to save runtime
             with Timer("Saving model", extra_data={"T": str(T), "budget": str(budget)}):
                 self.m.write(self.model_file)
         return None  # return value ensures ray remote call can be chained
 
     def solve(self):
         T = self.g.size
-        with Timer(
-            "Gurobi model optimization",
-            extra_data={"T": str(T), "budget": str(self.budget)},
-        ):
+        with Timer("Gurobi model optimization", extra_data={"T": str(T), "budget": str(self.budget)}):
             if self.seed_s is not None:
                 self.m.Params.TimeLimit = self.GRB_CONSTRAINED_PRESOLVE_TIME_LIMIT
                 self.m.optimize()
@@ -292,37 +195,15 @@ class ILPSolver:
 
         infeasible = self.m.status == GRB.INFEASIBLE
         if infeasible:
-            raise ValueError(
-                "Infeasible model, check constraints carefully. Insufficient memory?"
-            )
+            raise ValueError("Infeasible model, check constraints carefully. Insufficient memory?")
 
         if self.m.solCount < 1:
-            raise ValueError(
-                f"Model status is {self.m.status} (not infeasible), but solCount is {self.m.solCount}"
-            )
+            raise ValueError(f"Model status is {self.m.status} (not infeasible), but solCount is {self.m.solCount}")
 
-        Rout = np.zeros(
-            (T, T),
-            dtype=checkmate.core.utils.solver_common.SOLVER_DTYPE
-            if self.integral
-            else np.float,
-        )
-        Sout = np.zeros(
-            (T, T),
-            dtype=checkmate.core.utils.solver_common.SOLVER_DTYPE
-            if self.integral
-            else np.float,
-        )
-        Uout = np.zeros(
-            (T, T),
-            dtype=checkmate.core.utils.solver_common.SOLVER_DTYPE
-            if self.integral
-            else np.float,
-        )
-        Free_Eout = np.zeros(
-            (T, len(self.g.edge_list)),
-            dtype=checkmate.core.utils.solver_common.SOLVER_DTYPE,
-        )
+        Rout = np.zeros((T, T), dtype=checkmate.core.utils.solver_common.SOLVER_DTYPE if self.integral else np.float)
+        Sout = np.zeros((T, T), dtype=checkmate.core.utils.solver_common.SOLVER_DTYPE if self.integral else np.float)
+        Uout = np.zeros((T, T), dtype=checkmate.core.utils.solver_common.SOLVER_DTYPE if self.integral else np.float)
+        Free_Eout = np.zeros((T, len(self.g.edge_list)), dtype=checkmate.core.utils.solver_common.SOLVER_DTYPE)
         solver_dtype_cast = int if self.integral else float
         try:
             for t in range(T):

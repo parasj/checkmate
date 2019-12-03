@@ -2,10 +2,7 @@ import math
 
 from checkmate.core.dfgraph import DFGraph
 from checkmate.core.schedule import ScheduledResult
-from checkmate.core.utils.solver_common import (
-    gen_s_matrix_fixed_checkpoints,
-    solve_r_opt,
-)
+from checkmate.core.utils.solver_common import gen_s_matrix_fixed_checkpoints, solve_r_opt
 from checkmate.core.enum_strategy import SolveStrategy
 from checkmate.core.utils.scheduler import schedule_from_rs
 from checkmate.core.utils.timer import Timer
@@ -27,9 +24,7 @@ def solve_chen_greedy(g: DFGraph, segment_mem_B: int, use_actuation_points: bool
         R = solve_r_opt(g, S)
     schedule, aux_data = schedule_from_rs(g, R, S)
     return ScheduledResult(
-        solve_strategy=SolveStrategy.CHEN_GREEDY
-        if use_actuation_points
-        else SolveStrategy.CHEN_GREEDY_NOAP,
+        solve_strategy=SolveStrategy.CHEN_GREEDY if use_actuation_points else SolveStrategy.CHEN_GREEDY_NOAP,
         solver_budget=segment_mem_B,
         feasible=True,
         schedule=schedule,
@@ -47,9 +42,7 @@ def solve_chen_sqrtn(g: DFGraph, use_actuation_points: bool) -> ScheduledResult:
         R = solve_r_opt(g, S)
     schedule, aux_data = schedule_from_rs(g, R, S)
     return ScheduledResult(
-        solve_strategy=SolveStrategy.CHEN_SQRTN
-        if use_actuation_points
-        else SolveStrategy.CHEN_SQRTN_NOAP,
+        solve_strategy=SolveStrategy.CHEN_SQRTN if use_actuation_points else SolveStrategy.CHEN_SQRTN_NOAP,
         solver_budget=0,
         feasible=True,
         schedule=schedule,

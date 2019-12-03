@@ -25,9 +25,7 @@ GB = 1000 * 1000 * 1000
 def extract_params():
     parser = argparse.ArgumentParser()
     parser.add_argument("--platform", default="flops", choices=PLATFORM_CHOICES)
-    parser.add_argument(
-        "--model-name", default="VGG16", choices=list(sorted(MODEL_NAMES))
-    )
+    parser.add_argument("--model-name", default="VGG16", choices=list(sorted(MODEL_NAMES)))
     parser.add_argument("-s", "--input-shape", type=int, nargs="+", default=[])
     parser.add_argument("--batch-size-min", type=int, default=1)
 
@@ -47,9 +45,7 @@ if __name__ == "__main__":
     log_base = checkmate_data_dir() / "max_batch_size_ilp" / key
     shutil.rmtree(log_base, ignore_errors=True)
     pathlib.Path(log_base).mkdir(parents=True, exist_ok=True)
-    result_dict: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]] = defaultdict(
-        lambda: defaultdict(list)
-    )
+    result_dict: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]] = defaultdict(lambda: defaultdict(list))
     model_name = args.model_name
 
     # load costs, and plot optionally, if platform is not flops
@@ -63,19 +59,14 @@ if __name__ == "__main__":
 
     model = get_keras_model(model_name, input_shape=args.input_shape)
     tf.keras.utils.plot_model(
-        model,
-        to_file=log_base / f"plot_{model_name}.png",
-        show_shapes=True,
-        show_layer_names=True,
+        model, to_file=log_base / f"plot_{model_name}.png", show_shapes=True, show_layer_names=True
     )
 
     platform_ram = platform_memory("p32xlarge")
     bs_futures: Dict[int, List] = defaultdict(list)
     bs_fwd2xcost: Dict[int, int] = {}
     # load model at batch size
-    g = dfgraph_from_keras(
-        model, batch_size=1, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4)
-    )
+    g = dfgraph_from_keras(model, batch_size=1, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4))
     plot_dfgraph(g, log_base, name=model_name)
 
     model_file = str(log_base / f"max_bs_{model_name}.mps")

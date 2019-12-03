@@ -58,9 +58,7 @@ def _solve_griewank_to_rs(g: DFGraph, budget: int):
         return min(meta_to_real_v.get(_t, np.inf), g.size)
 
     for index, reg_range in regranges.iterrows():
-        for t in range(
-            map_time(reg_range["timestart"]), map_time(reg_range["timeend"] + 1)
-        ):
+        for t in range(map_time(reg_range["timestart"]), map_time(reg_range["timeend"] + 1)):
             if reg_range["nodeid"] > 0:
                 S[t, meta_to_real_v[reg_range["nodeid"]]] = 1
     R = solve_r_opt(g, S)
@@ -77,15 +75,11 @@ def _load_griewank(graph_size: int) -> pd.DataFrame:
             return pd.read_pickle(local_path)
         except Exception as e:
             logging.exception(e)
-            logging.warning(
-                "Error loading cached griewank solution, corrupt file? Reloading from S3"
-            )
+            logging.warning("Error loading cached griewank solution, corrupt file? Reloading from S3")
     with Timer("griewank_dl") as dl_timer:
         local_path_base.mkdir(parents=True, exist_ok=True)
         urllib.request.urlretrieve(remote_path, local_path)
-    logging.info(
-        f"Loaded graph from {remote_path} and saving to {local_path} in {dl_timer.elapsed:.2f}s"
-    )
+    logging.info(f"Loaded graph from {remote_path} and saving to {local_path} in {dl_timer.elapsed:.2f}s")
     return pd.read_pickle(local_path)
 
 

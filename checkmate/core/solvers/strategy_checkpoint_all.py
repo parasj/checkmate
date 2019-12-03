@@ -1,10 +1,7 @@
 from experiments.common.graph_plotting import _plot_schedule_from_rs
 from checkmate.core.dfgraph import DFGraph
 from checkmate.core.schedule import ScheduledResult
-from checkmate.core.utils.solver_common import (
-    gen_s_matrix_fixed_checkpoints,
-    solve_r_opt,
-)
+from checkmate.core.utils.solver_common import gen_s_matrix_fixed_checkpoints, solve_r_opt
 from checkmate.core.enum_strategy import SolveStrategy
 from checkmate.core.utils.scheduler import schedule_from_rs
 from checkmate.core.utils.timer import Timer

@@ -59,78 +59,43 @@ class MaxBatchILPSolver:
         self.batch_size = self.m.addVar(lb=1, ub=1024 * 16, name="batch_size")
         self.R = self.m.addVars(T, T, name="R", vtype=GRB.BINARY)
         self.S = self.m.addVars(T, T, name="S", vtype=GRB.BINARY)
-        self.Free_E = self.m.addVars(
-            T, len(self.g.edge_list), name="FREE_E", vtype=GRB.BINARY
-        )
+        self.Free_E = self.m.addVars(T, len(self.g.edge_list), name="FREE_E", vtype=GRB.BINARY)
         self.U = self.m.addVars(T, T, name="U", lb=0.0, ub=self.budget)
         for x in range(T):
             for y in range(T):
                 self.m.addLConstr(self.U[x, y], GRB.GREATER_EQUAL, 0)
-                self.m.addLConstr(
-                    self.U[x, y], GRB.LESS_EQUAL, float(budget) / self.ram_gcd
-                )
+                self.m.addLConstr(self.U[x, y], GRB.LESS_EQUAL, float(budget) / self.ram_gcd)
 
     def build_model(self):
         T = self.g.size
-        dict_val_div = lambda cost_dict, divisor: {
-            k: np.ceil(v / divisor) for k, v in cost_dict.items()
-        }
+        dict_val_div = lambda cost_dict, divisor: {k: np.ceil(v / divisor) for k, v in cost_dict.items()}
         permute_ram = dict_val_div(self.g.cost_ram, self.ram_gcd)
         budget = self.budget / self.ram_gcd
 
-        permute_eps = lambda cost_dict, eps: {
-            k: v * (1.0 + eps * np.random.randn()) for k, v in cost_dict.items()
-        }
+        permute_eps = lambda cost_dict, eps: {k: v * (1.0 + eps * np.random.randn()) for k, v in cost_dict.items()}
         permute_cpu = dict_val_div(self.g.cost_cpu, self.cpu_gcd)
         if self.eps_noise:
             permute_cpu = permute_eps(permute_cpu, self.eps_noise)
 
-        with self.profiler(
-            "Gurobi model construction", extra_data={"T": str(T), "budget": str(budget)}
-        ):
-            with self.profiler(
-                "Objective construction",
-                extra_data={"T": str(T), "budget": str(budget)},
-            ):
+        with self.profiler("Gurobi model construction", extra_data={"T": str(T), "budget": str(budget)}):
+            with self.profiler("Objective construction", extra_data={"T": str(T), "budget": str(budget)}):
                 # define objective function
                 self.m.setObjective(self.batch_size, GRB.MAXIMIZE)
 
-            with self.profiler(
-                "Variable initialization",
-                extra_data={"T": str(T), "budget": str(budget)},
-            ):
-                self.m.addLConstr(
-                    quicksum(self.R[t, i] for t in range(T) for i in range(t + 1, T)),
-                    GRB.EQUAL,
-                    0,
-                )
-                self.m.addLConstr(
-                    quicksum(self.S[t, i] for t in range(T) for i in range(t, T)),
-                    GRB.EQUAL,
-                    0,
-                )
-                self.m.addLConstr(
-                    quicksum(self.R[t, t] for t in range(T)), GRB.EQUAL, T
-                )
+            with self.profiler("Variable initialization", extra_data={"T": str(T), "budget": str(budget)}):
+                self.m.addLConstr(quicksum(self.R[t, i] for t in range(T) for i in range(t + 1, T)), GRB.EQUAL, 0)
+                self.m.addLConstr(quicksum(self.S[t, i] for t in range(T) for i in range(t, T)), GRB.EQUAL, 0)
+                self.m.addLConstr(quicksum(self.R[t, t] for t in range(T)), GRB.EQUAL, T)
 
-            with self.profiler(
-                "Correctness constraints",
-                extra_data={"T": str(T), "budget": str(budget)},
-            ):
+            with self.profiler("Correctness constraints", extra_data={"T": str(T), "budget": str(budget)}):
                 # ensure all checkpoints are in memory
                 for t in range(T - 1):
                     for i in range(T):
-                        self.m.addLConstr(
-                            self.S[t + 1, i],
-                            GRB.LESS_EQUAL,
-                            self.S[t, i] + self.R[t, i],
-                        )
+                        self.m.addLConstr(self.S[t + 1, i], GRB.LESS_EQUAL, self.S[t, i] + self.R[t, i])
                 # ensure all computations are possible
                 for (u, v) in self.g.edge_list:
                     for t in range(T):
-                        self.m.addLConstr(
-                            self.R[t, v], GRB.LESS_EQUAL, self.R[t, u] + self.S[t, u]
-                        )
+                        self.m.addLConstr(self.R[t, v], GRB.LESS_EQUAL, self.R[t, u] + self.S[t, u])
 
             # define memory constraints
             def _num_hazards(t, i, k):
@@ -141,11 +106,7 @@ class MaxBatchILPSolver:
                         + self.S[t + 1, i]
                         + quicksum(self.R[t, j] for j in self.g.successors(i) if j > k)
                     )
-                return (
-                    1
-                    - self.R[t, k]
-                    + quicksum(self.R[t, j] for j in self.g.successors(i) if j > k)
-                )
+                return 1 - self.R[t, k] + quicksum(self.R[t, j] for j in self.g.successors(i) if j > k)
 
             def _max_num_hazards(t, i, k):
                 num_uses_after_k = sum(1 for j in self.g.successors(i) if j > k)
@@ -154,19 +115,13 @@ class MaxBatchILPSolver:
                 return 1 + num_uses_after_k
 
             with self.profiler(
-                "Constraint: upper bound for 1 - Free_E",
-                extra_data={"T": str(T), "budget": str(budget)},
+                "Constraint: upper bound for 1 - Free_E", extra_data={"T": str(T), "budget": str(budget)}
             ):
                 for t in range(T):
                     for eidx, (i, k) in enumerate(self.g.edge_list):
-                        self.m.addLConstr(
-                            1 - self.Free_E[t, eidx],
-                            GRB.LESS_EQUAL,
-                            _num_hazards(t, i, k),
-                        )
+                        self.m.addLConstr(1 - self.Free_E[t, eidx], GRB.LESS_EQUAL, _num_hazards(t, i, k))
             with self.profiler(
-                "Constraint: lower bound for 1 - Free_E",
-                extra_data={"T": str(T), "budget": str(budget)},
+                "Constraint: lower bound for 1 - Free_E", extra_data={"T": str(T), "budget": str(budget)}
             ):
                 for t in range(T):
                     for eidx, (i, k) in enumerate(self.g.edge_list):
@@ -183,47 +138,29 @@ class MaxBatchILPSolver:
                     self.m.addConstr(
                         self.U[t, 0]
                         == self.batch_size
-                        * (
-                            self.R[t, 0] * permute_ram[0]
-                            + quicksum(self.S[t, i] * permute_ram[i] for i in range(T))
-                        ),
+                        * (self.R[t, 0] * permute_ram[0] + quicksum(self.S[t, i] * permute_ram[i] for i in range(T))),
                         name="init_mem",
                     )
-            with self.profiler(
-                "Constraint: memory recurrence",
-                extra_data={"T": str(T), "budget": str(budget)},
-            ):
+            with self.profiler("Constraint: memory recurrence", extra_data={"T": str(T), "budget": str(budget)}):
                 for t in range(T):
                     for k in range(T - 1):
                         mem_freed = quicksum(
-                            permute_ram[i] * self.Free_E[t, eidx]
-                            for (eidx, i) in self.g.predecessors_indexed(k)
+                            permute_ram[i] * self.Free_E[t, eidx] for (eidx, i) in self.g.predecessors_indexed(k)
                         )
                         self.m.addConstr(
                             self.U[t, k + 1]
-                            == self.U[t, k]
-                            + self.batch_size
-                            * (self.R[t, k + 1] * permute_ram[k + 1] - mem_freed),
+                            == self.U[t, k] + self.batch_size * (self.R[t, k + 1] * permute_ram[k + 1] - mem_freed),
                             name="update_mem",
                         )
 
             if self.cpu_fwd_factor:
                 with self.profiler("Constraint: recomputation overhead"):
                     compute_fwd = sum([permute_cpu[i] for i in self.g.vfwd])
-                    bwd_compute = sum(
-                        [permute_cpu[i] for i in self.g.v if i not in self.g.vfwd]
-                    )
+                    bwd_compute = sum([permute_cpu[i] for i in self.g.v if i not in self.g.vfwd])
                     max_mem = self.cpu_fwd_factor * compute_fwd + bwd_compute
-                    self.logger.info(
-                        f"Solver using compute overhead ceiling of {max_mem}"
-                    )
+                    self.logger.info(f"Solver using compute overhead ceiling of {max_mem}")
                     self.m.addConstr(
-                        quicksum(
-                            self.R[t, i] * permute_cpu[i]
-                            for t in range(T)
-                            for i in range(T)
-                        )
-                        <= max_mem,
+                        quicksum(self.R[t, i] * permute_cpu[i] for t in range(T) for i in range(T)) <= max_mem,
                         name="limit_cpu",
                     )
             else:
@@ -232,21 +169,14 @@ class MaxBatchILPSolver:
         with self.profiler("Model update"):
             self.m.update()
 
-        if (
-            self.model_file is not None and self.g.size < 200
-        ):  # skip for big models to save runtime
-            with self.profiler(
-                "Saving model", extra_data={"T": str(T), "budget": str(budget)}
-            ):
+        if self.model_file is not None and self.g.size < 200:  # skip for big models to save runtime
+            with self.profiler("Saving model", extra_data={"T": str(T), "budget": str(budget)}):
                 self.m.write(self.model_file)
         return None  # return value ensures ray remote call can be chained
 
     def solve(self):
         T = self.g.size
-        with self.profiler(
-            "Gurobi model optimization",
-            extra_data={"T": str(T), "budget": str(self.budget)},
-        ):
+        with self.profiler("Gurobi model optimization", extra_data={"T": str(T), "budget": str(self.budget)}):
             with Timer("ILPSolve") as solve_ilp:
                 self.m.optimize()
             self.solve_time = solve_ilp.elapsed
@@ -261,9 +191,7 @@ class MaxBatchILPSolver:
             infeasible = True
 
         if infeasible:
-            raise ValueError(
-                "Infeasible model, check constraints carefully. Insufficient memory?"
-            )
+            raise ValueError("Infeasible model, check constraints carefully. Insufficient memory?")
 
         Rout = np.zeros((T, T), dtype=SOLVER_DTYPE)
         Sout = np.zeros((T, T), dtype=SOLVER_DTYPE)

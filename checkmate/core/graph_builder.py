@@ -14,18 +14,12 @@ from checkmate.tf2_keras.extraction import dfgraph_from_keras
 
 class GraphBuilder:
     def __init__(self):
-        self.nodes: Dict[
-            str, uuid.UUID
-        ] = {}  # map of user-facing names to internal uuid
+        self.nodes: Dict[str, uuid.UUID] = {}  # map of user-facing names to internal uuid
         self.backward_nodes: Set[uuid.UUID] = set()  # set of backwards nodes
-        self.arguments: Dict[
-            uuid.UUID, List[uuid.UUID]
-        ] = {}  # map of internal node uuid to its list of arguments
+        self.arguments: Dict[uuid.UUID, List[uuid.UUID]] = {}  # map of internal node uuid to its list of arguments
         self.costs_cpu: Dict[uuid.UUID, int] = {}  # map of per-node CPU costs
         self.costs_ram: Dict[uuid.UUID, int] = {}  # map of per-node RAM costs
-        self.parameter_cost = (
-            0
-        )  # store total cost of parameters which is passed along to DFGraph initialization
+        self.parameter_cost = 0  # store total cost of parameters which is passed along to DFGraph initialization
 
     def _name_to_uuid(self, name: str) -> uuid.UUID:
         if name not in self.nodes.keys():
@@ -42,9 +36,7 @@ class GraphBuilder:
         self.parameter_cost = cost
         return self
 
-    def add_node(
-        self, name: str, cpu_cost: int, ram_cost: int, backward: bool = False
-    ) -> "GraphBuilder":
+    def add_node(self, name: str, cpu_cost: int, ram_cost: int, backward: bool = False) -> "GraphBuilder":
         """
         Add a node to the graph with associated graph properties
         :param name: A name for the node that is added to the graph
@@ -65,39 +57,22 @@ class GraphBuilder:
     def add_deps(self, dest_node: str, *source_nodes: str) -> "GraphBuilder":
         dest_node_uuid = self._name_to_uuid(dest_node)
         prior_nodes = self.arguments.get(dest_node_uuid, [])
-        self.arguments[dest_node_uuid] = prior_nodes + list(
-            map(self._name_to_uuid, source_nodes)
-        )
+        self.arguments[dest_node_uuid] = prior_nodes + list(map(self._name_to_uuid, source_nodes))
         return self
 
     def make_graph(self) -> DFGraph:
         # step 1 -- toposort graph and allocate node positions as a dict({0, ..., n} -> UUID)
-        edge_list = [
-            (source, dest)
-            for dest, sources in self.arguments.items()
-            for source in sources
-        ]
-        topo_order = list(
-            reversed([x for st in toposort(edge_to_adj_list(edge_list)) for x in st])
-        )
+        edge_list = [(source, dest) for dest, sources in self.arguments.items() for source in sources]
+        topo_order = list(reversed([x for st in toposort(edge_to_adj_list(edge_list)) for x in st]))
         uuid2topo = {uuid: topo_idx for topo_idx, uuid in enumerate(topo_order)}
 
         # step 2 -- map builder data-structures to node position indexed data-structures
         vertex_list = list(uuid2topo.values())
-        cost_cpu = dict(
-            (uuid2topo[idx], self.costs_cpu[idx]) for idx in self.costs_cpu.keys()
-        )
-        cost_ram = dict(
-            (uuid2topo[idx], self.costs_ram[idx]) for idx in self.costs_ram.keys()
-        )
-        arg_list: AdjList = {
-            uuid2topo[key]: [uuid2topo[arg] for arg in args]
-            for key, args in self.arguments.items()
-        }
+        cost_cpu = dict((uuid2topo[idx], self.costs_cpu[idx]) for idx in self.costs_cpu.keys())
+        cost_ram = dict((uuid2topo[idx], self.costs_ram[idx]) for idx in self.costs_ram.keys())
+        arg_list: AdjList = {uuid2topo[key]: [uuid2topo[arg] for arg in args] for key, args in self.arguments.items()}
         names = {uuid2topo[idx]: name for (name, idx) in self.nodes.items()}
-        bwd_node_set = set(
-            uuid2topo[v] for v in self.nodes.values() if v in self.backward_nodes
-        )
+        bwd_node_set = set(uuid2topo[v] for v in self.nodes.values() if v in self.backward_nodes)
 
         # step 3 -- make DFGraph
         return DFGraph(
@@ -120,9 +95,7 @@ def gen_linear_graph(forward_node_count) -> DFGraph:
     """
     gb = GraphBuilder()
     for i in range(forward_node_count * 2 + 1):
-        gb.add_node(
-            f"node{i}", cpu_cost=1, ram_cost=1, backward=(i >= forward_node_count)
-        )
+        gb.add_node(f"node{i}", cpu_cost=1, ram_cost=1, backward=(i >= forward_node_count))
         if i > 0:
             gb.add_deps(f"node{i}", f"node{i - 1}")
 

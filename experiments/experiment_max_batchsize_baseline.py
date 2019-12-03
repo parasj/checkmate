@@ -21,10 +21,7 @@ from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memo
 from experiments.common.ray_utils import get_futures
 from checkmate.core.schedule import ScheduledResult
 from checkmate.core.enum_strategy import SolveStrategy
-from checkmate.core.solvers.strategy_checkpoint_all import (
-    solve_checkpoint_all,
-    solve_checkpoint_all_ap,
-)
+from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all, solve_checkpoint_all_ap
 from checkmate.core.solvers.strategy_checkpoint_last import solve_checkpoint_last_node
 from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn, solve_chen_greedy
 from checkmate.tf2_keras.extraction import dfgraph_from_keras
@@ -33,9 +30,7 @@ from checkmate.tf2_keras.extraction import dfgraph_from_keras
 def extract_params():
     parser = argparse.ArgumentParser()
     parser.add_argument("--platform", default="flops", choices=PLATFORM_CHOICES)
-    parser.add_argument(
-        "--model-name", default="VGG16", choices=list(sorted(MODEL_NAMES))
-    )
+    parser.add_argument("--model-name", default="VGG16", choices=list(sorted(MODEL_NAMES)))
     parser.add_argument("-s", "--input-shape", type=int, nargs="+", default=[])
     parser.add_argument("--batch-size-min", type=int, default=4)
     parser.add_argument("--batch-size-max", type=int, default=512)
@@ -57,9 +52,7 @@ if __name__ == "__main__":
     log_base = checkmate_data_dir() / "max_batch_size" / key
     shutil.rmtree(log_base, ignore_errors=True)
     pathlib.Path(log_base).mkdir(parents=True, exist_ok=True)
-    result_dict: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]] = defaultdict(
-        lambda: defaultdict(list)
-    )
+    result_dict: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]] = defaultdict(lambda: defaultdict(list))
     model_name = args.model_name
 
     # load costs, and plot optionally, if platform is not flops
@@ -73,19 +66,14 @@ if __name__ == "__main__":
 
     model = get_keras_model(model_name, input_shape=args.input_shape)
     tf.keras.utils.plot_model(
-        model,
-        to_file=log_base / f"plot_{model_name}.png",
-        show_shapes=True,
-        show_layer_names=True,
+        model, to_file=log_base / f"plot_{model_name}.png", show_shapes=True, show_layer_names=True
     )
 
     platform_ram = platform_memory("p32xlarge")
     bs_futures: Dict[int, List] = defaultdict(list)
     bs_param_ram_cost: Dict[int, int] = {}
     bs_fwd2xcost: Dict[int, int] = {}
-    rg = list(
-        range(args.batch_size_min, args.batch_size_max, args.batch_size_increment)
-    )
+    rg = list(range(args.batch_size_min, args.batch_size_max, args.batch_size_increment))
     for bs in tqdm(rg, desc="Event dispatch"):
         while not ray.is_initialized():
             ray.init(
@@ -96,13 +84,7 @@ if __name__ == "__main__":
         futures = []
 
         # load model at batch size
-        g = dfgraph_from_keras(
-            model,
-            batch_size=bs,
-            cost_model=cost_model,
-            loss_cpu_cost=0,
-            loss_ram_cost=(4 * bs),
-        )
+        g = dfgraph_from_keras(model, batch_size=bs, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4 * bs))
         bs_fwd2xcost[bs] = sum(g.cost_cpu_fwd.values()) + sum(g.cost_cpu.values())
         bs_param_ram_cost[bs] = g.cost_ram_fixed
         plot_dfgraph(g, log_base, name=model_name)
@@ -121,16 +103,10 @@ if __name__ == "__main__":
 
         # sweep chen's greedy baseline
         chen_sqrtn_noap = result_dict[bs][SolveStrategy.CHEN_SQRTN_NOAP][0]
-        greedy_eval_points = chen_sqrtn_noap.schedule_aux_data.activation_ram * (
-            1.0 + np.arange(-1, 2, 0.05)
-        )
+        greedy_eval_points = chen_sqrtn_noap.schedule_aux_data.activation_ram * (1.0 + np.arange(-1, 2, 0.05))
         remote_solve_chen_greedy = ray.remote(num_cpus=1)(solve_chen_greedy).remote
-        futures.extend(
-            [remote_solve_chen_greedy(g, float(b), False) for b in greedy_eval_points]
-        )
-        futures.extend(
-            [remote_solve_chen_greedy(g, float(b), True) for b in greedy_eval_points]
-        )
+        futures.extend([remote_solve_chen_greedy(g, float(b), False) for b in greedy_eval_points])
+        futures.extend([remote_solve_chen_greedy(g, float(b), True) for b in greedy_eval_points])
 
         # # sweep griewank baselines
         # if model_name in CHAIN_GRAPH_MODELS:
@@ -156,8 +132,6 @@ if __name__ == "__main__":
                 max_batch_sizes[strategy] = max(bs, max_batch_sizes[strategy])
                 logging.info(f"SolveStrategy {strategy} succeeded at batch size {bs}")
 
-    df = pandas.DataFrame(
-        [{"strategy": k, "batch_size": v} for k, v in max_batch_sizes.items()]
-    )
+    df = pandas.DataFrame([{"strategy": k, "batch_size": v} for k, v in max_batch_sizes.items()])
     df.to_csv(log_base / "max_batch_size.csv")
     print(df)

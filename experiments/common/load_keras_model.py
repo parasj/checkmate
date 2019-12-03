@@ -53,9 +53,7 @@ def simple_model():
     b = tf.keras.layers.Conv2D(128, (1, 1), activation="relu", name="conv2")(x)
     c = tf.keras.layers.Add(name="addc1c2")([a, b])
     d = tf.keras.layers.GlobalAveragePooling2D(name="flatten")(c)
-    predictions = tf.keras.layers.Dense(1000, activation="softmax", name="predictions")(
-        d
-    )
+    predictions = tf.keras.layers.Dense(1000, activation="softmax", name="predictions")(d)
     return tf.keras.Model(inputs=inputs, outputs=predictions)
 
 
@@ -63,13 +61,9 @@ def linear_model(i):
     input = tf.keras.Input(shape=(224, 224, 3))
     x = input
     for i in range(i):
-        x = tf.keras.layers.Conv2D(
-            64, (3, 3), activation=None, use_bias=False, name="conv" + str(i)
-        )(x)
+        x = tf.keras.layers.Conv2D(64, (3, 3), activation=None, use_bias=False, name="conv" + str(i))(x)
     d = tf.keras.layers.GlobalAveragePooling2D(name="flatten")(x)
-    predictions = tf.keras.layers.Dense(1000, activation="softmax", name="predictions")(
-        d
-    )
+    predictions = tf.keras.layers.Dense(1000, activation="softmax", name="predictions")(d)
     return tf.keras.Model(inputs=input, outputs=predictions)
 
 
@@ -85,14 +79,8 @@ def get_keras_model(model_name: str, input_shape: Optional[List[int]] = None):
     elif model_name in SEGMENTATION_MODEL_NAMES:
         model = keras_segmentation.models.model_from_name[model_name]
         if input_shape is not None:
-            assert (
-                input_shape[2] == 3
-            ), "Can only segment 3-channel, channel-last images"
-            model = model(
-                n_classes=NUM_SEGMENTATION_CLASSES,
-                input_height=input_shape[0],
-                input_width=input_shape[1],
-            )
+            assert input_shape[2] == 3, "Can only segment 3-channel, channel-last images"
+            model = model(n_classes=NUM_SEGMENTATION_CLASSES, input_height=input_shape[0], input_width=input_shape[1])
         else:
             model = model(n_classes=NUM_SEGMENTATION_CLASSES)
     else:

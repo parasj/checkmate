@@ -4,9 +4,7 @@ from typing import Optional
 
 import tensorflow as tf
 
-from experiments.common.profile.cost_model import (
-    CostModel,
-)  # todo this really shouldn't be in the core package
+from experiments.common.profile.cost_model import CostModel  # todo this really shouldn't be in the core package
 from checkmate.core import dfgraph
 from checkmate.tf2_keras.extraction_hooks import op_hook, MEMORY_MULTIPLIER
 
@@ -48,9 +46,7 @@ def dfgraph_from_keras(
 
     # build argument list in order of dependencies
     dep_list_fwd = defaultdict(list)
-    dep_list_bwd = defaultdict(
-        list
-    )  # joined with dep_list_fwd in order to ensure backward nodes are last
+    dep_list_bwd = defaultdict(list)  # joined with dep_list_fwd in order to ensure backward nodes are last
     for layer_idx, layer in enumerate(layers):
         name_to_idx[layer.name] = layer_idx
         inbound_idx = [
@@ -59,34 +55,22 @@ def dfgraph_from_keras(
             for t in node.iterate_inbound()
             if node in relevant_nodes
         ]
-        print(
-            layer.name,
-            [key for key, value in name_to_idx.items() if value in inbound_idx],
-        )
-        for inbound_position, inbound_node in enumerate(
-            filter(lambda x: x != -1, inbound_idx)
-        ):
+        print(layer.name, [key for key, value in name_to_idx.items() if value in inbound_idx])
+        for inbound_position, inbound_node in enumerate(filter(lambda x: x != -1, inbound_idx)):
             dep_list_fwd[layer_idx].append(inbound_node)  # forward dependency
             dep_list_bwd[fwd_to_bwd(inbound_node)].append(
                 fwd_to_bwd(layer_idx)
             )  # connect grad node to previous backward node
-            if (
-                next_outputs_deps
-            ):  # connect output of node to the inbound node's gradient node
+            if next_outputs_deps:  # connect output of node to the inbound node's gradient node
                 dep_list_fwd[fwd_to_bwd(inbound_node)].append(layer_idx)
             if input_dep:
                 dep_list_fwd[fwd_to_bwd(layer_idx)].append(inbound_node)
-        if (
-            layer_idx == loss_node_idx - 1
-        ):  # inject loss node assuming we are at output node
+        if layer_idx == loss_node_idx - 1:  # inject loss node assuming we are at output node
             dep_list_fwd[loss_node_idx].append(layer_idx)
             dep_list_fwd[fwd_to_bwd(layer_idx)].append(loss_node_idx)
         if output_dep:  # connect output of node to corresponding backwards node
             dep_list_fwd[fwd_to_bwd(layer_idx)].append(layer_idx)
-    args = {
-        i: dep_list_fwd[i] + dep_list_bwd[i]
-        for i in set(dep_list_fwd.keys()).union(set(dep_list_bwd.keys()))
-    }
+    args = {i: dep_list_fwd[i] + dep_list_bwd[i] for i in set(dep_list_fwd.keys()).union(set(dep_list_bwd.keys()))}
 
     # Get per-node compute costs and activation memory usages
     costs = {loss_node_idx: loss_cpu_cost}
