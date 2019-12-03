@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import logging
 import os
 import pathlib
@@ -49,7 +50,7 @@ if __name__ == "__main__":
     args = extract_params()
 
     key = "_".join(map(str, [args.platform, args.model_name, args.input_shape]))
-    log_base = checkmate_data_dir() / "max_batch_size" / key
+    log_base = checkmate_data_dir() / "max_batch_size" / key / str(datetime.datetime.now().isoformat())
     shutil.rmtree(log_base, ignore_errors=True)
     pathlib.Path(log_base).mkdir(parents=True, exist_ok=True)
     result_dict: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]] = defaultdict(lambda: defaultdict(list))

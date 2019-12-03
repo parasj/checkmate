@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import logging
 import os
 import pathlib
@@ -158,7 +159,7 @@ def get_global_eval_points(g: DFGraph, results: Dict[SolveStrategy, List[Schedul
 if __name__ == "__main__":
     args = extract_params()
     key = "_".join(map(str, [args.platform, args.model_name, args.batch_size, args.input_shape]))
-    log_base = checkmate_data_dir() / "budget_sweep" / key
+    log_base = checkmate_data_dir() / "budget_sweep" / key / str(datetime.datetime.now().isoformat())
     shutil.rmtree(log_base, ignore_errors=True)
     pathlib.Path(log_base).mkdir(parents=True, exist_ok=True)
 
