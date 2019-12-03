@@ -201,7 +201,6 @@ hooks = {
     # Lambda can vary depending on the implementation
     # 'Lambda': pspnet_lambda_hook,
     'Lambda': fc_hook,
-    "Interp": pspnet_interp_hook,
 }
 
 
