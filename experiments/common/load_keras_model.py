@@ -27,7 +27,7 @@ KERAS_APPLICATION_MODEL_NAMES = [
     "ResNet152V2",
 ]
 LINEAR_MODEL_NAMES = ["linear" + str(i) for i in range(32)]
-MODEL_NAMES = KERAS_APPLICATION_MODEL_NAMES + ["bert", "test"] + LINEAR_MODEL_NAMES
+MODEL_NAMES = KERAS_APPLICATION_MODEL_NAMES + ["testBERT", "test"] + LINEAR_MODEL_NAMES
 CHAIN_GRAPH_MODELS = ["VGG16", "VGG19", "MobileNet"] + LINEAR_MODEL_NAMES
 
 try:
@@ -73,8 +73,8 @@ def linear_model(i):
 def get_keras_model(model_name: str, input_shape: Optional[List[int]] = None):
     if model_name == "test":
         model = simple_model()
-    elif model_name == "bert":
-        model = bertModel(12, 16, input_shape)
+    elif model_name == "testBERT":
+        model = testBertModel(12, 16, input_shape)
     elif model_name in LINEAR_MODEL_NAMES:
         i = int(re.search(r"\d+$", model_name).group())
         model = linear_model(i)
@@ -101,7 +101,7 @@ def get_input_shape(model_name: str, batch_size: Optional[int] = None):
         shape[0] = batch_size
     return shape
 
-def bertModel(num_layers,  heads, input_size):
+def testBertModel(num_layers,  heads, input_size):
     
     hidden_size = input_size[1]
     intermediate_size = 4 * hidden_size
