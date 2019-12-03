@@ -1,4 +1,4 @@
-PLATFORM_CHOICES = ['p32xlarge', 'p32xlarge_fp16', 'p2xlarge', 'c524xlarge', 'flops']
+PLATFORM_CHOICES = ["p32xlarge", "p32xlarge_fp16", "p2xlarge", "c524xlarge", "flops"]
 
 
 def pretty_platform_name(platform: str):

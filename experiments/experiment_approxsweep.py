@@ -1,7 +1,9 @@
 import logging
 
 from checkmate.core.graph_builder import gen_linear_graph
-from checkmate.core.solvers.strategy_approx_lp import solve_approx_lp_deterministic_sweep
+from checkmate.core.solvers.strategy_approx_lp import (
+    solve_approx_lp_deterministic_sweep,
+)
 from experiments.common.definitions import checkmate_data_dir
 from experiments.common.graph_plotting import plot_schedule
 from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
@@ -23,8 +25,12 @@ if __name__ == "__main__":
 
         scheduler_result_all = solve_checkpoint_all(g)
         scheduler_result_sqrtn = solve_chen_sqrtn(g, True)
-        plot_schedule(scheduler_result_all, False, save_file=scratch_dir / "CHECKPOINT_ALL.png")
-        plot_schedule(scheduler_result_sqrtn, False, save_file=scratch_dir / "CHEN_SQRTN.png")
+        plot_schedule(
+            scheduler_result_all, False, save_file=scratch_dir / "CHECKPOINT_ALL.png"
+        )
+        plot_schedule(
+            scheduler_result_sqrtn, False, save_file=scratch_dir / "CHEN_SQRTN.png"
+        )
         data.append(
             {
                 "Strategy": str(scheduler_result_all.solve_strategy.value),
@@ -42,8 +48,9 @@ if __name__ == "__main__":
             }
         )
 
-
-        logging.error("Skipping Griewank baselines as it was broken in parasj/checkmate#65")
+        logging.error(
+            "Skipping Griewank baselines as it was broken in parasj/checkmate#65"
+        )
         # scheduler_result_griewank = solve_griewank(g, B)
         # plot_schedule(scheduler_result_griewank, False, save_file=scratch_dir / "GRIEWANK.png")
         # data.append(
@@ -56,8 +63,12 @@ if __name__ == "__main__":
         # )
 
         with Timer("ilp") as timer_ilp:
-            scheduler_result_ilp = solve_ilp_gurobi(g, B, seed_s=scheduler_result_sqrtn.schedule_aux_data.S)
-            plot_schedule(scheduler_result_ilp, False, save_file=scratch_dir / "CHECKMATE_ILP.png")
+            scheduler_result_ilp = solve_ilp_gurobi(
+                g, B, seed_s=scheduler_result_sqrtn.schedule_aux_data.S
+            )
+            plot_schedule(
+                scheduler_result_ilp, False, save_file=scratch_dir / "CHECKMATE_ILP.png"
+            )
             data.append(
                 {
                     "Strategy": str(scheduler_result_ilp.solve_strategy.value),
@@ -70,18 +81,24 @@ if __name__ == "__main__":
         with Timer("det_lp") as timer_lp_det:
             scheduler_lp_deterministicround = solve_approx_lp_deterministic_sweep(g, B)
             if scheduler_lp_deterministicround.schedule_aux_data is not None:
-                plot_schedule(scheduler_lp_deterministicround, False,
-                              save_file=scratch_dir / f"CHECKMATE_LP_DETERMINISTICROUND_{scheduler_lp_deterministicround.ilp_aux_data.approx_deterministic_round_threshold}.png")
+                plot_schedule(
+                    scheduler_lp_deterministicround,
+                    False,
+                    save_file=scratch_dir
+                    / f"CHECKMATE_LP_DETERMINISTICROUND_{scheduler_lp_deterministicround.ilp_aux_data.approx_deterministic_round_threshold}.png",
+                )
                 data.append(
                     {
-                        "Strategy": str(scheduler_lp_deterministicround.solve_strategy.value),
+                        "Strategy": str(
+                            scheduler_lp_deterministicround.solve_strategy.value
+                        ),
                         "Name": f"CHECKM8_DET_APPROX_{scheduler_lp_deterministicround.ilp_aux_data.approx_deterministic_round_threshold:.2f}",
                         "CPU": scheduler_lp_deterministicround.schedule_aux_data.cpu,
                         "Activation RAM": scheduler_lp_deterministicround.schedule_aux_data.activation_ram,
                     }
                 )
 
-        with (scratch_dir / "times.log").open('w') as f:
+        with (scratch_dir / "times.log").open("w") as f:
             f.write(timer_ilp._format_results())
             f.write(timer_lp_det._format_results())
 

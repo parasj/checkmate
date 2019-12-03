@@ -23,16 +23,27 @@ class RedisCacheKey(NamedTuple):
     def key(self, *extra_args):
         def join(*args, delimiter="/"):
             return delimiter.join(map(lambda s: str(s).strip("/ \t\n\r"), args))
-        return join(self.global_project_version, self.platform, self.model_name, self.model_version,
-                    "bs" + str(self.batch_size), tuple(self.input_shape or []), self.solve_strategy.value,
-                    SolveStrategy.get_version(self.solve_strategy), self.cost_file, self.solver_budget, *extra_args)
+
+        return join(
+            self.global_project_version,
+            self.platform,
+            self.model_name,
+            self.model_version,
+            "bs" + str(self.batch_size),
+            tuple(self.input_shape or []),
+            self.solve_strategy.value,
+            SolveStrategy.get_version(self.solve_strategy),
+            self.cost_file,
+            self.solver_budget,
+            *extra_args,
+        )
 
 
 class RedisCache:
     def __init__(self, host=None, port=None, db=None, password=None, key_prefix=""):
         dotenv_location = dotenv.find_dotenv()
         if len(dotenv_location):
-            logging.info(f'Loading dotenv config from {dotenv_location}')
+            logging.info(f"Loading dotenv config from {dotenv_location}")
             dotenv.load_dotenv(dotenv_location)
         else:
             logging.warning("Failed to load dotenv config!")
@@ -42,7 +53,9 @@ class RedisCache:
         self.port = port or int(os.environ.get("REDIS_PORT", 6379))
         self.db = db or int(os.environ.get("REDIS_DB", 0))
         self.password = password or os.environ.get("REDIS_PASSWORD", "")
-        self.redis_conn = StrictRedis(host=self.host, port=self.port, db=self.db, password=self.password)
+        self.redis_conn = StrictRedis(
+            host=self.host, port=self.port, db=self.db, password=self.password
+        )
 
     # def query_results(self, key_pattern: str) -> Tuple[List[ScheduledResult], List[str]]:
     #     result_list = []
@@ -61,19 +74,25 @@ class RedisCache:
     #     print("key pattern", key_pattern)
     #     return self.query_results(key_pattern)
 
-    def read_result(self, cache_key: RedisCacheKey, ilp_time_limit: int = -1) -> Optional[ScheduledResult]:
+    def read_result(
+        self, cache_key: RedisCacheKey, ilp_time_limit: int = -1
+    ) -> Optional[ScheduledResult]:
         key = cache_key.key(ilp_time_limit)
         result_bytes = self.redis_conn.get(key)
         if result_bytes:
             res = ScheduledResult.loads(result_bytes)
             if res.solve_strategy == SolveStrategy.OPTIMAL_ILP_GC:
-                if res.ilp_aux_data is not None and (res.ilp_aux_data.ilp_time_limit >= ilp_time_limit):
+                if res.ilp_aux_data is not None and (
+                    res.ilp_aux_data.ilp_time_limit >= ilp_time_limit
+                ):
                     return res
             elif res.schedule_aux_data is not None:
                 return res
         return None
 
-    def write_result(self, key: RedisCacheKey, result: ScheduledResult, ilp_time_limit: int = -1):
+    def write_result(
+        self, key: RedisCacheKey, result: ScheduledResult, ilp_time_limit: int = -1
+    ):
         return self.redis_conn.set(key.key(ilp_time_limit), result.dumps())
 
     def __del__(self):

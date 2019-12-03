@@ -19,7 +19,9 @@ BATCH_SIZES_LOAD = [32, 64, 128, 256, 512, 1024, 2048]
 
 
 class CostModel:
-    def __init__(self, model_name: str, platform: str, log_base: PathLike, quantization: int):
+    def __init__(
+        self, model_name: str, platform: str, log_base: PathLike, quantization: int
+    ):
         self.log_base = log_base
         self.logger = logging.getLogger("CostModel")
 
@@ -36,7 +38,9 @@ class CostModel:
                 self.batch_sizes_to_load.append(batch_size)
                 self.cost_files_to_load.append(cost_file)
             else:
-                self.logger.warning(f"Missing cost file {cost_file} for batch size {batch_size}")
+                self.logger.warning(
+                    f"Missing cost file {cost_file} for batch size {batch_size}"
+                )
 
         # Cost model parameters
         self.fits = []
@@ -45,10 +49,13 @@ class CostModel:
 
     def fit(self):
         import scipy.stats
+
         self.logger.info("Loading measured costs")
         costs_by_layer = defaultdict(list)
         batch_sizes_by_layer = defaultdict(list)
-        for batch_size, cost_file in zip(self.batch_sizes_to_load, self.cost_files_to_load):
+        for batch_size, cost_file in zip(
+            self.batch_sizes_to_load, self.cost_files_to_load
+        ):
             costs = self.load_costs(cost_file)
             if costs is None:
                 self.logger.error(f"Error loading cost file {cost_file}, skipping")
@@ -66,11 +73,14 @@ class CostModel:
 
             if intercept / 1000 >= 100:
                 # Greater than 100 ms overhead for the layer
-                self.logger.warn(f"Layer {layer} has overhead (bs=0 cost) of {intercept / 1000} ms. "
-                                 f"r={rvalue}, p={pvalue}, stderr={stderr}, for cost model {slope}*bs+{intercept}")
+                self.logger.warn(
+                    f"Layer {layer} has overhead (bs=0 cost) of {intercept / 1000} ms. "
+                    f"r={rvalue}, p={pvalue}, stderr={stderr}, for cost model {slope}*bs+{intercept}"
+                )
             if rvalue < 0.8:
                 self.logger.warn(
-                    f"Poor fit: layer {layer} has r={rvalue}, p={pvalue}, stderr={stderr}, for cost model {slope}*bs+{intercept}")
+                    f"Poor fit: layer {layer} has r={rvalue}, p={pvalue}, stderr={stderr}, for cost model {slope}*bs+{intercept}"
+                )
 
         # Collect models into ndarrays
         nlayer = len(self.fits)
@@ -90,10 +100,14 @@ class CostModel:
     def get_costs(self, batch_size: int) -> Optional[np.ndarray]:
         # Attempt to load costs if available
         if batch_size in self.batch_sizes_to_load:
-            cost_file = self.cost_files_to_load[self.batch_sizes_to_load.index(batch_size)]
+            cost_file = self.cost_files_to_load[
+                self.batch_sizes_to_load.index(batch_size)
+            ]
             costs = self.load_costs(cost_file)
             if costs is not None:
-                self.logger.info(f"Using measured costs {cost_file} for batch size {batch_size}")
+                self.logger.info(
+                    f"Using measured costs {cost_file} for batch size {batch_size}"
+                )
                 self.logger.info(f"Quantizing costs")
                 return self.quantize_costs(costs)
 
@@ -119,12 +133,19 @@ class CostModel:
     def plot_costs(self):
         import matplotlib.pyplot as plt
         import seaborn as sns
+
         self.logger.info("Plotting cost model")
         data_by_layer = defaultdict(lambda: ([], [], []))
-        for batch_size, cost_file in zip(self.batch_sizes_to_load, self.cost_files_to_load):
+        for batch_size, cost_file in zip(
+            self.batch_sizes_to_load, self.cost_files_to_load
+        ):
             import datetime
+
             threshutc = datetime.datetime.utcnow() - datetime.timedelta(days=3)
-            if datetime.datetime.fromtimestamp(int(os.path.getmtime(cost_file))) < threshutc:
+            if (
+                datetime.datetime.fromtimestamp(int(os.path.getmtime(cost_file)))
+                < threshutc
+            ):
                 self.logger.warn(f"Skipping {cost_file} for plotting, too old")
                 continue
             costs, stds = self.load_costs(cost_file, withdevs=True)
@@ -166,11 +187,15 @@ class CostModel:
         ax.legend(bbox_to_anchor=(1.04, 1))
         plt.xticks(sorted(list(batch_sizes)))
 
-        fig.savefig(self.log_base / "!plot_costs.pdf", format='pdf', bbox_inches='tight')
-        fig.savefig(self.log_base / "!plot_costs.png", bbox_inches='tight', dpi=300)
+        fig.savefig(
+            self.log_base / "!plot_costs.pdf", format="pdf", bbox_inches="tight"
+        )
+        fig.savefig(self.log_base / "!plot_costs.png", bbox_inches="tight", dpi=300)
 
     @staticmethod
-    def load_profile_s3(model_name: str, batch_size: int, platform: str) -> Optional[str]:
+    def load_profile_s3(
+        model_name: str, batch_size: int, platform: str
+    ) -> Optional[str]:
         local_base = checkmate_cache_dir() / "profiles"
         local_path = local_base / f"{model_name}_{batch_size}_{platform}.npy"
         remote_path = f"https://optimalcheckpointing.s3.amazonaws.com/profiles/{model_name}/b{batch_size}_{platform}.npy"
@@ -180,7 +205,9 @@ class CostModel:
                 return local_path
             except Exception as e:
                 logging.exception(e)
-                logging.warning("Error loading cached profile solution, corrupt file? Reloading from S3")
+                logging.warning(
+                    "Error loading cached profile solution, corrupt file? Reloading from S3"
+                )
         pathlib.Path(local_base).mkdir(parents=True, exist_ok=True)
         try:
             urllib.request.urlretrieve(remote_path, local_path)
