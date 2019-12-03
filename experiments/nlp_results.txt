@@ -1,0 +1,6 @@
+0   SolveStrategy.CHEN_GREEDY_NOAP          84
+1         SolveStrategy.CHEN_SQRTN         108
+2  SolveStrategy.CHECKPOINT_ALL_AP         108
+3     SolveStrategy.CHECKPOINT_ALL          60
+4        SolveStrategy.CHEN_GREEDY         220
+
