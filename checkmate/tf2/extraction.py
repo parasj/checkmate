@@ -1,8 +1,16 @@
-import tensorflow as tf
-
 from checkmate.core.dfgraph import DFGraph
 from checkmate.core.graph_builder import GraphBuilder
-from experiments.common.graph_plotting import plot_dfgraph
+
+# operations to ignore due to non-determinism or impurity
+from checkmate.core.utils.timer import Timer
+
+TFOPS_IGNORE = [
+    "Placeholder",
+    "ReadVariableOp",
+    "Const",
+    "BroadcastGradientArgs",
+    "Fill",
+]
 
 
 def dfgraph_from_tf_function(fn) -> DFGraph:
@@ -16,17 +24,16 @@ def dfgraph_from_tf_function(fn) -> DFGraph:
     # todo type assertions for concrete function
     assert fn.__class__.__name__ == "ConcreteFunction", "Can only compile concrete functions"
     gb = GraphBuilder()
+    ops = {op for op in fn.graph.get_operations() if op.type not in TFOPS_IGNORE}
+
+    # initialize nodes
+    for op in ops:
+        gb.add_node(op.name, cpu_cost=1, ram_cost=1, backward="gradients" not in op.name)
+
+    # build dependency graph
+    for op in ops:
+        for out in op.outputs:
+            for cons in out.consumers():
+                if cons in ops:
+                    gb.add_deps(cons.name, op.name)
     return gb.make_graph()
-
-
-if __name__ == "__main__":
-    @tf.function
-    def fn(x):
-        return 2 * x
-
-
-    x = tf.constant([[2.0, 3.0]])
-    conc_fn = fn.get_concrete_function(x)
-
-    g = dfgraph_from_tf_function(conc_fn)
-    plot_dfgraph(g, directory="/tmp/test_remat/tf")
