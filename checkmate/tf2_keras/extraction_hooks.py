@@ -17,7 +17,7 @@ def conv_transpose_hook(node, inputs, outputs):
     mem_cost = np.prod(outputs) * MEMORY_MULTIPLIER
     weight = node.weights[0].shape
     cin = weight[3]
-    #cout = weight[2]
+    # cout = weight[2]
     ops_per_output = cin
     ops = ops_per_output * np.prod(outputs)
     return ops, mem_cost
@@ -37,10 +37,10 @@ def conv_hook(node, inputs, outputs):
     mem_cost = np.prod(outputs) * MEMORY_MULTIPLIER
     weight = node.weights[0].shape
     # NHWC
-    #cout = weight[3]
+    # cout = weight[3]
     cin = weight[2]
     kernel = weight[:2]
-    #batch = inputs[0]
+    # batch = inputs[0]
     ops_per_output = np.prod(kernel) * cin
     ops = ops_per_output * np.prod(outputs)
     return ops, mem_cost
@@ -48,10 +48,10 @@ def conv_hook(node, inputs, outputs):
 
 def depthwise_conv_hook(node, inputs, outputs):
     weight = node.weights[0].shape
-    #cout = weight[3]
-    #cin = weight[2]
+    # cout = weight[3]
+    # cin = weight[2]
     kernel = weight[:2]
-    #batch = inputs[0]
+    # batch = inputs[0]
     ops_per_output = np.prod(kernel)  # don't look at rest of input
     ops = ops_per_output * np.prod(outputs)
 
@@ -172,21 +172,21 @@ def pspnet_lambda_hook(node, inputs, outputs):
 # todo flatten
 hooks = {
     # General hooks
-    'Conv2D': conv_hook,
-    'Conv2DTranspose': conv_transpose_hook,
-    'Cropping2D': pool_hook,  # TODO fix
-    'DepthwiseConv2D': depthwise_conv_hook,
-    'BatchNormalization': bn_hook,
-    'Activation': relu_hook,
-    'ReLU': relu_hook,
-    'MaxPooling2D': pool_hook,
-    'Dropout': dropout_hook,
-    'Concatenate': concat_hook,
-    'TensorFlowOpLayer': reshape_hook,
-    'LayerNormalization': bn_hook,
-    'Add': add_hook,
-    'GlobalAveragePooling2D': pool_hook,
-    'AveragePooling2D': pool_hook,
+    "Conv2D": conv_hook,
+    "Conv2DTranspose": conv_transpose_hook,
+    "Cropping2D": pool_hook,  # TODO fix
+    "DepthwiseConv2D": depthwise_conv_hook,
+    "BatchNormalization": bn_hook,
+    "Activation": relu_hook,
+    "ReLU": relu_hook,
+    "MaxPooling2D": pool_hook,
+    "Dropout": dropout_hook,
+    "Concatenate": concat_hook,
+    "TensorFlowOpLayer": reshape_hook,
+    "LayerNormalization": bn_hook,
+    "Add": add_hook,
+    "GlobalAveragePooling2D": pool_hook,
+    "AveragePooling2D": pool_hook,
     # 'Shape': shape_hook,
     "Flatten": reshape_hook,
     "Concat": concat_hook,
@@ -197,10 +197,10 @@ hooks = {
     # 'Squeeze' : reshape_hook,
     "ZeroPadding2D": pad_hook,
     # Model specific hooks
-    'Interp': pspnet_interp_hook,
+    "Interp": pspnet_interp_hook,
     # Lambda can vary depending on the implementation
     # 'Lambda': pspnet_lambda_hook,
-    'Lambda': fc_hook,
+    "Lambda": fc_hook,
 }
 
 

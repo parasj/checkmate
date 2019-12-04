@@ -4,13 +4,7 @@ from checkmate.core.graph_builder import GraphBuilder
 # operations to ignore due to non-determinism or impurity
 from checkmate.core.utils.timer import Timer
 
-TFOPS_IGNORE = [
-    "Placeholder",
-    "ReadVariableOp",
-    "Const",
-    "BroadcastGradientArgs",
-    "Fill",
-]
+TFOPS_IGNORE = ["Placeholder", "ReadVariableOp", "Const", "BroadcastGradientArgs", "Fill"]
 
 
 def dfgraph_from_tf_function(fn) -> DFGraph:
