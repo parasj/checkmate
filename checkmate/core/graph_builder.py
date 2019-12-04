@@ -33,6 +33,10 @@ class GraphBuilder:
                 return name
 
     def set_parameter_cost(self, cost: int) -> "GraphBuilder":
+        """
+        Set graph-wide parameter costs which is used internally to adjust the budget to avoid OOM due to params
+        :param cost: Cost in bytes to store parameters for this graph
+        """
         self.parameter_cost = cost
         return self
 
@@ -55,12 +59,22 @@ class GraphBuilder:
         return self
 
     def add_deps(self, dest_node: str, *source_nodes: str) -> "GraphBuilder":
+        """
+        Add dependencies to the adjacency list. This command will append listed sources in order that they are passed
+        and add said dependencies after any existing nodes.
+        :param dest_node: name for the destination node
+        :param source_nodes: one or more names for any dependencies for the destination node
+        """
         dest_node_uuid = self._name_to_uuid(dest_node)
         prior_nodes = self.arguments.get(dest_node_uuid, [])
         self.arguments[dest_node_uuid] = prior_nodes + list(map(self._name_to_uuid, source_nodes))
         return self
 
     def make_graph(self) -> DFGraph:
+        """
+        Build the DFGraph given the dependency structure described in the problem
+        :return: a DFGraph instance corresponding to your problem description
+        """
         # step 1 -- toposort graph and allocate node positions as a dict({0, ..., n} -> UUID)
         edge_list = [(source, dest) for dest, sources in self.arguments.items() for source in sources]
         topo_order = list(reversed([x for st in toposort(edge_to_adj_list(edge_list)) for x in st]))
@@ -70,7 +84,7 @@ class GraphBuilder:
         vertex_list = list(uuid2topo.values())
         cost_cpu = dict((uuid2topo[idx], self.costs_cpu[idx]) for idx in self.costs_cpu.keys())
         cost_ram = dict((uuid2topo[idx], self.costs_ram[idx]) for idx in self.costs_ram.keys())
-        arg_list: AdjList = {uuid2topo[key]: [uuid2topo[arg] for arg in args] for key, args in self.arguments.items()}
+        arg_list = {uuid2topo[key]: [uuid2topo[arg] for arg in args] for key, args in self.arguments.items()}
         names = {uuid2topo[idx]: name for (name, idx) in self.nodes.items()}
         bwd_node_set = set(uuid2topo[v] for v in self.nodes.values() if v in self.backward_nodes)
 
