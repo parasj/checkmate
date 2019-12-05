@@ -18,7 +18,7 @@ df = pd.concat(dfs)
 del df["Unnamed: 0"]
 for valuekey in ["geomean_slowdown", "max"]:
     pivot_df = pd.pivot_table(df, values=valuekey, index=["Model name"], columns=["method"])
-    pivot_df.to_csv(checkmate_data_dir() / "budget_sweep" / f"{valuekey}_aggr.csv")
+    pivot_df.to_csv(checkmate_data_dir() / "budget_sweep" / "{}_aggr.csv".format(valuekey))
 
 # compute lp relaxation speedups
 ilp_runtime_dict = {}

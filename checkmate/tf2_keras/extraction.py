@@ -97,7 +97,7 @@ def dfgraph_from_keras(
     idx_to_name = {v: u for u, v in name_to_idx.items()}
     fwd_names = {u: idx_to_name[u] for u in vfwd}
     loss_names = {loss_node_idx: "Loss"}
-    bwd_names = {fwd_to_bwd(key): f"Grad <{val}>" for key, val in fwd_names.items()}
+    bwd_names = {fwd_to_bwd(key): "Grad <{}>".format(val) for key, val in fwd_names.items()}
     total_names = {**fwd_names, **loss_names, **bwd_names}
 
     # Get parameter and gradient momentum memory usage

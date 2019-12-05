@@ -36,7 +36,7 @@ class CostModel:
                 self.batch_sizes_to_load.append(batch_size)
                 self.cost_files_to_load.append(cost_file)
             else:
-                self.logger.warning(f"Missing cost file {cost_file} for batch size {batch_size}")
+                self.logger.warning("Missing cost file {} for batch size {}".format(cost_file, batch_size))
 
         # Cost model parameters
         self.fits = []
@@ -52,7 +52,7 @@ class CostModel:
         for batch_size, cost_file in zip(self.batch_sizes_to_load, self.cost_files_to_load):
             costs = self.load_costs(cost_file)
             if costs is None:
-                self.logger.error(f"Error loading cost file {cost_file}, skipping")
+                self.logger.error("Error loading cost file {}, skipping".format(cost_file))
                 continue
             for layer, cost in enumerate(costs):
                 costs_by_layer[layer].append(cost)
@@ -68,12 +68,16 @@ class CostModel:
             if intercept / 1000 >= 100:
                 # Greater than 100 ms overhead for the layer
                 self.logger.warn(
-                    f"Layer {layer} has overhead (bs=0 cost) of {intercept / 1000} ms. "
-                    f"r={rvalue}, p={pvalue}, stderr={stderr}, for cost model {slope}*bs+{intercept}"
+                    "Layer {} has overhead (bs=0 cost) of {} ms. "
+                    "r={}, p={}, stderr={}, for cost model {}*bs+{}".format(
+                        layer, intercept / 1000, rvalue, pvalue, stderr, slope, intercept
+                    )
                 )
             if rvalue < 0.8:
                 self.logger.warn(
-                    f"Poor fit: layer {layer} has r={rvalue}, p={pvalue}, stderr={stderr}, for cost model {slope}*bs+{intercept}"
+                    "Poor fit: layer {} has r={}, p={}, stderr={}, for cost model {}*bs+{}".format(
+                        layer, rvalue, pvalue, stderr, slope, intercept
+                    )
                 )
 
         # Collect models into ndarrays
@@ -97,11 +101,11 @@ class CostModel:
             cost_file = self.cost_files_to_load[self.batch_sizes_to_load.index(batch_size)]
             costs = self.load_costs(cost_file)
             if costs is not None:
-                self.logger.info(f"Using measured costs {cost_file} for batch size {batch_size}")
-                self.logger.info(f"Quantizing costs")
+                self.logger.info("Using measured costs {} for batch size {}".format(cost_file, batch_size))
+                self.logger.info("Quantizing costs")
                 return self.quantize_costs(costs)
 
-        self.logger.info(f"Using linear cost model for batch size {batch_size}")
+        self.logger.info("Using linear cost model for batch size {}".format(batch_size))
         # raise NotImplementedError("Linear cost model disabled. Must have a profile .npy file")
         return self.slopes_np * batch_size + self.intercepts_np
 
@@ -112,7 +116,7 @@ class CostModel:
             if not withdevs:
                 cost_list = np.load(cost_file)
                 return cost_list
-            self.logger.error(f"Error loading cost file {cost_file}: %s", exc)
+            self.logger.error("Error loading cost file {}: %s".format(cost_file), exc)
             if withdevs:
                 return None, None
             return None
@@ -131,7 +135,7 @@ class CostModel:
 
             threshutc = datetime.datetime.utcnow() - datetime.timedelta(days=3)
             if datetime.datetime.fromtimestamp(int(os.path.getmtime(cost_file))) < threshutc:
-                self.logger.warn(f"Skipping {cost_file} for plotting, too old")
+                self.logger.warn("Skipping {} for plotting, too old".format(cost_file))
                 continue
             costs, stds = self.load_costs(cost_file, withdevs=True)
             if costs is None:
@@ -143,7 +147,7 @@ class CostModel:
 
         sns.set()
         fig, ax = plt.subplots(1, 1, figsize=(16, 20))
-        ax.set_title(f"Cost model for {self.model_name}")
+        ax.set_title("Cost model for {}".format(self.model_name))
         ax.set_xlabel("Batch size")
         ax.set_ylabel("Layer cost (microseconds)")
 
@@ -178,8 +182,10 @@ class CostModel:
     @staticmethod
     def load_profile_s3(model_name: str, batch_size: int, platform: str) -> Optional[str]:
         local_base = checkmate_cache_dir() / "profiles"
-        local_path = local_base / f"{model_name}_{batch_size}_{platform}.npy"
-        remote_path = f"https://optimalcheckpointing.s3.amazonaws.com/profiles/{model_name}/b{batch_size}_{platform}.npy"
+        local_path = local_base / "{}_{}_{}.npy".format(model_name, batch_size, platform)
+        remote_path = "https://optimalcheckpointing.s3.amazonaws.com/profiles/{}/b{}_{}.npy".format(
+            model_name, batch_size, platform
+        )
         if os.path.exists(local_path):
             try:
                 _ = np.load(local_path)

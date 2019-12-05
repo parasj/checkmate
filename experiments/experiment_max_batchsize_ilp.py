@@ -50,7 +50,7 @@ if __name__ == "__main__":
     model_name = args.model_name
 
     # load costs, and plot optionally, if platform is not flops
-    logging.info(f"Loading costs")
+    logging.info("Loading costs")
     if args.platform == "flops":
         cost_model = None
     else:
@@ -59,7 +59,9 @@ if __name__ == "__main__":
         cost_model.plot_costs()
 
     model = get_keras_model(model_name, input_shape=args.input_shape)
-    tf.keras.utils.plot_model(model, to_file=log_base / f"plot_{model_name}.png", show_shapes=True, show_layer_names=True)
+    tf.keras.utils.plot_model(
+        model, to_file=log_base / "plot_{}.png".format(model_name), show_shapes=True, show_layer_names=True
+    )
 
     platform_ram = platform_memory("p32xlarge")
     bs_futures: Dict[int, List] = defaultdict(list)
@@ -68,10 +70,10 @@ if __name__ == "__main__":
     g = dfgraph_from_keras(model, batch_size=1, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4))
     plot_dfgraph(g, log_base, name=model_name)
 
-    model_file = str(log_base / f"max_bs_{model_name}.mps")
+    model_file = str(log_base / "max_bs_{}.mps".format(model_name))
     param_dict = {
         "LogToConsole": 1,
-        "LogFile": str(log_base / f"max_bs_{model_name}.solve.log"),
+        "LogFile": str(log_base / "max_bs_{}.solve.log".format(model_name)),
         "Threads": os.cpu_count(),
         "TimeLimit": math.inf,
     }
@@ -84,7 +86,7 @@ if __name__ == "__main__":
     )
     ilp_solver.build_model()
     result, batch_size = ilp_solver.solve()
-    logging.info(f"Max batch size = {batch_size}")
+    logging.info("Max batch size = {}".format(batch_size))
 
-    save_file = log_base / f"{model}_plot.png"
+    save_file = log_base / "{}_plot.png".format(model)
     plot_schedule(result, plot_mem_usage=True, save_file=save_file)

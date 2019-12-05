@@ -17,7 +17,7 @@ if __name__ == "__main__":
         # model = get_keras_model("MobileNet")
         # g = dfgraph_from_keras(mod=model)
         g = gen_linear_graph(N)
-        scratch_dir = checkmate_data_dir() / f"scratch_linear" / str(N) / str(B)
+        scratch_dir = checkmate_data_dir() / "scratch_linear" / str(N) / str(B)
         scratch_dir.mkdir(parents=True, exist_ok=True)
         data = []
 
@@ -73,12 +73,16 @@ if __name__ == "__main__":
                     scheduler_lp_deterministicround,
                     False,
                     save_file=scratch_dir
-                    / f"CHECKMATE_LP_DETERMINISTICROUND_{scheduler_lp_deterministicround.ilp_aux_data.approx_deterministic_round_threshold}.png",
+                    / "CHECKMATE_LP_DETERMINISTICROUND_{}.png".format(
+                        scheduler_lp_deterministicround.ilp_aux_data.approx_deterministic_round_threshold
+                    ),
                 )
                 data.append(
                     {
                         "Strategy": str(scheduler_lp_deterministicround.solve_strategy.value),
-                        "Name": f"CHECKM8_DET_APPROX_{scheduler_lp_deterministicround.ilp_aux_data.approx_deterministic_round_threshold:.2f}",
+                        "Name": "CHECKM8_DET_APPROX_{:.2f}".format(
+                            scheduler_lp_deterministicround.ilp_aux_data.approx_deterministic_round_threshold
+                        ),
                         "CPU": scheduler_lp_deterministicround.schedule_aux_data.cpu,
                         "Activation RAM": scheduler_lp_deterministicround.schedule_aux_data.activation_ram,
                     }

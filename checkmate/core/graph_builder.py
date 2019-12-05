@@ -110,11 +110,11 @@ def gen_linear_graph(forward_node_count) -> DFGraph:
     """
     gb = GraphBuilder()
     for i in range(forward_node_count * 2 + 1):
-        gb.add_node(f"node{i}", cpu_cost=1, ram_cost=1, backward=(i >= forward_node_count))
+        gb.add_node("node{}".format(i), cpu_cost=1, ram_cost=1, backward=(i >= forward_node_count))
         if i > 0:
-            gb.add_deps(f"node{i}", f"node{i - 1}")
+            gb.add_deps("node{}".format(i), "node{}".format(i - 1))
 
     for i in range(forward_node_count):
         corresponding_bwd = (forward_node_count * 2) - i
-        gb.add_deps(f"node{corresponding_bwd}", f"node{i}")
+        gb.add_deps("node{}".format(corresponding_bwd), "node{}".format(i))
     return gb.make_graph()

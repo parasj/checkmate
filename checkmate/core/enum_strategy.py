@@ -63,7 +63,7 @@ class SolveStrategy(Enum):
         }
         if val in mapping:
             return mapping[val]
-        raise NotImplementedError(f"No plotting parameters for strategy {val}")
+        raise NotImplementedError("No plotting parameters for strategy {}".format(val))
 
 
 class ImposedSchedule(Enum):

@@ -48,7 +48,9 @@ def tfgraph_from_schedule(
                     input_layers = sort_by_dep_order(op.arg_regs.keys(), g.args[idx])
                     inputs = [regs[op.arg_regs[arg_layer_id]] for arg_layer_id in input_layers]
                     inputs = inputs if len(inputs) > 0 else [input_val]  # if first node
-                    logger.debug(f"reg[{op.out_register}] ⟵ {layer.name}({[op.arg_regs[x] for x in input_layers]})")
+                    logger.debug(
+                        "reg[{}] ⟵ {}({})".format(op.out_register, layer.name, [op.arg_regs[x] for x in input_layers])
+                    )
                     for var in itertools.chain(inputs, layer.variables):
                         tape.watch(var)
                     if len(inputs) > 1:
@@ -65,7 +67,7 @@ def tfgraph_from_schedule(
                     regs[op.out_register] = loss(*inputs)
                 tapes[op.out_register] = tape
                 our_loss = regs[op.out_register]
-                logger.debug(f"reg[{op.out_register}] ⟵ loss_fn ({our_loss})")
+                logger.debug("reg[{}] ⟵ loss_fn ({})".format(op.out_register, our_loss))
             # elif isinstance(op, OperatorEvaluation):
             #     idx = g.backward_to_forward(op.id)
             #     layer = layers[idx]
