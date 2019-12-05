@@ -239,13 +239,7 @@ def op_hook(layer, batch_size=1):
         print("WARN: No inputs or no outputs?", type(layer), "input shape:", inputs, "output shape:", outputs)
 
     if None in inputs or None in outputs:
-        print(
-            "WARN: Layer of type {} has None in shape".format(type(layer)),
-            "input shape:",
-            inputs,
-            "output shape:",
-            outputs,
-        )
+        print("WARN: Layer of type {} has None in shape".format(type(layer)), "input shape:", inputs, "output shape:", outputs)
 
     ops, mem_cost = hooks[layer.__class__.__name__](layer, inputs, outputs)
 

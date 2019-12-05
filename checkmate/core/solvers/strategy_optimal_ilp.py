@@ -93,9 +93,7 @@ class ILPSolver:
                     self.m.update()
 
                 # define objective function
-                self.m.setObjective(
-                    quicksum(self.R[t, i] * permute_cpu[i] for t in range(T) for i in range(T)), GRB.MINIMIZE
-                )
+                self.m.setObjective(quicksum(self.R[t, i] * permute_cpu[i] for t in range(T) for i in range(T)), GRB.MINIMIZE)
 
             with Timer("Variable initialization", extra_data={"T": str(T), "budget": str(budget)}):
                 if self.imposed_schedule == ImposedSchedule.FULL_SCHEDULE:
@@ -125,12 +123,7 @@ class ILPSolver:
             # define memory constraints
             def _num_hazards(t, i, k):
                 if t + 1 < T:
-                    return (
-                        1
-                        - self.R[t, k]
-                        + self.S[t + 1, i]
-                        + quicksum(self.R[t, j] for j in self.g.successors(i) if j > k)
-                    )
+                    return 1 - self.R[t, k] + self.S[t + 1, i] + quicksum(self.R[t, j] for j in self.g.successors(i) if j > k)
                 return 1 - self.R[t, k] + quicksum(self.R[t, j] for j in self.g.successors(i) if j > k)
 
             def _max_num_hazards(t, i, k):
@@ -147,9 +140,7 @@ class ILPSolver:
                 for t in range(T):
                     for eidx, (i, k) in enumerate(self.g.edge_list):
                         self.m.addLConstr(
-                            _max_num_hazards(t, i, k) * (1 - self.Free_E[t, eidx]),
-                            GRB.GREATER_EQUAL,
-                            _num_hazards(t, i, k),
+                            _max_num_hazards(t, i, k) * (1 - self.Free_E[t, eidx]), GRB.GREATER_EQUAL, _num_hazards(t, i, k)
                         )
             with Timer(
                 "Constraint: initialize memory usage (includes spurious checkpoints)",
@@ -168,9 +159,7 @@ class ILPSolver:
                             permute_ram[i] * self.Free_E[t, eidx] for (eidx, i) in self.g.predecessors_indexed(k)
                         )
                         self.m.addLConstr(
-                            self.U[t, k + 1],
-                            GRB.EQUAL,
-                            self.U[t, k] + self.R[t, k + 1] * permute_ram[k + 1] - mem_freed,
+                            self.U[t, k + 1], GRB.EQUAL, self.U[t, k] + self.R[t, k + 1] * permute_ram[k + 1] - mem_freed
                         )
 
         if self.model_file is not None and self.g.size < 200:  # skip for big models to save runtime

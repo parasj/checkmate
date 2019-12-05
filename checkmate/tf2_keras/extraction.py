@@ -50,17 +50,12 @@ def dfgraph_from_keras(
     for layer_idx, layer in enumerate(layers):
         name_to_idx[layer.name] = layer_idx
         inbound_idx = [
-            name_to_idx[t[0].name]
-            for node in layer._inbound_nodes
-            for t in node.iterate_inbound()
-            if node in relevant_nodes
+            name_to_idx[t[0].name] for node in layer._inbound_nodes for t in node.iterate_inbound() if node in relevant_nodes
         ]
         print(layer.name, [key for key, value in name_to_idx.items() if value in inbound_idx])
         for inbound_position, inbound_node in enumerate(filter(lambda x: x != -1, inbound_idx)):
             dep_list_fwd[layer_idx].append(inbound_node)  # forward dependency
-            dep_list_bwd[fwd_to_bwd(inbound_node)].append(
-                fwd_to_bwd(layer_idx)
-            )  # connect grad node to previous backward node
+            dep_list_bwd[fwd_to_bwd(inbound_node)].append(fwd_to_bwd(layer_idx))  # connect grad node to previous backward node
             if next_outputs_deps:  # connect output of node to the inbound node's gradient node
                 dep_list_fwd[fwd_to_bwd(inbound_node)].append(layer_idx)
             if input_dep:
