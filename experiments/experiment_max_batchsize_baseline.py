@@ -53,11 +53,11 @@ if __name__ == "__main__":
     log_base = checkmate_data_dir() / "max_batch_size" / key / str(datetime.datetime.now().isoformat())
     shutil.rmtree(log_base, ignore_errors=True)
     pathlib.Path(log_base).mkdir(parents=True, exist_ok=True)
-    result_dict: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]] = defaultdict(lambda: defaultdict(list))
+    result_dict = defaultdict(lambda: defaultdict(list))  # type: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]]
     model_name = args.model_name
 
     # load costs, and plot optionally, if platform is not flops
-    logging.info(f"Loading costs")
+    logging.info("Loading costs")
     if args.platform == "flops":
         cost_model = None
     else:
@@ -66,12 +66,14 @@ if __name__ == "__main__":
         cost_model.plot_costs()
 
     model = get_keras_model(model_name, input_shape=args.input_shape)
-    tf.keras.utils.plot_model(model, to_file=log_base / f"plot_{model_name}.png", show_shapes=True, show_layer_names=True)
+    tf.keras.utils.plot_model(
+        model, to_file=log_base / "plot_{}.png".format(model_name), show_shapes=True, show_layer_names=True
+    )
 
     platform_ram = platform_memory("p32xlarge")
-    bs_futures: Dict[int, List] = defaultdict(list)
-    bs_param_ram_cost: Dict[int, int] = {}
-    bs_fwd2xcost: Dict[int, int] = {}
+    bs_futures = defaultdict(list)  # type: Dict[int, List]
+    bs_param_ram_cost = {}  # type: Dict[int, int]
+    bs_fwd2xcost = {}  # type: Dict[int, int]
     rg = list(range(args.batch_size_min, args.batch_size_max, args.batch_size_increment))
     for bs in tqdm(rg, desc="Event dispatch"):
         while not ray.is_initialized():
@@ -114,7 +116,7 @@ if __name__ == "__main__":
         #     remote_solve_griewank = ray.remote(num_cpus=1)(solve_griewank).remote
         #     futures.extend([remote_solve_griewank(g, float(b)) for b in griewank_eval_points])
 
-        for result in get_futures(futures, desc=f"Batch size: {bs}"):
+        for result in get_futures(futures, desc="Batch size: {}".format(bs)):
             result_dict[bs][result.solve_strategy].append(result)
 
         ray.shutdown()
@@ -129,7 +131,7 @@ if __name__ == "__main__":
             )
             if any(map(is_valid, results)):
                 max_batch_sizes[strategy] = max(bs, max_batch_sizes[strategy])
-                logging.info(f"SolveStrategy {strategy} succeeded at batch size {bs}")
+                logging.info("SolveStrategy {} succeeded at batch size {}".format(strategy, bs))
 
     df = pandas.DataFrame([{"strategy": k, "batch_size": v} for k, v in max_batch_sizes.items()])
     df.to_csv(log_base / "max_batch_size.csv")

@@ -34,11 +34,11 @@ class MaxBatchILPSolver:
         self.model_file = model_file
         self.eps_noise = eps_noise
         self.budget = budget
-        self.g: DFGraph = g
+        self.g = g
         self.solve_time = None
         self.init_constraints = []  # used for seeding the model
 
-        self.m = Model(f"checkpointmip_gc_maxbs_{self.g.size}_{self.budget}")
+        self.m = Model("checkpointmip_gc_maxbs_{}_{}".format(self.g.size, self.budget))
         if gurobi_params is not None:
             for k, v in gurobi_params.items():
                 setattr(self.m.Params, k, v)
@@ -47,14 +47,18 @@ class MaxBatchILPSolver:
         CPU_VALS = list(self.g.cost_cpu.values())
         RAM_VALS = list(self.g.cost_ram.values())
         self.logger.info(
-            f"RAM: [{np.min(RAM_VALS):.2E}, {np.max(RAM_VALS):.2E}], {np.mean(RAM_VALS):.2E} +- {np.std(RAM_VALS):.2E}"
+            "RAM: [{:.2E}, {:.2E}], {:.2E} +- {:.2E}".format(
+                np.min(RAM_VALS), np.max(RAM_VALS), np.mean(RAM_VALS), np.std(RAM_VALS)
+            )
         )
         self.logger.info(
-            f"CPU: [{np.min(CPU_VALS):.2E}, {np.max(CPU_VALS):.2E}], {np.mean(CPU_VALS):.2E} +- {np.std(CPU_VALS):.2E}"
+            "CPU: [{:.2E}, {:.2E}], {:.2E} +- {:.2E}".format(
+                np.min(CPU_VALS), np.max(CPU_VALS), np.mean(CPU_VALS), np.std(CPU_VALS)
+            )
         )
         self.ram_gcd = int(max(self.g.ram_gcd(self.budget), 1))
         self.cpu_gcd = int(max(self.g.cpu_gcd(), 1))
-        self.logger.info(f"ram_gcd = {self.ram_gcd} cpu_gcd = {self.cpu_gcd}")
+        self.logger.info("ram_gcd = {} cpu_gcd = {}".format(self.ram_gcd, self.cpu_gcd))
 
         self.batch_size = self.m.addVar(lb=1, ub=1024 * 16, name="batch_size")
         self.R = self.m.addVars(T, T, name="R", vtype=GRB.BINARY)
@@ -147,7 +151,7 @@ class MaxBatchILPSolver:
                     compute_fwd = sum([permute_cpu[i] for i in self.g.vfwd])
                     bwd_compute = sum([permute_cpu[i] for i in self.g.v if i not in self.g.vfwd])
                     max_mem = self.cpu_fwd_factor * compute_fwd + bwd_compute
-                    self.logger.info(f"Solver using compute overhead ceiling of {max_mem}")
+                    self.logger.info("Solver using compute overhead ceiling of {}".format(max_mem))
                     self.m.addConstr(
                         quicksum(self.R[t, i] * permute_cpu[i] for t in range(T) for i in range(T)) <= max_mem,
                         name="limit_cpu",

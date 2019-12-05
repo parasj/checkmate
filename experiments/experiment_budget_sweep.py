@@ -186,11 +186,11 @@ if __name__ == "__main__":
     ####
     # Begin budget_sweep data collection
     ####
-    result_dict: Dict[SolveStrategy, List[ScheduledResult]] = {}
+    result_dict = {}  # type: Dict[SolveStrategy, List[ScheduledResult]]
     model_name = args.model_name
 
     # load costs, and plot optionally, if platform is not flops
-    logger.info(f"Loading costs")
+    logger.info("Loading costs")
     if args.platform == "flops":
         cost_model = None
     else:
@@ -200,19 +200,19 @@ if __name__ == "__main__":
             cost_model.plot_costs()
 
     # load model from Keras
-    logger.info(f"Loading model {model_name}")
+    logger.info("Loading model {}".format(model_name))
     model = get_keras_model(model_name, input_shape=args.input_shape)
     g = dfgraph_from_keras(
         model, batch_size=args.batch_size, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4 * args.batch_size)
     )
     if args.debug:
         tf.keras.utils.plot_model(
-            model, to_file=log_base / f"plot_{model_name}_keras.png", show_shapes=True, show_layer_names=True
+            model, to_file=log_base / "plot_{}_keras.png".format(model_name), show_shapes=True, show_layer_names=True
         )
         plot_dfgraph(g, log_base, name=model_name)
 
     # sweep constant baselines
-    logger.info(f"Running constant baselines (ALL, ALL_AP, LAST_NODE, SQRTN_NOAP, SQRTN)")
+    logger.info("Running constant baselines (ALL, ALL_AP, LAST_NODE, SQRTN_NOAP, SQRTN)")
     result_dict[SolveStrategy.CHECKPOINT_ALL] = [solve_checkpoint_all(g)]
     result_dict[SolveStrategy.CHECKPOINT_ALL_AP] = [solve_checkpoint_all_ap(g)]
     result_dict[SolveStrategy.CHECKPOINT_LAST_NODE] = [solve_checkpoint_last_node(g)]
@@ -220,14 +220,14 @@ if __name__ == "__main__":
     result_dict[SolveStrategy.CHEN_SQRTN] = [solve_chen_sqrtn(g, True)]
 
     # sweep chen's greedy baseline
-    logger.info(f"Running Chen's greedy baseline (APs only)")
+    logger.info("Running Chen's greedy baseline (APs only)")
     chen_sqrtn_noap = result_dict[SolveStrategy.CHEN_SQRTN_NOAP][0]
     greedy_eval_points = chen_sqrtn_noap.schedule_aux_data.activation_ram * (1.0 + np.arange(-1, 2, 0.01))
     remote_solve_chen_greedy = ray.remote(num_cpus=1)(solve_chen_greedy).remote
     futures = [remote_solve_chen_greedy(g, float(b), False) for b in greedy_eval_points]
     result_dict[SolveStrategy.CHEN_GREEDY] = get_futures(list(futures), desc="Greedy (APs only)")
     if model_name not in CHAIN_GRAPH_MODELS:
-        logger.info(f"Running Chen's greedy baseline (no AP) as model is non-linear")
+        logger.info("Running Chen's greedy baseline (no AP) as model is non-linear")
         futures = [remote_solve_chen_greedy(g, float(b), True) for b in greedy_eval_points]
         result_dict[SolveStrategy.CHEN_SQRTN_NOAP] = get_futures(list(futures), desc="Greedy (No AP)")
 
@@ -253,7 +253,7 @@ if __name__ == "__main__":
         else:
             # run global search routine
             global_eval_points = get_global_eval_points(g, result_dict)
-            logger.info(f"Evaluating ILP at global evaluation points: {global_eval_points}")
+            logger.info("Evaluating ILP at global evaluation points: {}".format(global_eval_points))
             futures = []
             for b in global_eval_points:
                 seed_result = get_closest_budget_result(result_dict, b)
@@ -264,9 +264,9 @@ if __name__ == "__main__":
                     time_limit=args.ilp_time_limit,
                     solver_cores=NUM_ILP_CORES,
                     seed_s=seed_s,
-                    write_log_file=ilp_log_base / f"ilp_{b}.log",
+                    write_log_file=ilp_log_base / "ilp_{}.log".format(b),
                     print_to_console=False,
-                    write_model_file=ilp_log_base / f"ilp_{b}.lp" if args.debug else None,
+                    write_model_file=ilp_log_base / "ilp_{}.lp".format(b) if args.debug else None,
                     eps_noise=0 if args.exact_ilp_solve else 0.01,
                     approx=args.exact_ilp_solve,
                 )
@@ -282,7 +282,7 @@ if __name__ == "__main__":
                     if r is not None and r.schedule_aux_data is not None
                 ]
             )
-            logger.debug(f"Minimum feasible ILP solution at {min_r}")
+            logger.debug("Minimum feasible ILP solution at {}".format(min_r))
             nlocal_samples = NUM_ILP_LOCAL * 2 if model_name in DENSE_SOLVE_MODELS else NUM_ILP_LOCAL
             min_ram = ILP_SEARCH_RANGE[0] * min_r
             max_ram = ILP_SEARCH_RANGE[1] * min_r
@@ -300,9 +300,9 @@ if __name__ == "__main__":
                 time_limit=args.ilp_time_limit,
                 solver_cores=NUM_ILP_CORES,
                 seed_s=seed_s,
-                write_log_file=ilp_log_base / f"ilp_{b}.log",
+                write_log_file=ilp_log_base / "ilp_{}.log".format(b),
                 print_to_console=False,
-                write_model_file=ilp_log_base / f"ilp_{b}.lp" if args.debug else None,
+                write_model_file=ilp_log_base / "ilp_{}.lp".format(b) if args.debug else None,
                 eps_noise=0 if args.exact_ilp_solve else 0.01,
                 approx=args.exact_ilp_solve,
             )
@@ -312,7 +312,7 @@ if __name__ == "__main__":
     approx_eval_points = list(get_global_eval_points(g, result_dict))
     if not args.skip_ilp:
         approx_eval_points.extend(list(local_ilp_eval_points))
-    logger.info(f"Evaluating LP approximation evaluation points: {approx_eval_points}")
+    logger.info("Evaluating LP approximation evaluation points: {}".format(approx_eval_points))
 
     # sweep LP rounding (deterministic w/ 0.5 threshold)
     lpdet05_log_base = log_base / "lp_det_05"
@@ -325,9 +325,9 @@ if __name__ == "__main__":
             b,
             time_limit=args.ilp_time_limit,
             solver_cores=NUM_ILP_CORES,
-            write_log_file=lpdet05_log_base / f"lp_det_rand_{b}.log",
+            write_log_file=lpdet05_log_base / "lp_det_rand_{}.log".format(b),
             print_to_console=False,
-            write_model_file=lpdet05_log_base / f"lp_det_rand_{b}.lp" if args.debug else None,
+            write_model_file=lpdet05_log_base / "lp_det_rand_{}.lp".format(b) if args.debug else None,
             eps_noise=0,
             approx=False,
         )
@@ -345,9 +345,9 @@ if __name__ == "__main__":
             b,
             time_limit=args.ilp_time_limit,
             solver_cores=NUM_ILP_CORES,
-            write_log_file=lpdetrand_log_base / f"lp_det_05_{b}.log",
+            write_log_file=lpdetrand_log_base / "lp_det_05_{}.log".format(b),
             print_to_console=False,
-            write_model_file=lpdetrand_log_base / f"lp_det_05_{b}.lp" if args.debug else None,
+            write_model_file=lpdetrand_log_base / "lp_det_05_{}.lp".format(b) if args.debug else None,
             eps_noise=0,
             approx=False,
         )
@@ -365,9 +365,9 @@ if __name__ == "__main__":
             b,
             time_limit=args.ilp_time_limit,
             solver_cores=NUM_ILP_CORES,
-            write_log_file=lpdet_log_base / f"lp_det_{b}.log",
+            write_log_file=lpdet_log_base / "lp_det_{}.log".format(b),
             print_to_console=False,
-            write_model_file=lpdet_log_base / f"lp_det_{b}.lp" if args.debug else None,
+            write_model_file=lpdet_log_base / "lp_det_{}.lp".format(b) if args.debug else None,
             eps_noise=0,
             approx=False,
         )
@@ -385,9 +385,9 @@ if __name__ == "__main__":
             b,
             time_limit=args.ilp_time_limit,
             solver_cores=NUM_ILP_CORES,
-            write_log_file=lprand_log_base / f"lp_rand_{b}.log",
+            write_log_file=lprand_log_base / "lp_rand_{}.log".format(b),
             print_to_console=False,
-            write_model_file=lprand_log_base / f"lp_rand_{b}.lp" if args.debug else None,
+            write_model_file=lprand_log_base / "lp_rand_{}.lp".format(b) if args.debug else None,
             eps_noise=0,
             approx=False,
         )
@@ -413,7 +413,7 @@ if __name__ == "__main__":
             if r is not None and r.schedule_aux_data is not None
         ]
     )
-    logger.info(f"xmax value = {xmax}")
+    logger.info("xmax value = {}".format(xmax))
     legend_elements = []
 
     export_prefix_min = {}
@@ -430,7 +430,7 @@ if __name__ == "__main__":
         valid_data = [r.schedule_aux_data for r in results if r is not None and r.schedule_aux_data is not None]
         sorted_data = sorted(valid_data, key=lambda r: r.peak_ram)
         data_points = [(t.peak_ram / PLOT_UNIT_RAM, t.cpu * 1.0 / baseline_cpu) for t in sorted_data]
-        logger.info(f"Strategy {solve_strategy} has {len(data_points)} samples from {len(results)}")
+        logger.info("Strategy {} has {} samples from {}".format(solve_strategy, len(data_points), len(results)))
         if not len(data_points):
             continue
 
@@ -473,7 +473,9 @@ if __name__ == "__main__":
     if xlim_min <= mem_gb <= xlim_max:
         ax.vlines(x=mem_gb, ymin=ylim_min, ymax=ylim_max, linestyles="dotted", color="b")
         legend_elements.append(
-            Line2D([0], [0], lw=2, label=f"{pretty_platform_name(args.platform)} memory", color="b", linestyle="dotted")
+            Line2D(
+                [0], [0], lw=2, label="{} memory".format(pretty_platform_name(args.platform)), color="b", linestyle="dotted"
+            )
         )
         ax.set_ylim([ylim_min, ylim_max])
 
@@ -489,14 +491,18 @@ if __name__ == "__main__":
     ax.legend(handles=legend_elements, loc="upper center", bbox_to_anchor=(0.5, -0.2), fancybox=False, shadow=False, ncol=2)
 
     fig.savefig(
-        log_base / f"plot_budget_sweep_{model_name}_{args.platform}_b{args.batch_size}.pdf", format="pdf", bbox_inches="tight"
+        log_base / "plot_budget_sweep_{}_{}_b{}.pdf".format(model_name, args.platform, args.batch_size),
+        format="pdf",
+        bbox_inches="tight",
     )
     fig.savefig(
-        log_base / f"plot_budget_sweep_{model_name}_{args.platform}_b{args.batch_size}.png", bbox_inches="tight", dpi=300
+        log_base / "plot_budget_sweep_{}_{}_b{}.png".format(model_name, args.platform, args.batch_size),
+        bbox_inches="tight",
+        dpi=300,
     )
 
     # export list of budget, CPU tuples for each strategy
-    pickle.dump(export_prefix_min, (log_base / f"export_prefix_min_data.pickle").open("wb"), protocol=pickle.HIGHEST_PROTOCOL)
+    pickle.dump(export_prefix_min, (log_base / "export_prefix_min_data.pickle").open("wb"), protocol=pickle.HIGHEST_PROTOCOL)
 
     if not args.skip_ilp:
         optimal_ilp_budgets = [x[0] for x in export_prefix_min["OPTIMAL_ILP_GC"]]

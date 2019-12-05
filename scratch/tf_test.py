@@ -10,7 +10,7 @@ from checkmate.core.schedule import (
     OperatorEvaluation,
     AllocateRegister,
     DeallocateRegister,
-    Schedule,
+    Schedule
 )
 
 # tf.compat.v1.disable_eager_execution()

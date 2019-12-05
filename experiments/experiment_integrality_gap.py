@@ -35,7 +35,11 @@ if __name__ == "__main__":
     for B in reversed(range(4, N + 3)):  # Try several budgets
         g = gen_linear_graph(N)
         scratch_dir = (
-            checkmate_data_dir() / f"scratch_integrality_gap_linear" / f"{N}_layers" / str(IMPOSED_SCHEDULE) / f"{B}_budget"
+            checkmate_data_dir()
+            / "scratch_integrality_gap_linear"
+            / "{}_layers".format(N)
+            / str(IMPOSED_SCHEDULE)
+            / "{}_budget".format(B)
         )
         scratch_dir.mkdir(parents=True, exist_ok=True)
         data = []
@@ -69,7 +73,18 @@ if __name__ == "__main__":
             logging.exception(e)
 
         logging.info(
-            f">>> N={N} B={B} ilp_feasible={ilp.feasible} lb_lp_feasible={lb_lp.feasible}"
-            f" integrality_gap={integrality_gap:.3f} approx_ratio={approx_ratio_actual:.3f}-{approx_ratio_ub:.3f}"
-            f" time_ilp={ilp.solve_time_s:.3f} time_lp={lb_lp.solve_time_s:.3f} speedup={speedup:.3f}"
+            ">>> N={} B={} ilp_feasible={} lb_lp_feasible={}"
+            " integrality_gap={:.3f} approx_ratio={:.3f}-{:.3f}"
+            " time_ilp={:.3f} time_lp={:.3f} speedup={:.3f}".format(
+                N,
+                B,
+                ilp.feasible,
+                lb_lp.feasible,
+                integrality_gap,
+                approx_ratio_actual,
+                approx_ratio_ub,
+                ilp.solve_time_s,
+                lb_lp.solve_time_s,
+                speedup,
+            )
         )

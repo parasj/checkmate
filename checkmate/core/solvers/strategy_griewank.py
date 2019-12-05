@@ -66,10 +66,10 @@ def _solve_griewank_to_rs(g: DFGraph, budget: int):
 
 
 def _load_griewank(graph_size: int) -> pd.DataFrame:
-    fname = f"{graph_size}.pkl.gz"
+    fname = "{}.pkl.gz".format(graph_size)
     local_path_base = checkmate_cache_dir() / "griewank_solutions"
     local_path = local_path_base / fname
-    remote_path = f"https://optimalcheckpointing.s3.amazonaws.com/griewank_solutions/pickle/{fname}"
+    remote_path = "https://optimalcheckpointing.s3.amazonaws.com/griewank_solutions/pickle/{}".format(fname)
     if local_path.exists():
         try:
             return pd.read_pickle(local_path)
@@ -79,7 +79,7 @@ def _load_griewank(graph_size: int) -> pd.DataFrame:
     with Timer("griewank_dl") as dl_timer:
         local_path_base.mkdir(parents=True, exist_ok=True)
         urllib.request.urlretrieve(remote_path, local_path)
-    logging.info(f"Loaded graph from {remote_path} and saving to {local_path} in {dl_timer.elapsed:.2f}s")
+    logging.info("Loaded graph from {} and saving to {} in {:.2f}s".format(remote_path, local_path, dl_timer.elapsed))
     return pd.read_pickle(local_path)
 
 

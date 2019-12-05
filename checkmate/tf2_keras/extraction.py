@@ -4,6 +4,7 @@ from typing import Optional
 
 import tensorflow as tf
 
+from checkmate.core.utils.common import merge_dicts
 from experiments.common.profile.cost_model import CostModel  # todo this really shouldn't be in the core package
 from checkmate.core import dfgraph
 from checkmate.tf2_keras.extraction_hooks import op_hook, MEMORY_MULTIPLIER
@@ -97,8 +98,8 @@ def dfgraph_from_keras(
     idx_to_name = {v: u for u, v in name_to_idx.items()}
     fwd_names = {u: idx_to_name[u] for u in vfwd}
     loss_names = {loss_node_idx: "Loss"}
-    bwd_names = {fwd_to_bwd(key): f"Grad <{val}>" for key, val in fwd_names.items()}
-    total_names = {**fwd_names, **loss_names, **bwd_names}
+    bwd_names = {fwd_to_bwd(key): "Grad <{}>".format(val) for key, val in fwd_names.items()}
+    total_names = merge_dicts(fwd_names, loss_names, bwd_names)
 
     # Get parameter and gradient momentum memory usage
     total_params = sum(count_params_keras(mod))

@@ -8,18 +8,24 @@ from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
 from checkmate.core.utils.definitions import AdjList
 from toposort import toposort
 
-from checkmate.core.utils.dfgraph_utils import edge_to_adj_list
+from checkmate.core.utils.graph import edge_to_adj_list
 from checkmate.tf2_keras.extraction import dfgraph_from_keras
 
 
 class GraphBuilder:
     def __init__(self):
-        self.nodes: Dict[str, uuid.UUID] = {}  # map of user-facing names to internal uuid
-        self.backward_nodes: Set[uuid.UUID] = set()  # set of backwards nodes
-        self.arguments: Dict[uuid.UUID, List[uuid.UUID]] = {}  # map of internal node uuid to its list of arguments
-        self.costs_cpu: Dict[uuid.UUID, int] = {}  # map of per-node CPU costs
-        self.costs_ram: Dict[uuid.UUID, int] = {}  # map of per-node RAM costs
-        self.parameter_cost = 0  # store total cost of parameters which is passed along to DFGraph initialization
+        # map of user-facing names to internal uuid
+        self.nodes = {}  # type: Dict[str, uuid.UUID]
+        # set of backwards node
+        self.backward_nodes = set()  # type: Set[uuid.UUID]
+        # map of internal node uuid to its list of arguments
+        self.arguments = {}  # type: Dict[uuid.UUID, List[uuid.UUID]]
+        # map of per-node CPU costs
+        self.costs_cpu = {}  # type: Dict[uuid.UUID, int]
+        # map of per-node RAM costs
+        self.costs_ram = {}  # type: Dict[uuid.UUID, int]
+        # store total cost of parameters which is passed along to DFGraph initialization
+        self.parameter_cost = 0
 
     def _name_to_uuid(self, name: str) -> uuid.UUID:
         if name not in self.nodes.keys():
@@ -110,11 +116,11 @@ def gen_linear_graph(forward_node_count) -> DFGraph:
     """
     gb = GraphBuilder()
     for i in range(forward_node_count * 2 + 1):
-        gb.add_node(f"node{i}", cpu_cost=1, ram_cost=1, backward=(i >= forward_node_count))
+        gb.add_node("node{}".format(i), cpu_cost=1, ram_cost=1, backward=(i >= forward_node_count))
         if i > 0:
-            gb.add_deps(f"node{i}", f"node{i - 1}")
+            gb.add_deps("node{}".format(i), "node{}".format(i - 1))
 
     for i in range(forward_node_count):
         corresponding_bwd = (forward_node_count * 2) - i
-        gb.add_deps(f"node{corresponding_bwd}", f"node{i}")
+        gb.add_deps("node{}".format(corresponding_bwd), "node{}".format(i))
     return gb.make_graph()

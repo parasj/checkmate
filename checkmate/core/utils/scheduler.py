@@ -13,11 +13,11 @@ class ScheduleBuilder:
         self.max_ram = 0
         self.total_cpu = 0
         self.g = g
-        self.schedule: Schedule = []
-        self.live_registers: Dict[int, int] = {}
+        self.schedule = []  # type: Schedule
+        self.live_registers = {}  # type: Dict[int, int]
         self.next_free_register_id = 0
         self.verbosity = verbosity
-        self.ram_timeline: List[int] = []
+        self.ram_timeline = []  # type: List[int]
 
     def is_op_cached(self, op_id: int):
         return op_id in self.live_registers.keys()

@@ -41,7 +41,7 @@ class ILPSolver:
         self.solve_r = solve_r
         self.eps_noise = eps_noise
         self.budget = budget
-        self.g: DFGraph = g
+        self.g = g
         self.solve_time = None
 
         if not self.integral:
@@ -174,7 +174,7 @@ class ILPSolver:
                 self.m.Params.TimeLimit = self.GRB_CONSTRAINED_PRESOLVE_TIME_LIMIT
                 self.m.optimize()
                 if self.m.status == GRB.INFEASIBLE:
-                    print(f"Infeasible ILP seed at budget {self.budget:.2E}")
+                    print("Infeasible ILP seed at budget {:.2E}".format(self.budget))
                 self.m.remove(self.init_constraints)
             self.m.Params.TimeLimit = self.gurobi_params.get("TimeLimit", 0)
             self.m.message("\n\nRestarting solve\n\n")
@@ -187,7 +187,7 @@ class ILPSolver:
             raise ValueError("Infeasible model, check constraints carefully. Insufficient memory?")
 
         if self.m.solCount < 1:
-            raise ValueError(f"Model status is {self.m.status} (not infeasible), but solCount is {self.m.solCount}")
+            raise ValueError("Model status is {} (not infeasible), but solCount is {}".format(self.m.status, self.m.solCount))
 
         Rout = np.zeros((T, T), dtype=checkmate.core.utils.solver_common.SOLVER_DTYPE if self.integral else np.float)
         Sout = np.zeros((T, T), dtype=checkmate.core.utils.solver_common.SOLVER_DTYPE if self.integral else np.float)

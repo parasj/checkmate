@@ -5,7 +5,7 @@ setup(
     version="0.1.0",
     description="Checkmate prevents you from OOMing when training big deep neural nets",
     packages=["checkmate"],  # find_packages()
-    python_requires=">=3.6",
+    python_requires=">=3.5",
     install_requires=[
         "matplotlib",  # this is only used once in the core checkmate package
         "numpy",
