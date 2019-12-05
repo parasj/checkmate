@@ -7,7 +7,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.6, 3.7]  # python 3.8 not supported by Github actions yet
+        python-version: [3.5, 3.6, 3.7]  # python 3.8 not supported by Github actions yet
         os: [ubuntu-latest]  # macos-latest has long queue times, broken on windows-latest
     steps:
     - uses: actions/checkout@v1
