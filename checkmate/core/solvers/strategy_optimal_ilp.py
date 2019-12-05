@@ -41,7 +41,7 @@ class ILPSolver:
         self.solve_r = solve_r
         self.eps_noise = eps_noise
         self.budget = budget
-        self.g: DFGraph = g
+        self.g = g
         self.solve_time = None
 
         if not self.integral:

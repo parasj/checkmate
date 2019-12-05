@@ -186,7 +186,7 @@ if __name__ == "__main__":
     ####
     # Begin budget_sweep data collection
     ####
-    result_dict: Dict[SolveStrategy, List[ScheduledResult]] = {}
+    result_dict = {}  # type: Dict[SolveStrategy, List[ScheduledResult]]
     model_name = args.model_name
 
     # load costs, and plot optionally, if platform is not flops

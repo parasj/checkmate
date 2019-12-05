@@ -4,7 +4,7 @@ from typing import Iterable, Dict, List, Set
 
 from toposort import toposort
 from checkmate.core.utils.definitions import Vertex, EdgeList, AdjList
-from checkmate.core.utils.dfgraph_utils import edge_to_adj_list, adj_to_edge_list, gcd, connected_components
+from checkmate.core.utils.graph import edge_to_adj_list, adj_to_edge_list, gcd, connected_components
 
 
 class DFGraph:

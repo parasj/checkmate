@@ -34,7 +34,7 @@ class MaxBatchILPSolver:
         self.model_file = model_file
         self.eps_noise = eps_noise
         self.budget = budget
-        self.g: DFGraph = g
+        self.g = g
         self.solve_time = None
         self.init_constraints = []  # used for seeding the model
 

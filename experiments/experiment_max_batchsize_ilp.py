@@ -46,7 +46,7 @@ if __name__ == "__main__":
     log_base = checkmate_data_dir() / "max_batch_size_ilp" / key / str(datetime.datetime.now().isoformat())
     shutil.rmtree(log_base, ignore_errors=True)
     pathlib.Path(log_base).mkdir(parents=True, exist_ok=True)
-    result_dict: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]] = defaultdict(lambda: defaultdict(list))
+    result_dict = defaultdict(lambda: defaultdict(list))  # type: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]]
     model_name = args.model_name
 
     # load costs, and plot optionally, if platform is not flops
@@ -64,8 +64,8 @@ if __name__ == "__main__":
     )
 
     platform_ram = platform_memory("p32xlarge")
-    bs_futures: Dict[int, List] = defaultdict(list)
-    bs_fwd2xcost: Dict[int, int] = {}
+    bs_futures = defaultdict(list)  # type: Dict[int, List]
+    bs_fwd2xcost = {}  # type: Dict[int, int]
     # load model at batch size
     g = dfgraph_from_keras(model, batch_size=1, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4))
     plot_dfgraph(g, log_base, name=model_name)

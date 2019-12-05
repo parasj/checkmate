@@ -53,7 +53,7 @@ if __name__ == "__main__":
     log_base = checkmate_data_dir() / "max_batch_size" / key / str(datetime.datetime.now().isoformat())
     shutil.rmtree(log_base, ignore_errors=True)
     pathlib.Path(log_base).mkdir(parents=True, exist_ok=True)
-    result_dict: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]] = defaultdict(lambda: defaultdict(list))
+    result_dict = defaultdict(lambda: defaultdict(list))  # type: Dict[int, Dict[SolveStrategy, List[ScheduledResult]]]
     model_name = args.model_name
 
     # load costs, and plot optionally, if platform is not flops
@@ -71,9 +71,9 @@ if __name__ == "__main__":
     )
 
     platform_ram = platform_memory("p32xlarge")
-    bs_futures: Dict[int, List] = defaultdict(list)
-    bs_param_ram_cost: Dict[int, int] = {}
-    bs_fwd2xcost: Dict[int, int] = {}
+    bs_futures = defaultdict(list)  # type: Dict[int, List]
+    bs_param_ram_cost = {}  # type: Dict[int, int]
+    bs_fwd2xcost = {}  # type: Dict[int, int]
     rg = list(range(args.batch_size_min, args.batch_size_max, args.batch_size_increment))
     for bs in tqdm(rg, desc="Event dispatch"):
         while not ray.is_initialized():

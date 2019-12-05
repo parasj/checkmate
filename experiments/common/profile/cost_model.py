@@ -40,8 +40,8 @@ class CostModel:
 
         # Cost model parameters
         self.fits = []
-        self.slopes_np: Optional[np.ndarray] = None
-        self.intercepts_np: Optional[np.ndarray] = None
+        self.slopes_np = None  # type: Optional[np.ndarray]
+        self.intercepts_np = None  # type: Optional[np.ndarray]
 
     def fit(self):
         import scipy.stats
