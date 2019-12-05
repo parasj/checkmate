@@ -22,7 +22,7 @@ def dfgraph_from_tf_function(fn) -> DFGraph:
 
     # initialize nodes
     for op in ops:
-        gb.add_node(op.name, cpu_cost=1, ram_cost=1, backward=op.name.startswith("gradients/")
+        gb.add_node(op.name, cpu_cost=1, ram_cost=1, backward=op.name.startswith("gradients/"))
 
     # build dependency graph
     for op in ops:
