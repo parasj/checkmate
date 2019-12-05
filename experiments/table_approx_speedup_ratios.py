@@ -30,9 +30,7 @@ for model in [
     "p32xlarge_VGG16_256_None",
     "p32xlarge_VGG19_256_None",
 ]:
-    ilp_matcher = re.compile(
-        r"Explored [0-9]+ nodes \([0-9]+ simplex iterations\) in (?P<ilp_runtime>[0-9\.]+) seconds"
-    )
+    ilp_matcher = re.compile(r"Explored [0-9]+ nodes \([0-9]+ simplex iterations\) in (?P<ilp_runtime>[0-9\.]+) seconds")
     lp_matcher = re.compile(r"Solved in [0-9]+ iterations and (?P<lp_runtime>[0-9\.]+) seconds")
     ilp_runtimes = []
     for path in (checkmate_data_dir() / "budget_sweep" / model / "ilp_log").glob("./*.log"):

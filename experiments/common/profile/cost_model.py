@@ -179,9 +179,7 @@ class CostModel:
     def load_profile_s3(model_name: str, batch_size: int, platform: str) -> Optional[str]:
         local_base = checkmate_cache_dir() / "profiles"
         local_path = local_base / f"{model_name}_{batch_size}_{platform}.npy"
-        remote_path = (
-            f"https://optimalcheckpointing.s3.amazonaws.com/profiles/{model_name}/b{batch_size}_{platform}.npy"
-        )
+        remote_path = f"https://optimalcheckpointing.s3.amazonaws.com/profiles/{model_name}/b{batch_size}_{platform}.npy"
         if os.path.exists(local_path):
             try:
                 _ = np.load(local_path)

@@ -100,12 +100,7 @@ class MaxBatchILPSolver:
             # define memory constraints
             def _num_hazards(t, i, k):
                 if t + 1 < T:
-                    return (
-                        1
-                        - self.R[t, k]
-                        + self.S[t + 1, i]
-                        + quicksum(self.R[t, j] for j in self.g.successors(i) if j > k)
-                    )
+                    return 1 - self.R[t, k] + self.S[t + 1, i] + quicksum(self.R[t, j] for j in self.g.successors(i) if j > k)
                 return 1 - self.R[t, k] + quicksum(self.R[t, j] for j in self.g.successors(i) if j > k)
 
             def _max_num_hazards(t, i, k):
@@ -114,21 +109,15 @@ class MaxBatchILPSolver:
                     return 2 + num_uses_after_k
                 return 1 + num_uses_after_k
 
-            with self.profiler(
-                "Constraint: upper bound for 1 - Free_E", extra_data={"T": str(T), "budget": str(budget)}
-            ):
+            with self.profiler("Constraint: upper bound for 1 - Free_E", extra_data={"T": str(T), "budget": str(budget)}):
                 for t in range(T):
                     for eidx, (i, k) in enumerate(self.g.edge_list):
                         self.m.addLConstr(1 - self.Free_E[t, eidx], GRB.LESS_EQUAL, _num_hazards(t, i, k))
-            with self.profiler(
-                "Constraint: lower bound for 1 - Free_E", extra_data={"T": str(T), "budget": str(budget)}
-            ):
+            with self.profiler("Constraint: lower bound for 1 - Free_E", extra_data={"T": str(T), "budget": str(budget)}):
                 for t in range(T):
                     for eidx, (i, k) in enumerate(self.g.edge_list):
                         self.m.addLConstr(
-                            _max_num_hazards(t, i, k) * (1 - self.Free_E[t, eidx]),
-                            GRB.GREATER_EQUAL,
-                            _num_hazards(t, i, k),
+                            _max_num_hazards(t, i, k) * (1 - self.Free_E[t, eidx]), GRB.GREATER_EQUAL, _num_hazards(t, i, k)
                         )
             with self.profiler(
                 "Constraint: initialize memory usage (includes spurious checkpoints)",

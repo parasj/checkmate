@@ -35,11 +35,7 @@ if __name__ == "__main__":
     for B in reversed(range(4, N + 3)):  # Try several budgets
         g = gen_linear_graph(N)
         scratch_dir = (
-            checkmate_data_dir()
-            / f"scratch_integrality_gap_linear"
-            / f"{N}_layers"
-            / str(IMPOSED_SCHEDULE)
-            / f"{B}_budget"
+            checkmate_data_dir() / f"scratch_integrality_gap_linear" / f"{N}_layers" / str(IMPOSED_SCHEDULE) / f"{B}_budget"
         )
         scratch_dir.mkdir(parents=True, exist_ok=True)
         data = []
@@ -52,9 +48,7 @@ if __name__ == "__main__":
         plot_schedule(lb_lp, False, save_file=scratch_dir / "CHECKMATE_LB_LP.png")
 
         logging.info("--- Solving ILP")
-        ilp = solve_ilp_gurobi(
-            g, B, approx=APPROX, eps_noise=EPS_NOISE, imposed_schedule=IMPOSED_SCHEDULE, solve_r=SOLVE_R
-        )
+        ilp = solve_ilp_gurobi(g, B, approx=APPROX, eps_noise=EPS_NOISE, imposed_schedule=IMPOSED_SCHEDULE, solve_r=SOLVE_R)
         ilp_feasible = ilp.schedule_aux_data.activation_ram <= B
         plot_schedule(ilp, False, save_file=scratch_dir / "CHECKMATE_ILP.png")
 

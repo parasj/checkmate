@@ -101,40 +101,41 @@ def get_input_shape(model_name: str, batch_size: Optional[int] = None):
         shape[0] = batch_size
     return shape
 
-def testBertModel(num_layers,  heads, input_size):
-    
+
+def testBertModel(num_layers, heads, input_size):
+
     hidden_size = input_size[1]
     intermediate_size = 4 * hidden_size
     seq_length = input_size[0]
-    #batch = input_size[0]
+    # batch = input_size[0]
 
-    #config = BertConfig(hidden_size=hidden_size, 
-    #                    num_hidden_layers=num_layers , 
-    #                    num_attention_heads=heads, 
+    # config = BertConfig(hidden_size=hidden_size,
+    #                    num_hidden_layers=num_layers ,
+    #                    num_attention_heads=heads,
     #                    intermediate_size=4 * hidden_size,
     #                   hidden_act = "relu",
     #                   max_position_embeddings=seq_length)
     num_layers = num_layers
     layer = []
-    inputs = keras.Input(shape=( input_size))
+    inputs = keras.Input(shape=(input_size))
     mask = tf.fill(tf.shape(inputs), 1.0)
     tids = tf.fill(tf.shape(inputs), 0.0)
     x = inputs
     for i in range(num_layers):
-        query = Dense(hidden_size, name = "query_{}".format(i))(x)
-        key = Dense(hidden_size, name = "key_{}".format(i))(x)
-        value = Dense(hidden_size, name = "value_{}".format(i))(x)
-        query = Reshape( (heads, seq_length, hidden_size//heads))(query)
-        key= Reshape( ( heads, hidden_size//heads, seq_length))(key)
-        value = Reshape( (heads, seq_length, hidden_size//heads))(value)
-        acts = Lambda(lambda x : tf.matmul(x[0],x[1]), name="acts_{}".format(i))([query, key])
-        fin = Lambda(lambda x : tf.matmul(x[0], x[1]), name="fin_{}".format(i))([acts, value])
-        fin = Reshape( ( seq_length, hidden_size))(fin)
-        #layer.append(TFBertSelfAttention(config, name="layer_{}".format(i)))
+        query = Dense(hidden_size, name="query_{}".format(i))(x)
+        key = Dense(hidden_size, name="key_{}".format(i))(x)
+        value = Dense(hidden_size, name="value_{}".format(i))(x)
+        query = Reshape((heads, seq_length, hidden_size // heads))(query)
+        key = Reshape((heads, hidden_size // heads, seq_length))(key)
+        value = Reshape((heads, seq_length, hidden_size // heads))(value)
+        acts = Lambda(lambda x: tf.matmul(x[0], x[1]), name="acts_{}".format(i))([query, key])
+        fin = Lambda(lambda x: tf.matmul(x[0], x[1]), name="fin_{}".format(i))([acts, value])
+        fin = Reshape((seq_length, hidden_size))(fin)
+        # layer.append(TFBertSelfAttention(config, name="layer_{}".format(i)))
         att = Dense(hidden_size, name="att_{}".format(i))(fin)
         relu = Activation("relu", name="relu0_{}".format(i))(att)
         x = LayerNormalization(name="f_att_{}".format(i))(relu + x)
-        inter = Dense(intermediate_size,name = "inter_{}".format(i))(x)
+        inter = Dense(intermediate_size, name="inter_{}".format(i))(x)
         relu1 = Activation("relu", name="relu1_{}".format(i))(inter)
         shrink = Dense(hidden_size, name="shrink_{}".format(i))(relu1)
         relu2 = Activation("relu", name="relu2_{}".format(i))(shrink)
