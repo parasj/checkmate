@@ -66,9 +66,7 @@ if __name__ == "__main__":
         cost_model.plot_costs()
 
     model = get_keras_model(model_name, input_shape=args.input_shape)
-    tf.keras.utils.plot_model(
-        model, to_file=log_base / f"plot_{model_name}.png", show_shapes=True, show_layer_names=True
-    )
+    tf.keras.utils.plot_model(model, to_file=log_base / f"plot_{model_name}.png", show_shapes=True, show_layer_names=True)
 
     platform_ram = platform_memory("p32xlarge")
     bs_futures: Dict[int, List] = defaultdict(list)

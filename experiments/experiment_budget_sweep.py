@@ -445,13 +445,7 @@ if __name__ == "__main__":
         if args.hide_points:
             # Plot only the first and last points
             ax.scatter(
-                [x[0], x[-1]],
-                [y[0], y[-1]],
-                label="",
-                zorder=scatter_zorder,
-                s=markersize ** 2,
-                color=color,
-                marker=marker,
+                [x[0], x[-1]], [y[0], y[-1]], label="", zorder=scatter_zorder, s=markersize ** 2, color=color, marker=marker
             )
         else:
             ax.scatter(x, np.array(y), label="", zorder=scatter_zorder, s=markersize ** 2, color=color, marker=marker)
@@ -492,25 +486,17 @@ if __name__ == "__main__":
     # Make legend
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
-    ax.legend(
-        handles=legend_elements, loc="upper center", bbox_to_anchor=(0.5, -0.2), fancybox=False, shadow=False, ncol=2
-    )
+    ax.legend(handles=legend_elements, loc="upper center", bbox_to_anchor=(0.5, -0.2), fancybox=False, shadow=False, ncol=2)
 
     fig.savefig(
-        log_base / f"plot_budget_sweep_{model_name}_{args.platform}_b{args.batch_size}.pdf",
-        format="pdf",
-        bbox_inches="tight",
+        log_base / f"plot_budget_sweep_{model_name}_{args.platform}_b{args.batch_size}.pdf", format="pdf", bbox_inches="tight"
     )
     fig.savefig(
-        log_base / f"plot_budget_sweep_{model_name}_{args.platform}_b{args.batch_size}.png",
-        bbox_inches="tight",
-        dpi=300,
+        log_base / f"plot_budget_sweep_{model_name}_{args.platform}_b{args.batch_size}.png", bbox_inches="tight", dpi=300
     )
 
     # export list of budget, CPU tuples for each strategy
-    pickle.dump(
-        export_prefix_min, (log_base / f"export_prefix_min_data.pickle").open("wb"), protocol=pickle.HIGHEST_PROTOCOL
-    )
+    pickle.dump(export_prefix_min, (log_base / f"export_prefix_min_data.pickle").open("wb"), protocol=pickle.HIGHEST_PROTOCOL)
 
     if not args.skip_ilp:
         optimal_ilp_budgets = [x[0] for x in export_prefix_min["OPTIMAL_ILP_GC"]]
