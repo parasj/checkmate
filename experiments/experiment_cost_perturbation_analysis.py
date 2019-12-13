@@ -1,16 +1,11 @@
-import logging
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
-from experiments.common.load_keras_model import get_keras_model
-from remat.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
-from remat.tensorflow2.extraction import dfgraph_from_keras
 import seaborn as sns
-try:
-    import gurobipy as _
-except ImportError as e:
-    logging.exception(e)
-    logging.warning("Continuing with tests, gurobi not installed")
-    return
-from remat.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
+
+from checkmate.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
+from checkmate.tf2_keras.extraction import dfgraph_from_keras
+from experiments.common.load_keras_model import get_keras_model
 
 # get sample network and generate a graph on it
 model = get_keras_model("VGG16")
