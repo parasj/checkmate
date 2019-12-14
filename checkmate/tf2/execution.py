@@ -41,15 +41,15 @@ def copy_op(op, new_name):
     return new_op
 
 
-def edit_graph(fxn, op_list,  schedule):
-    registers = [None] * len(op_list)
+def edit_graph(fxn, op_dict, schedule):
+    registers = [None] * len(op_dict)
     output_ops = [t.op for t in fxn.outputs]
     # run the schedule
     name_fmt = "{}_Copy_{}"
     for i, inst in enumerate(schedule):
         if type(inst) == OperatorEvaluation:
             args = [registers[i] for i in inst.arg_regs]
-            op = op_list[inst.id]
+            op = op_dict[inst.id]
             assert (
                 len(op.outputs) == 1
             ), "ops which output two tensors not yet supported"
@@ -64,5 +64,6 @@ def edit_graph(fxn, op_list,  schedule):
                     if can_replace(inp, arg):
                         new_op._update_input(j, arg)
             registers[inst.out_register] = new_op.outputs[0]
+    return fxn
 
 
