@@ -155,6 +155,7 @@ def solve_approx_lp_randomized(
     write_model_file: Optional[PathLike] = None,
     eps_noise=0.01,
     solver_cores=os.cpu_count(),
+    num_rounds=100
 ):
     param_dict = {
         "LogToConsole": 1 if print_to_console else 0,
@@ -184,11 +185,17 @@ def solve_approx_lp_randomized(
         logging.exception(e)
         r, s, u, free_e = (None, None, None, None)
         lp_feasible = False
-    schedule, aux_data, min_threshold = None, None, None
+    best_solution = (float("inf"), None, None)
     if lp_feasible:  # round the solution
-        s_ = (np.random.rand(*s.shape) <= s).astype(np.int32)
-        r_ = solve_r_opt(g, s_)
-        schedule, aux_data = schedule_from_rs(g, r_, s_)
+        for i in range(num_rounds):
+            s_ = (np.random.rand(*s.shape) <= s).astype(np.int32)
+            r_ = solve_r_opt(g, s_)
+            schedule, aux_data = schedule_from_rs(g, r_, s_)
+            if aux_data.cpu < best_solution[0]:
+                best_solution = (aux_data.cpu, schedule, aux_data)
+            if (i+1) % 1 == 0:
+                print(f"Rounded relaxation argmin {i+1} / num_rounds times, best cost {best_solution[0]}")
+    schedule, aux_data = best_solution[1], best_solution[2]
     return ScheduledResult(
         solve_strategy=SolveStrategy.APPROX_DET_ROUND_LP_SWEEP,
         solver_budget=budget,
@@ -204,6 +211,6 @@ def solve_approx_lp_randomized(
             ilp_eps_noise=eps_noise,
             ilp_num_constraints=lpsolver.m.numConstrs,
             ilp_num_variables=lpsolver.m.numVars,
-            approx_deterministic_round_threshold=min_threshold,
+            approx_deterministic_round_threshold=None,
         ),
     )
