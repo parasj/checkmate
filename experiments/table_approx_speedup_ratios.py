@@ -42,7 +42,7 @@ for model in [
         ilp_runtimes.append(float(match.group("ilp_runtime")))
 
     lp_runtimes = []
-    for path in (checkmate_data_dir() / "budget_sweep" / "p32xlarge_vgg_unet_32_None" / "lp_det_05").glob("./*.log"):
+    for path in (checkmate_data_dir() / "budget_sweep" / model / "lp_det_05").glob("./*.log"):
         with path.open("r") as f:
             file_contents = f.read()
         if "Model is infeasible" in file_contents:
