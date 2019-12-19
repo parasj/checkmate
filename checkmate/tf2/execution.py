@@ -36,7 +36,7 @@ def edit_graph(fxn, op_dict, schedule: Schedule):
         if type(inst) == OperatorEvaluation:
             args = [registers[i] for i in inst.arg_regs]
             op = op_dict[inst.id]
-            assert len(op.outputs) == 1, "ops which output two tensors not yet supported"
+            assert len(op.outputs) == 1, "op {} which output two tensors not yet supported".format(op.name)
 
             if op in output_ops:
                 new_op = op  #
