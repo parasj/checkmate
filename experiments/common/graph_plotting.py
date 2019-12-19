@@ -25,7 +25,9 @@ def tensor_plot(g: DFGraph, sched: Schedule, directory, tag=None, format="pdf", 
                 raise ValueError("Unknown operation")
             # dot.node("op{}".format(op.id), node_name, shape="diamond")
             # dot.edge("op{}".format(op.id), "reg{}".format(op.out_register))
-            dot.node("reg{}".format(op.out_register), "Register {} for {}".format(op.out_register, node_name), shape="box")
+            dot.node(
+                "reg{}".format(op.out_register), "Register {} for {}".format(op.out_register, node_name), shape="box"
+            )
             for dep_op, dep_reg in op.arg_regs.items():
                 dot.edge(
                     "reg{}".format(dep_reg),
@@ -46,7 +48,7 @@ def plot_dfgraph(g: DFGraph, directory, format="pdf", quiet=True, name=""):
     for u in g.v:
         node_name = g.node_names.get(u)
         node_name = node_name if node_name is None else "{} ({})".format(node_name, str(u))
-        attrs = {} if g.is_backward_node(u) else {"style": "filled"}
+        attrs = {"style": "filled"} if g.is_backward_node(u) else {}
         dot.node(str(u), node_name, **attrs)
     for edge in g.edge_list:
         dep_order = str(g.args[edge[-1]].index(edge[0]))
