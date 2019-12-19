@@ -1,12 +1,7 @@
 import tensorflow as tf
 from copy import deepcopy
 
-from checkmate.core.schedule import (
-    OperatorEvaluation,
-    AllocateRegister,
-    DeallocateRegister,
-    Schedule
-)
+from checkmate.core.schedule import OperatorEvaluation, AllocateRegister, DeallocateRegister, Schedule
 
 
 def can_replace(orig, replace):
@@ -28,20 +23,11 @@ def copy_op(op, new_name):
     output_types = op._output_types[:]
     input_types = op._input_types[:]
     control_inputs = op.control_inputs[:]
-    new_op = tf.Operation(
-        nnd,
-        op.graph,
-        list(op.inputs),
-        output_types,
-        control_inputs,
-        input_types,
-        op,
-        nod,
-    )
+    new_op = tf.Operation(nnd, op.graph, list(op.inputs), output_types, control_inputs, input_types, op, nod)
     return new_op
 
 
-def edit_graph(fxn, op_dict, schedule):
+def edit_graph(fxn, op_dict, schedule: Schedule):
     registers = [None] * len(op_dict)
     output_ops = [t.op for t in fxn.outputs]
     # run the schedule
@@ -50,9 +36,7 @@ def edit_graph(fxn, op_dict, schedule):
         if type(inst) == OperatorEvaluation:
             args = [registers[i] for i in inst.arg_regs]
             op = op_dict[inst.id]
-            assert (
-                len(op.outputs) == 1
-            ), "ops which output two tensors not yet supported"
+            assert len(op.outputs) == 1, "ops which output two tensors not yet supported"
 
             if op in output_ops:
                 new_op = op  #
@@ -65,5 +49,3 @@ def edit_graph(fxn, op_dict, schedule):
                         new_op._update_input(j, arg)
             registers[inst.out_register] = new_op.outputs[0]
     return fxn
-
-
