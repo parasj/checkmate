@@ -27,6 +27,7 @@ def solve_approx_lp_deterministic_sweep(
     solver_cores=os.cpu_count(),
     thresholds=(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
     imposed_schedule: ImposedSchedule = ImposedSchedule.FULL_SCHEDULE,
+    allow_return_infeasible_schedule=False,
 ):
     param_dict = {
         "LogToConsole": 1 if print_to_console else 0,
@@ -63,7 +64,8 @@ def solve_approx_lp_deterministic_sweep(
             s_ = (s >= threshold).astype(np.int)
             r_ = solve_r_opt(g, s_)
             schedule_, aux_data_ = schedule_from_rs(g, r_, s_)
-            if aux_data_.activation_ram <= budget and (aux_data is None or aux_data_.cpu <= aux_data.cpu):
+            if (allow_return_infeasible_schedule and aux_data is None) or \
+               (aux_data_.activation_ram <= budget and (aux_data is None or aux_data_.cpu <= aux_data.cpu)):
                 aux_data = aux_data_
                 schedule = schedule_
                 min_threshold = threshold
@@ -128,6 +130,7 @@ def solve_approx_lp_deterministic_05_threshold(
     eps_noise=0.01,
     solver_cores=os.cpu_count(),
     n_samples=1,
+    allow_return_infeasible_schedule=False,
 ):
     return solve_approx_lp_deterministic_sweep(
         g,
@@ -141,6 +144,7 @@ def solve_approx_lp_deterministic_05_threshold(
         eps_noise,
         solver_cores,
         thresholds=[0.5],
+        allow_return_infeasible_schedule=allow_return_infeasible_schedule,
     )
 
 
