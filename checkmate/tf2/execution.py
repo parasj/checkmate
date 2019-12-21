@@ -1,7 +1,8 @@
-import tensorflow as tf
 from copy import deepcopy
 
-from checkmate.core.schedule import OperatorEvaluation, AllocateRegister, DeallocateRegister, Schedule
+import tensorflow as tf
+
+from checkmate.core.schedule import OperatorEvaluation, Schedule
 
 
 def can_replace(orig, replace):
@@ -9,11 +10,8 @@ def can_replace(orig, replace):
     #    o1 = t1.op._original_op
     # else:
     #    o1 = t1.op
-    if replace.op._original_op is not None:
-        replace_op = replace.op._original_op
-    else:
-        replace_op = replace.op
-    return orig.op == replace_op
+    replace_op = replace.op if replace.op._original_op is None else replace.op._original_op
+    return orig.op == replace_op and orig.value_index == replace.value_index
 
 
 def copy_op(op, new_name):
@@ -28,24 +26,21 @@ def copy_op(op, new_name):
 
 
 def edit_graph(fxn, op_dict, schedule: Schedule):
-    registers = [None] * len(op_dict)
+    registers = dict()
     output_ops = [t.op for t in fxn.outputs]
-    # run the schedule
-    name_fmt = "{}_Copy_{}"
     for i, inst in enumerate(schedule):
         if type(inst) == OperatorEvaluation:
-            args = [registers[i] for i in inst.arg_regs]
+            args = [arg for i in inst.arg_regs for arg in registers[i]]
             op = op_dict[inst.id]
-            assert len(op.outputs) == 1, "op {} which output two tensors not yet supported".format(op.name)
+            # assert len(op.outputs) == 1, "op {} which output two tensors not yet supported".format(op.name)
 
-            if op in output_ops:
-                new_op = op  #
-            else:
-                new_op = copy_op(op, name_fmt.format(op.name, i))
-            # match up args
+            # duplicate rematerialized operation
+            new_op = op if op in output_ops else copy_op(op, "{}_copy_at_sched_idx{}".format(op.name, i))
+
+            # match up args, and assign outputs
             for arg in args:
                 for j, inp in enumerate(new_op.inputs):
                     if can_replace(inp, arg):
                         new_op._update_input(j, arg)
-            registers[inst.out_register] = new_op.outputs[0]
+            registers[inst.out_register] = new_op.outputs
     return fxn
