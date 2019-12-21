@@ -12,7 +12,7 @@ from experiments.common.load_keras_model import get_keras_model
 
 
 def test_vgg16_execution():
-    vgg = get_keras_model("VGG16")
+    vgg = get_keras_model("test")
 
     @tf.function
     def get_grads(inputs):
@@ -24,15 +24,14 @@ def test_vgg16_execution():
     fn = get_grads.get_concrete_function(x)
     g = dfgraph_from_tf_function(fn)
 
-    plot_dfgraph(g, checkmate_data_dir() / "test_exec" / "vgg16" / "base")
-    # sqrtn_result = solve_chen_sqrtn(g, False)
-    sqrtn_result = solve_checkpoint_all(g)
+    plot_dfgraph(g, checkmate_data_dir() / "test_exec" / "test" / "base")
+    sqrtn_result = solve_chen_sqrtn(g, True)
     assert sqrtn_result.feasible
-    plot_schedule(sqrtn_result, save_file=checkmate_data_dir() / "test_exec" / "vgg16" / "checkpoint_last.png")
+    plot_schedule(sqrtn_result, save_file=checkmate_data_dir() / "test_exec" / "test" / "checkpoint_last.png")
 
     sqrtn_fn = edit_graph(fn, g.op_dict, sqrtn_result.schedule)
     g_new = dfgraph_from_tf_function(sqrtn_fn)
-    plot_dfgraph(g_new, checkmate_data_dir() / "test_exec" / "vgg16" / "checkpoint_last")
+    plot_dfgraph(g_new, checkmate_data_dir() / "test_exec" / "test" / "checkpoint_last")
 
 
 if __name__ == "__main__":
