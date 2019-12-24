@@ -6,6 +6,7 @@ from tensorflow.keras import Model
 from tensorflow.keras.layers import Dense, Flatten, Conv2D
 from tqdm import tqdm
 
+from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
 from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
 from checkmate.tf2.execution import edit_graph
 from checkmate.tf2.extraction import dfgraph_from_tf_function
@@ -141,21 +142,21 @@ def test_checkpointed(epochs=5):
         train_accuracy(labels, predictions)
         return gradients
 
+    fn = grads_check.get_concrete_function(*train_ds.element_spec)
+    g = dfgraph_from_tf_function(fn)
+    sqrtn_fn = edit_graph(fn, g.op_dict, solve_checkpoint_all(g).schedule)
+
+    @tf.function
+    def train_step_check(images, labels):
+        gradients = sqrtn_fn(images, labels)
+        optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+
     @tf.function
     def test_step_check(images, labels):
         predictions = model_check(images)
         t_loss = loss_object(labels, predictions)
         test_loss(t_loss)
         test_accuracy(labels, predictions)
-
-    fn = grads_check.get_concrete_function(*train_ds.element_spec)
-    g = dfgraph_from_tf_function(fn)
-    sqrtn_fn = edit_graph(fn, g.op_dict, solve_chen_sqrtn(g, True).schedule)
-
-    @tf.function
-    def train_step_check(images, labels):
-        gradients = sqrtn_fn(images, labels)
-        optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
     logging.info("Training checkpointed model")
     sqrtn_losses = train_model(
