@@ -1,6 +1,7 @@
 import logging
 import os
 
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Dense, Flatten, Conv2D
@@ -132,24 +133,24 @@ def test_checkpointed(epochs=5):
     logging.info("Building checkpointed model via checkmate")
     model_check = make_model()
 
-    @tf.function
+    @tf.function(input_signature=train_ds.element_spec)
     def grads_check(images, labels):
-        with tf.GradientTape() as tape:
+        with tf.GradientTape() as check_tape:
             predictions = model_check(images)
             loss = loss_object(labels, predictions)
-        gradients = tape.gradient(loss, model.trainable_variables)
+        gradients = check_tape.gradient(loss, model_check.trainable_variables)
         train_loss(loss)
         train_accuracy(labels, predictions)
         return gradients
 
-    fn = grads_check.get_concrete_function(*train_ds.element_spec)
+    fn = grads_check.get_concrete_function()
     g = dfgraph_from_tf_function(fn)
     sqrtn_fn = edit_graph(fn, g.op_dict, solve_checkpoint_all(g).schedule)
 
-    @tf.function
+    # @tf.function
     def train_step_check(images, labels):
         gradients = sqrtn_fn(images, labels)
-        optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+        optimizer.apply_gradients(zip(gradients, model_check.trainable_variables))
 
     @tf.function
     def test_step_check(images, labels):
@@ -174,5 +175,8 @@ def test_checkpointed(epochs=5):
 
 
 if __name__ == "__main__":
-    EPOCHS = 2
-    plot_losses({"original": test_baseline(EPOCHS), "sqrtn": test_checkpointed(EPOCHS)})
+    EPOCHS = 1
+    data = {}
+    data["baseline"] = test_baseline(EPOCHS)
+    data["checkpointed"] = test_checkpointed(EPOCHS)
+    plot_losses(data)
