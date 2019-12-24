@@ -77,6 +77,7 @@ def plot_losses(loss_curves):
     for loss_name, loss_data in loss_curves.items():
         plt.plot(loss_data, label=loss_name)
     plt.legend(loc="upper right")
+    (checkmate_data_dir() / "exec").mkdir(parents=True, exist_ok=True)
     plt.savefig(checkmate_data_dir() / "exec" / "test.pdf")
     plt.savefig(checkmate_data_dir() / "exec" / "test.png")
 
