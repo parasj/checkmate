@@ -4,13 +4,14 @@ import os
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import Model
-from tensorflow.keras.layers import Dense, Flatten, Conv2D
+from tensorflow.keras.layers import Dense, Flatten, Conv2D, BatchNormalization
 from tqdm import tqdm
 
 from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
 from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
 from checkmate.tf2.execution import edit_graph
 from checkmate.tf2.extraction import dfgraph_from_tf_function
+from experiments.common.definitions import checkmate_data_dir
 
 logging.basicConfig(level=logging.INFO)
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
@@ -31,12 +32,14 @@ def make_model():
     class MyModel(Model):
         def __init__(self):
             super(MyModel, self).__init__()
+            self.bn = BatchNormalization()
             self.conv1 = Conv2D(32, 3, activation="relu")
             self.flatten = Flatten()
             self.d1 = Dense(128, activation="relu")
             self.d2 = Dense(10, activation="softmax")
 
         def call(self, x):
+            x = self.bn(x)
             x = self.conv1(x)
             x = self.flatten(x)
             x = self.d1(x)
@@ -73,7 +76,9 @@ def plot_losses(loss_curves):
     sns.set_style("darkgrid")
     for loss_name, loss_data in loss_curves.items():
         plt.plot(loss_data, label=loss_name)
-    plt.show()
+    plt.legend(loc="upper right")
+    plt.savefig(checkmate_data_dir() / "exec" / "test.pdf")
+    plt.savefig(checkmate_data_dir() / "exec" / "test.png")
 
 
 def test_baseline(train_ds, test_ds, epochs=5):
@@ -168,7 +173,7 @@ def test_checkpointed(train_ds, test_ds, solver, epochs=5):
 if __name__ == "__main__":
     train_ds, test_ds = get_data()
 
-    EPOCHS = 5
+    EPOCHS = 1
     data = {
         "baseline": test_baseline(train_ds, test_ds, EPOCHS),
         "checkpoint_all": test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=EPOCHS),
