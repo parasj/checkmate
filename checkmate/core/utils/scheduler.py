@@ -50,8 +50,11 @@ class ScheduleBuilder:
 
     def run_operator(self, op_id: int, update_aux_vars: bool):
         if not all([pred in self.live_registers.keys() for pred in self.g.predecessors(op_id)]):
-            raise InfeasibleScheduleError("Dependency not fulfilled for op #{}, ops in ram now are {} but I need {}".format(
-                op_id, set(self.live_registers.keys()), self.g.predecessors(op_id)))
+            raise InfeasibleScheduleError(
+                "Dependency not fulfilled for op #{}, ops in ram now are {} but I need {}".format(
+                    op_id, set(self.live_registers.keys()), self.g.predecessors(op_id)
+                )
+            )
         out_reg = self.allocate_register(op_id)
         in_regs = {pred_id: self.live_registers[pred_id] for pred_id in self.g.predecessors(op_id)}
         eval_op = OperatorEvaluation(

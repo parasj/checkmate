@@ -10,7 +10,7 @@ from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
 from checkmate.tf2.execution import edit_graph
 from checkmate.tf2.extraction import dfgraph_from_tf_function
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 
@@ -80,7 +80,7 @@ def plot_losses(loss_curves):
     plt.show()
 
 
-def test_vgg16_execution(epochs=5):
+def test_baseline(epochs=5):
     logging.info("Configuring basic MNIST model")
     train_ds, test_ds = get_data()
     model = make_model()
@@ -111,12 +111,25 @@ def test_vgg16_execution(epochs=5):
 
     logging.info("Training baseline model")
     orig_losses = train_model(
-        test_ds, test_ds, train_step, test_step, train_loss, train_accuracy, test_loss, test_accuracy
+        test_ds, test_ds, train_step, test_step, train_loss, train_accuracy, test_loss, test_accuracy, n_epochs=epochs
     )
+    return orig_losses
+
+
+def test_checkpointed(epochs=5):
+    logging.info("Configuring basic MNIST model")
+    train_ds, test_ds = get_data()
+    model = make_model()
+    loss_object = tf.keras.losses.SparseCategoricalCrossentropy()
+    optimizer = tf.keras.optimizers.Adam()
+
+    train_loss = tf.keras.metrics.Mean(name="train_loss")
+    train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name="train_accuracy")
+    test_loss = tf.keras.metrics.Mean(name="test_loss")
+    test_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name="test_accuracy")
 
     logging.info("Building checkpointed model via checkmate")
     model_check = make_model()
-    optimizer_check = tf.keras.optimizers.Adam()
 
     @tf.function
     def grads_check(images, labels):
@@ -142,20 +155,23 @@ def test_vgg16_execution(epochs=5):
     @tf.function
     def train_step_check(images, labels):
         gradients = sqrtn_fn(images, labels)
-        optimizer_check.apply_gradients(zip(gradients, model.trainable_variables))
+        optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
     logging.info("Training checkpointed model")
     sqrtn_losses = train_model(
-        test_ds, test_ds, sqrtn_fn, test_step_check, train_loss, train_accuracy, test_loss, test_accuracy
+        test_ds,
+        test_ds,
+        train_step_check,
+        test_step_check,
+        train_loss,
+        train_accuracy,
+        test_loss,
+        test_accuracy,
+        n_epochs=epochs,
     )
-
-    plot_losses({"original": orig_losses, "sqrtn": sqrtn_losses})
-
-    # out_orig = fn(x)
-    # out_sqrtn = sqrtn_fn(x)
-    # for orig_tensor, sqrtn_tensor in zip(out_orig, out_sqrtn):
-    #     print(f"orig: {orig_tensor.shape}, chen: {sqrtn_tensor.shape}, equals: {np.all(orig_tensor == sqrtn_tensor)}")
+    return sqrtn_losses
 
 
 if __name__ == "__main__":
-    test_vgg16_execution()
+    EPOCHS = 2
+    plot_losses({"original": test_baseline(EPOCHS), "sqrtn": test_checkpointed(EPOCHS)})

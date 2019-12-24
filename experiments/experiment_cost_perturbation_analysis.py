@@ -8,7 +8,7 @@ from checkmate.tf2_keras.extraction import dfgraph_from_keras
 from experiments.common.definitions import checkmate_data_dir
 from experiments.common.load_keras_model import get_keras_model
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # get sample network and generate a graph on it
     model = get_keras_model("VGG16")
     g = dfgraph_from_keras(mod=model)
@@ -28,4 +28,4 @@ if __name__ == '__main__':
     plt.figure()
     sns.distplot(x)
     checkmate_data_dir().mkdir(parents=True, exist_ok=True)
-    plt.savefig(checkmate_data_dir() / 'distribution_of_perturbed_cpu_costs.pdf')
+    plt.savefig(checkmate_data_dir() / "distribution_of_perturbed_cpu_costs.pdf")
