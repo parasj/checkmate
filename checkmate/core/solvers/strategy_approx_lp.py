@@ -27,6 +27,7 @@ def solve_approx_lp_deterministic_sweep(
     solver_cores=os.cpu_count(),
     thresholds=(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
     imposed_schedule: ImposedSchedule = ImposedSchedule.FULL_SCHEDULE,
+    allow_return_infeasible_schedule=False,
 ):
     param_dict = {
         "LogToConsole": 1 if print_to_console else 0,
@@ -63,7 +64,8 @@ def solve_approx_lp_deterministic_sweep(
             s_ = (s >= threshold).astype(np.int)
             r_ = solve_r_opt(g, s_)
             schedule_, aux_data_ = schedule_from_rs(g, r_, s_)
-            if aux_data_.activation_ram <= budget and (aux_data is None or aux_data_.cpu <= aux_data.cpu):
+            if (allow_return_infeasible_schedule and aux_data is None) or \
+               (aux_data_.activation_ram <= budget and (aux_data is None or aux_data_.cpu <= aux_data.cpu)):
                 aux_data = aux_data_
                 schedule = schedule_
                 min_threshold = threshold
@@ -128,6 +130,7 @@ def solve_approx_lp_deterministic_05_threshold(
     eps_noise=0.01,
     solver_cores=os.cpu_count(),
     n_samples=1,
+    allow_return_infeasible_schedule=False,
 ):
     return solve_approx_lp_deterministic_sweep(
         g,
@@ -141,6 +144,7 @@ def solve_approx_lp_deterministic_05_threshold(
         eps_noise,
         solver_cores,
         thresholds=[0.5],
+        allow_return_infeasible_schedule=allow_return_infeasible_schedule,
     )
 
 
@@ -155,7 +159,25 @@ def solve_approx_lp_randomized(
     write_model_file: Optional[PathLike] = None,
     eps_noise=0.01,
     solver_cores=os.cpu_count(),
+    num_rounds=100,
+    return_rounds=False
 ):
+    """Randomized rounding of LP relaxation
+    
+    Args:
+        g: 
+        budget: 
+        seed_s: 
+        approx: 
+        time_limit: 
+        write_log_file: 
+        print_to_console: 
+        write_model_file: 
+        eps_noise:
+        solver_cores:
+        num_rounds: 
+        return_rounds: If True, return tuple (ScheduledResult, rounding_statistics)
+    """
     param_dict = {
         "LogToConsole": 1 if print_to_console else 0,
         "LogFile": str(write_log_file) if write_log_file is not None else "",
@@ -184,13 +206,30 @@ def solve_approx_lp_randomized(
         logging.exception(e)
         r, s, u, free_e = (None, None, None, None)
         lp_feasible = False
-    schedule, aux_data, min_threshold = None, None, None
+
+    best_solution = (float("inf"), None, None)
+    rounding_cpus = []
+    rounding_activation_rams = []
+    rounding_in_budgets = []
     if lp_feasible:  # round the solution
-        s_ = (np.random.rand(*s.shape) <= s).astype(np.int32)
-        r_ = solve_r_opt(g, s_)
-        schedule, aux_data = schedule_from_rs(g, r_, s_)
-    return ScheduledResult(
-        solve_strategy=SolveStrategy.APPROX_DET_ROUND_LP_SWEEP,
+        for i in range(num_rounds):
+            s_ = (np.random.rand(*s.shape) <= s).astype(np.int32)
+            r_ = solve_r_opt(g, s_)
+            schedule, aux_data = schedule_from_rs(g, r_, s_)
+
+            rounding_cpus.append(aux_data.cpu)
+            rounding_activation_rams.append(aux_data.activation_ram)
+            rounding_in_budgets.append(aux_data.activation_ram <= budget)
+
+            if aux_data.activation_ram <= budget and (best_solution[2] is None or aux_data.cpu <= best_solution[0]):
+                best_solution = (aux_data.cpu, schedule, aux_data)
+
+            if (i+1) % 1 == 0:
+                print(f"Rounded relaxation argmin {i+1} / num_rounds times, best cost {best_solution[0]}")
+    schedule, aux_data = best_solution[1], best_solution[2]
+
+    scheduled_result = ScheduledResult(
+        solve_strategy=SolveStrategy.APPROX_RANDOMIZED_ROUND,
         solver_budget=budget,
         feasible=lp_feasible,
         schedule=schedule,
@@ -204,6 +243,13 @@ def solve_approx_lp_randomized(
             ilp_eps_noise=eps_noise,
             ilp_num_constraints=lpsolver.m.numConstrs,
             ilp_num_variables=lpsolver.m.numVars,
-            approx_deterministic_round_threshold=min_threshold,
+            approx_deterministic_round_threshold=None,
         ),
     )
+    if return_rounds:
+        return (scheduled_result, {
+            "cpu": rounding_cpus,
+            "activation_ram": rounding_activation_rams,
+            "in_budget": rounding_in_budgets
+        })
+    return scheduled_result
