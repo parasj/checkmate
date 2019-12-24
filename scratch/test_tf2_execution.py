@@ -45,9 +45,7 @@ def make_model():
     return MyModel()
 
 
-def train_model(
-    train_ds, test_ds, train_step, test_step, train_loss, train_accuracy, test_loss, test_accuracy, n_epochs=1
-):
+def train_model(train_ds, test_ds, train_step, test_step, train_loss, train_accuracy, test_loss, test_accuracy, n_epochs=1):
     train_losses = []
     for epoch in range(n_epochs):
         # Reset the metrics at the start of the next epoch
@@ -62,11 +60,7 @@ def train_model(
         template = "Epoch {}, Loss: {}, Accuracy: {}, Test Loss: {}, Test Accuracy: {}"
         print(
             template.format(
-                epoch + 1,
-                train_loss.result(),
-                train_accuracy.result() * 100,
-                test_loss.result(),
-                test_accuracy.result() * 100,
+                epoch + 1, train_loss.result(), train_accuracy.result() * 100, test_loss.result(), test_accuracy.result() * 100
             )
         )
     return train_losses
@@ -82,9 +76,8 @@ def plot_losses(loss_curves):
     plt.show()
 
 
-def test_baseline(epochs=5):
+def test_baseline(train_ds, test_ds, epochs=5):
     logging.info("Configuring basic MNIST model")
-    train_ds, test_ds = get_data()
     model = make_model()
     loss_object = tf.keras.losses.SparseCategoricalCrossentropy()
     optimizer = tf.keras.optimizers.Adam()
@@ -118,10 +111,9 @@ def test_baseline(epochs=5):
     return orig_losses
 
 
-def test_checkpointed(epochs=5):
+def test_checkpointed(train_ds, test_ds, solver, epochs=5):
     logging.info("Configuring basic MNIST model")
-    train_ds, test_ds = get_data()
-    model = make_model()
+    model_check = make_model()
     loss_object = tf.keras.losses.SparseCategoricalCrossentropy()
     optimizer = tf.keras.optimizers.Adam()
 
@@ -131,7 +123,6 @@ def test_checkpointed(epochs=5):
     test_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name="test_accuracy")
 
     logging.info("Building checkpointed model via checkmate")
-    model_check = make_model()
 
     @tf.function(input_signature=train_ds.element_spec)
     def grads_check(images, labels):
@@ -145,9 +136,9 @@ def test_checkpointed(epochs=5):
 
     fn = grads_check.get_concrete_function()
     g = dfgraph_from_tf_function(fn)
-    sqrtn_fn = edit_graph(fn, g.op_dict, solve_checkpoint_all(g).schedule)
+    sqrtn_fn = edit_graph(fn, g.op_dict, solver(g).schedule)
 
-    # @tf.function
+    @tf.function
     def train_step_check(images, labels):
         gradients = sqrtn_fn(images, labels)
         optimizer.apply_gradients(zip(gradients, model_check.trainable_variables))
@@ -175,8 +166,12 @@ def test_checkpointed(epochs=5):
 
 
 if __name__ == "__main__":
-    EPOCHS = 1
-    data = {}
-    data["baseline"] = test_baseline(EPOCHS)
-    data["checkpointed"] = test_checkpointed(EPOCHS)
+    train_ds, test_ds = get_data()
+
+    EPOCHS = 5
+    data = {
+        "baseline": test_baseline(train_ds, test_ds, EPOCHS),
+        "checkpoint_all": test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=EPOCHS),
+        "checkpoint_sqrtn_ap": test_checkpointed(train_ds, test_ds, lambda g: solve_chen_sqrtn(g, False), epochs=EPOCHS),
+    }
     plot_losses(data)
