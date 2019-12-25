@@ -17,14 +17,14 @@ logging.basicConfig(level=logging.INFO)
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 
-def get_data():
+def get_data(batch_size=32):
     mnist = tf.keras.datasets.mnist
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
     x_train, x_test = x_train / 255.0, x_test / 255.0
     x_train = x_train[..., tf.newaxis]
     x_test = x_test[..., tf.newaxis]
-    train_ds = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(10000).batch(32)
-    test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(32)
+    train_ds = tf.data.Dataset.from_tensor_slices((x_train, y_train)).batch(batch_size)
+    test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(batch_size)
     return train_ds, test_ds
 
 
@@ -172,12 +172,15 @@ def test_checkpointed(train_ds, test_ds, solver, epochs=5):
 
 
 if __name__ == "__main__":
-    train_ds, test_ds = get_data()
+    train_ds, test_ds = get_data(2048)
+    test_checkpointed(train_ds, test_ds, lambda g: solve_chen_sqrtn(g, False), epochs=5)
+    # test_baseline(train_ds, test_ds, 5)
+    # train_ds, test_ds = get_data()
 
-    EPOCHS = 1
-    data = {
-        "baseline": test_baseline(train_ds, test_ds, EPOCHS),
-        "checkpoint_all": test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=EPOCHS),
-        "checkpoint_sqrtn_ap": test_checkpointed(train_ds, test_ds, lambda g: solve_chen_sqrtn(g, False), epochs=EPOCHS),
-    }
-    plot_losses(data)
+    # EPOCHS = 1
+    # data = {
+    #     "baseline": test_baseline(train_ds, test_ds, EPOCHS),
+    #     "checkpoint_all": test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=EPOCHS),
+    #     "checkpoint_sqrtn_ap": test_checkpointed(train_ds, test_ds, lambda g: solve_chen_sqrtn(g, False), epochs=EPOCHS),
+    # }
+    # plot_losses(data)
