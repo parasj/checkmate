@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 import tensorflow as tf
 import numpy as np
@@ -70,7 +70,10 @@ def linear_model(i):
     return tf.keras.Model(inputs=input, outputs=predictions)
 
 
-def get_keras_model(model_name: str, input_shape: Optional[List[int]] = None):
+def get_keras_model(model_name: str, input_shape: Optional[Tuple[int, ...]] = None):
+    if input_shape is not None:
+        input_shape = tuple(input_shape)
+
     if model_name == "test":
         model = simple_model()
     elif model_name == "testBERT":

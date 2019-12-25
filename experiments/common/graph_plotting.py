@@ -46,7 +46,7 @@ def plot_dfgraph(g: DFGraph, directory, format="pdf", quiet=True, name=""):
     for u in g.v:
         node_name = g.node_names.get(u)
         node_name = node_name if node_name is None else "{} ({})".format(node_name, str(u))
-        attrs = {} if g.is_backward_node(u) else {"style": "filled"}
+        attrs = {"style": "filled"} if g.is_backward_node(u) else {}
         dot.node(str(u), node_name, **attrs)
     for edge in g.edge_list:
         dep_order = str(g.args[edge[-1]].index(edge[0]))
