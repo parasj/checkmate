@@ -172,15 +172,11 @@ def test_checkpointed(train_ds, test_ds, solver, epochs=5):
 
 
 if __name__ == "__main__":
-    train_ds, test_ds = get_data(2048)
-    test_checkpointed(train_ds, test_ds, lambda g: solve_chen_sqrtn(g, False), epochs=5)
-    # test_baseline(train_ds, test_ds, 5)
-    # train_ds, test_ds = get_data()
-
-    # EPOCHS = 1
-    # data = {
-    #     "baseline": test_baseline(train_ds, test_ds, EPOCHS),
-    #     "checkpoint_all": test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=EPOCHS),
-    #     "checkpoint_sqrtn_ap": test_checkpointed(train_ds, test_ds, lambda g: solve_chen_sqrtn(g, False), epochs=EPOCHS),
-    # }
-    # plot_losses(data)
+    train_ds, test_ds = get_data()
+    EPOCHS = 1
+    data = {
+        "baseline": test_baseline(train_ds, test_ds, EPOCHS),
+        "checkpoint_all": test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=EPOCHS),
+        "checkpoint_sqrtn_ap": test_checkpointed(train_ds, test_ds, lambda g: solve_chen_sqrtn(g, False), epochs=EPOCHS),
+    }
+    plot_losses(data)
