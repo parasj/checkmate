@@ -1,20 +1,22 @@
 import logging
 import os
+from pathlib import Path
 
-import numpy as np
 import tensorflow as tf
-from tensorflow.keras import Model
-from tensorflow.keras.layers import Dense, Flatten, Conv2D, BatchNormalization
 from tqdm import tqdm
 
 from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
 from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
+from checkmate.core.utils.definitions import PathLike
 from checkmate.tf2.execution import edit_graph
 from checkmate.tf2.extraction import dfgraph_from_tf_function
 from experiments.common.definitions import checkmate_data_dir
 
 logging.basicConfig(level=logging.INFO)
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
+
+solve_chen_sqrtn_noap = lambda g: solve_chen_sqrtn(g, False)
+solve_chen_sqrtn_ap = lambda g: solve_chen_sqrtn(g, True)
 
 
 def get_data(batch_size=32):
@@ -29,6 +31,9 @@ def get_data(batch_size=32):
 
 
 def make_model():
+    from tensorflow.keras import Model
+    from tensorflow.keras.layers import Dense, Flatten, Conv2D, BatchNormalization
+
     class MyModel(Model):
         def __init__(self):
             super(MyModel, self).__init__()
@@ -52,6 +57,10 @@ def train_model(train_ds, test_ds, train_step, test_step, train_loss, train_accu
     train_losses = []
     for epoch in range(n_epochs):
         # Reset the metrics at the start of the next epoch
+        train_loss.reset_states()
+        train_accuracy.reset_states()
+        test_loss.reset_states()
+        test_accuracy.reset_states()
 
         for images, labels in tqdm(train_ds, "Train", total=len(list(train_ds))):
             train_step(images, labels)
@@ -60,64 +69,14 @@ def train_model(train_ds, test_ds, train_step, test_step, train_loss, train_accu
         for images, labels in tqdm(test_ds, "Test", total=len(list(test_ds))):
             test_step(images, labels)
 
-        template = "Epoch {}, Loss: {}, Accuracy: {}, Test Loss: {}, Test Accuracy: {}"
         print(
-            template.format(
-                epoch + 1, train_loss.result(), train_accuracy.result() * 100, test_loss.result(), test_accuracy.result() * 100
-            )
+            f"Epoch {epoch + 1}, Loss: {train_loss.result()}, Accuracy: {train_accuracy.result() * 100}, ",
+            f"Test Loss: {test_loss.result()}, Test Accuracy: {test_accuracy.result() * 100}",
         )
     return train_losses
 
 
-def plot_losses(loss_curves):
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-
-    sns.set_style("darkgrid")
-    for loss_name, loss_data in loss_curves.items():
-        plt.plot(loss_data, label=loss_name)
-    plt.legend(loc="upper right")
-    (checkmate_data_dir() / "exec").mkdir(parents=True, exist_ok=True)
-    plt.savefig(checkmate_data_dir() / "exec" / "test.pdf")
-    plt.savefig(checkmate_data_dir() / "exec" / "test.png")
-
-
-def test_baseline(train_ds, test_ds, epochs=5):
-    logging.info("Configuring basic MNIST model")
-    model = make_model()
-    loss_object = tf.keras.losses.SparseCategoricalCrossentropy()
-    optimizer = tf.keras.optimizers.Adam()
-
-    train_loss = tf.keras.metrics.Mean(name="train_loss")
-    train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name="train_accuracy")
-    test_loss = tf.keras.metrics.Mean(name="test_loss")
-    test_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name="test_accuracy")
-
-    @tf.function
-    def train_step(images, labels):
-        with tf.GradientTape() as tape:
-            predictions = model(images)
-            loss = loss_object(labels, predictions)
-        gradients = tape.gradient(loss, model.trainable_variables)
-        optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-        train_loss(loss)
-        train_accuracy(labels, predictions)
-
-    @tf.function
-    def test_step(images, labels):
-        predictions = model(images)
-        t_loss = loss_object(labels, predictions)
-        test_loss(t_loss)
-        test_accuracy(labels, predictions)
-
-    logging.info("Training baseline model")
-    orig_losses = train_model(
-        test_ds, test_ds, train_step, test_step, train_loss, train_accuracy, test_loss, test_accuracy, n_epochs=epochs
-    )
-    return orig_losses
-
-
-def test_checkpointed(train_ds, test_ds, solver, epochs=5):
+def _build_model_via_solver(train_signature, solver):
     logging.info("Configuring basic MNIST model")
     model_check = make_model()
     loss_object = tf.keras.losses.SparseCategoricalCrossentropy()
@@ -130,7 +89,7 @@ def test_checkpointed(train_ds, test_ds, solver, epochs=5):
 
     logging.info("Building checkpointed model via checkmate")
 
-    @tf.function(input_signature=train_ds.element_spec)
+    @tf.function(input_signature=train_signature)
     def grads_check(images, labels):
         with tf.GradientTape() as check_tape:
             predictions = model_check(images)
@@ -156,27 +115,113 @@ def test_checkpointed(train_ds, test_ds, solver, epochs=5):
         test_loss(t_loss)
         test_accuracy(labels, predictions)
 
-    logging.info("Training checkpointed model")
-    sqrtn_losses = train_model(
-        test_ds,
-        test_ds,
-        train_step_check,
-        test_step_check,
-        train_loss,
-        train_accuracy,
-        test_loss,
-        test_accuracy,
-        n_epochs=epochs,
-    )
-    return sqrtn_losses
+    return sqrtn_fn, train_step_check, test_step_check, train_loss, train_accuracy, test_loss, test_accuracy
+
+
+def save_checkpoint_chrome_trace(log_base):
+    def trace_solver_solution(trace_save_dir: PathLike, prefix: str, train_ds, solver):
+        import tensorflow.compat.v1 as tf1
+        from tensorflow.python.client import timeline
+
+        sqrtn_fn, *_ = _build_model_via_solver(train_ds.element_spec, solver)
+
+        data_iter = train_ds.__iter__()
+        for i in range(1):
+            data_list = [x.numpy() for x in data_iter.next()]
+            with tf1.Session() as sess:
+                run_meta = tf1.RunMetadata()
+                sess.run(tf1.global_variables_initializer())
+
+                data_list_tf = [tf1.convert_to_tensor(x, dtype=tf.float32) for x in data_list]
+                out = sqrtn_fn(*data_list_tf)
+                sess.run(out, options=tf1.RunOptions(trace_level=tf1.RunOptions.FULL_TRACE), run_metadata=run_meta)
+
+                t1 = timeline.Timeline(run_meta.step_stats)
+                lctf = t1.generate_chrome_trace_format()
+            save_path = Path(trace_save_dir) / "{}_{}.json".format(prefix, i)
+            with save_path.open("w") as f:
+                f.write(lctf)
+
+    log_base.mkdir(parents=True, exist_ok=True)
+    train_ds, test_ds = get_data()
+    trace_solver_solution(log_base, "check_all", train_ds, solve_checkpoint_all)
+    # profile_checkpointed(log_base, 'check_sqrtn_noap', train_ds, solve_chen_sqrtn_noap)
+
+
+def compare_checkpoint_loss_curves(n_epochs: int = 1):
+    def test_baseline(train_ds, test_ds, epochs=5):
+        logging.info("Configuring basic MNIST model")
+        model = make_model()
+        loss_object = tf.keras.losses.SparseCategoricalCrossentropy()
+        optimizer = tf.keras.optimizers.Adam()
+
+        train_loss = tf.keras.metrics.Mean(name="train_loss")
+        train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name="train_accuracy")
+        test_loss = tf.keras.metrics.Mean(name="test_loss")
+        test_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name="test_accuracy")
+
+        @tf.function
+        def train_step(images, labels):
+            with tf.GradientTape() as tape:
+                predictions = model(images)
+                loss = loss_object(labels, predictions)
+            gradients = tape.gradient(loss, model.trainable_variables)
+            optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+            train_loss(loss)
+            train_accuracy(labels, predictions)
+
+        @tf.function
+        def test_step(images, labels):
+            predictions = model(images)
+            t_loss = loss_object(labels, predictions)
+            test_loss(t_loss)
+            test_accuracy(labels, predictions)
+
+        logging.info("Training baseline model")
+        orig_losses = train_model(
+            train_ds, test_ds, train_step, test_step, train_loss, train_accuracy, test_loss, test_accuracy, n_epochs=epochs
+        )
+        return orig_losses
+
+    def test_checkpointed(train_ds, test_ds, solver, epochs=1):
+        check_model = _build_model_via_solver(train_ds.element_spec, solver)
+        _, train_step_check, test_step_check, train_loss, train_accuracy, test_loss, test_accuracy = check_model
+        logging.info("Training checkpointed model")
+        sqrtn_losses = train_model(
+            train_ds,
+            test_ds,
+            train_step_check,
+            test_step_check,
+            train_loss,
+            train_accuracy,
+            test_loss,
+            test_accuracy,
+            n_epochs=epochs,
+        )
+        return sqrtn_losses
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    sns.set_style("darkgrid")
+
+    train_ds, test_ds = get_data()
+    data = {
+        "baseline": (test_baseline(train_ds, test_ds, n_epochs)),
+        "checkpoint_all": (test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=n_epochs)),
+        "checkpoint_sqrtn_ap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_ap, epochs=n_epochs)),
+        "checkpoint_sqrtn_noap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_noap, epochs=n_epochs)),
+    }
+
+    for loss_name, loss_data in data.items():
+        plt.plot(loss_data, label=loss_name)
+    plt.legend(loc="upper right")
+    (checkmate_data_dir() / "exec").mkdir(parents=True, exist_ok=True)
+    plt.savefig(checkmate_data_dir() / "exec" / "test.pdf")
+    plt.savefig(checkmate_data_dir() / "exec" / "test.png")
 
 
 if __name__ == "__main__":
-    train_ds, test_ds = get_data()
-    EPOCHS = 1
-    data = {
-        "baseline": test_baseline(train_ds, test_ds, EPOCHS),
-        "checkpoint_all": test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=EPOCHS),
-        "checkpoint_sqrtn_ap": test_checkpointed(train_ds, test_ds, lambda g: solve_chen_sqrtn(g, False), epochs=EPOCHS),
-    }
-    plot_losses(data)
+    tf.compat.v1.logging.set_verbosity("ERROR")
+    save_checkpoint_chrome_trace(checkmate_data_dir() / "profile_exec")
+    # compare_checkpoint_loss_curves(n_epochs=5)
