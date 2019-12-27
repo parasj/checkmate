@@ -64,8 +64,9 @@ def solve_approx_lp_deterministic_sweep(
             s_ = (s >= threshold).astype(np.int)
             r_ = solve_r_opt(g, s_)
             schedule_, aux_data_ = schedule_from_rs(g, r_, s_)
-            if (allow_return_infeasible_schedule and aux_data is None) or \
-               (aux_data_.activation_ram <= budget and (aux_data is None or aux_data_.cpu <= aux_data.cpu)):
+            if (allow_return_infeasible_schedule and aux_data is None) or (
+                aux_data_.activation_ram <= budget and (aux_data is None or aux_data_.cpu <= aux_data.cpu)
+            ):
                 aux_data = aux_data_
                 schedule = schedule_
                 min_threshold = threshold
@@ -160,7 +161,7 @@ def solve_approx_lp_randomized(
     eps_noise=0.01,
     solver_cores=os.cpu_count(),
     num_rounds=100,
-    return_rounds=False
+    return_rounds=False,
 ):
     """Randomized rounding of LP relaxation
     
@@ -224,7 +225,7 @@ def solve_approx_lp_randomized(
             if aux_data.activation_ram <= budget and (best_solution[2] is None or aux_data.cpu <= best_solution[0]):
                 best_solution = (aux_data.cpu, schedule, aux_data)
 
-            if (i+1) % 1 == 0:
+            if (i + 1) % 1 == 0:
                 print(f"Rounded relaxation argmin {i+1} / num_rounds times, best cost {best_solution[0]}")
     schedule, aux_data = best_solution[1], best_solution[2]
 
@@ -247,9 +248,8 @@ def solve_approx_lp_randomized(
         ),
     )
     if return_rounds:
-        return (scheduled_result, {
-            "cpu": rounding_cpus,
-            "activation_ram": rounding_activation_rams,
-            "in_budget": rounding_in_budgets
-        })
+        return (
+            scheduled_result,
+            {"cpu": rounding_cpus, "activation_ram": rounding_activation_rams, "in_budget": rounding_in_budgets},
+        )
     return scheduled_result

@@ -6,12 +6,7 @@ from tensorflow.keras import layers
 from copy import deepcopy
 
 # from tensorflow.python.ops import gradients_util as tfg
-from checkmate.core.schedule import (
-    OperatorEvaluation,
-    AllocateRegister,
-    DeallocateRegister,
-    Schedule
-)
+from checkmate.core.schedule import OperatorEvaluation, AllocateRegister, DeallocateRegister, Schedule
 
 # tf.compat.v1.disable_eager_execution()
 logging.basicConfig(level=logging.DEBUG)
@@ -23,14 +18,8 @@ class Linear(layers.Layer):
         self.units = units
 
     def build(self, input_shape):
-        self.w = self.add_weight(
-            shape=(input_shape[-1], self.units),
-            initializer="random_normal",
-            trainable=True,
-        )
-        self.b = self.add_weight(
-            shape=(self.units,), initializer="random_normal", trainable=True
-        )
+        self.w = self.add_weight(shape=(input_shape[-1], self.units), initializer="random_normal", trainable=True)
+        self.b = self.add_weight(shape=(self.units,), initializer="random_normal", trainable=True)
 
     def call(self, inputs):
         return tf.matmul(inputs, self.w) + self.b
@@ -65,34 +54,17 @@ conc = tf.function(mlp).get_concrete_function(x)
 grad_conc = get_grads.get_concrete_function(mlp, x, mlp.trainable_variables)
 
 op_list = grad_conc.graph.get_operations()
-exclude_list = [
-    "Placeholder",
-    "ReadVariableOp",
-    "Const",
-    "BroadcastGradientArgs",
-    "Fill",
-]
+exclude_list = ["Placeholder", "ReadVariableOp", "Const", "BroadcastGradientArgs", "Fill"]
 
 
-def copy_op(
-    op, new_name
-):  # taken from "tensorflow/contrib/copy_graph/python/util/copy_elements.py"
+def copy_op(op, new_name):  # taken from "tensorflow/contrib/copy_graph/python/util/copy_elements.py"
     nnd = deepcopy(op.node_def)
     nnd.name = new_name
     nod = deepcopy(op.op_def)
     output_types = op._output_types[:]
     input_types = op._input_types[:]
     control_inputs = op.control_inputs[:]
-    new_op = tf.Operation(
-        nnd,
-        op.graph,
-        list(op.inputs),
-        output_types,
-        control_inputs,
-        input_types,
-        op,
-        nod,
-    )
+    new_op = tf.Operation(nnd, op.graph, list(op.inputs), output_types, control_inputs, input_types, op, nod)
     return new_op
 
 
@@ -156,9 +128,7 @@ def execute(fxn, op_list, op_dict, schedule, samp_inputs):
         if type(inst) == OperatorEvaluation:
             args = [registers[i] for i in inst.arg_regs]
             op = op_list[inst.id]
-            assert (
-                len(op.outputs) == 1
-            ), "ops which output two tensors not yet supported"
+            assert len(op.outputs) == 1, "ops which output two tensors not yet supported"
 
             if op in output_ops:
                 new_op = op  #
