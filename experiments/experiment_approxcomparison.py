@@ -34,10 +34,12 @@ def extract_params():
     parser.add_argument("--skip-ilp", action="store_true", help="If set, skip running the ILP during evaluation.")
     return parser.parse_args()
 
+
 def b2gb(data):
     if hasattr(data, "__iter__"):
         return [d * 1e-9 for d in data]
     return data * 1e-9
+
 
 if __name__ == "__main__":
     args = extract_params()
@@ -65,16 +67,11 @@ if __name__ == "__main__":
         # load model from Keras
         print("Loading model {}".format(args.model_name))
         model = get_keras_model(args.model_name)
-        g = dfgraph_from_keras(model, batch_size=args.batch_size, cost_model=cost_model,
-                               loss_cpu_cost=0, loss_ram_cost=(4 * args.batch_size))
+        g = dfgraph_from_keras(
+            model, batch_size=args.batch_size, cost_model=cost_model, loss_cpu_cost=0, loss_ram_cost=(4 * args.batch_size)
+        )
 
-    common_kwargs = dict(
-        g=g,
-        budget=B,
-        print_to_console=False,
-        eps_noise=0,
-        approx=False,
-    )
+    common_kwargs = dict(g=g, budget=B, print_to_console=False, eps_noise=0, approx=False)
 
     print("Common args:", common_kwargs)
 
@@ -114,7 +111,7 @@ if __name__ == "__main__":
             write_log_file=scratch_dir / "ilp.log",
             print_to_console=False,
             eps_noise=0,
-            approx=False
+            approx=False,
         )
         if scheduler_result_ilp.schedule_aux_data is not None:
             plot_schedule(scheduler_result_ilp, False, save_file=scratch_dir / "CHECKM8_ILP.png")
@@ -129,35 +126,33 @@ if __name__ == "__main__":
 
     # Deterministic rounding
     scheduler_lp_det = solve_approx_lp_deterministic_05_threshold(
-        write_log_file=scratch_dir / "lp_det_05.log",
-        allow_return_infeasible_schedule=True,
-        **common_kwargs
+        write_log_file=scratch_dir / "lp_det_05.log", allow_return_infeasible_schedule=True, **common_kwargs
     )
     if scheduler_lp_det.schedule_aux_data is not None:
         plot_schedule(scheduler_lp_det, False, save_file=scratch_dir / "CHECKM8_DET_APPROX_05.png")
-        data.append({
+        data.append(
+            {
                 "Strategy": str(scheduler_lp_det.solve_strategy.value),
                 "Name": "CHECKM8_DET_APPROX_05",
                 "CPU": scheduler_lp_det.schedule_aux_data.cpu,
                 "Activation RAM": scheduler_lp_det.schedule_aux_data.activation_ram,
-        })
+            }
+        )
 
     # Randomized rounding
     scheduler_lp_rand, rounding_stats = solve_approx_lp_randomized(
-        write_log_file=scratch_dir / "lp_rand.log",
-        num_rounds=args.num_rounds,
-        return_rounds=True,
-        **common_kwargs
+        write_log_file=scratch_dir / "lp_rand.log", num_rounds=args.num_rounds, return_rounds=True, **common_kwargs
     )
     if scheduler_lp_rand.schedule_aux_data is not None:
         plot_schedule(scheduler_lp_rand, False, save_file=scratch_dir / "CHECKM8_RAND_APPROX.png")
-        data.append({
+        data.append(
+            {
                 "Strategy": str(scheduler_lp_rand.solve_strategy.value),
                 "Name": "CHECKM8_RAND_APPROX",
                 "CPU": scheduler_lp_rand.schedule_aux_data.cpu,
                 "Activation RAM": scheduler_lp_rand.schedule_aux_data.activation_ram,
-        })
-
+            }
+        )
 
     # Plot solution memory usage vs cpu scatter plot
     sns.set()
@@ -168,34 +163,56 @@ if __name__ == "__main__":
     plt.ylabel("GPU time (ms)")
 
     color, marker, markersize = SolveStrategy.get_plot_params(scheduler_result_all.solve_strategy)
-    plt.axhline(y=scheduler_result_all.schedule_aux_data.cpu / 1000, color=color, linestyle='--', label="Checkpoint all (ideal)")
+    plt.axhline(
+        y=scheduler_result_all.schedule_aux_data.cpu / 1000, color=color, linestyle="--", label="Checkpoint all (ideal)"
+    )
 
     if args.model_name in LINEAR_MODELS:
         color, marker, markersize = SolveStrategy.get_plot_params(scheduler_result_sqrtn.solve_strategy)
-        plt.scatter([b2gb(scheduler_result_sqrtn.schedule_aux_data.activation_ram)], [scheduler_result_sqrtn.schedule_aux_data.cpu / 1000],
-                    s=markersize ** 2, color=color, marker=marker, label="Chen $\sqrt{n}$")
+        plt.scatter(
+            [b2gb(scheduler_result_sqrtn.schedule_aux_data.activation_ram)],
+            [scheduler_result_sqrtn.schedule_aux_data.cpu / 1000],
+            s=markersize ** 2,
+            color=color,
+            marker=marker,
+            label="Chen $\sqrt{n}$",
+        )
 
     _, marker, markersize = SolveStrategy.get_plot_params(scheduler_lp_rand.solve_strategy)
-    plt.scatter(b2gb(rounding_stats["activation_ram"]), np.array(rounding_stats["cpu"]) / 1000,
-                s=markersize ** 2, color="lightcoral", marker=marker, label="Randomized rounding")
-    plt.axhline(y=np.mean(rounding_stats["cpu"]) / 1000, color="lightcoral", linestyle=':')
+    plt.scatter(
+        b2gb(rounding_stats["activation_ram"]),
+        np.array(rounding_stats["cpu"]) / 1000,
+        s=markersize ** 2,
+        color="lightcoral",
+        marker=marker,
+        label="Randomized rounding",
+    )
+    plt.axhline(y=np.mean(rounding_stats["cpu"]) / 1000, color="lightcoral", linestyle=":")
 
     color, marker, markersize = SolveStrategy.get_plot_params(scheduler_lp_det.solve_strategy)
-    plt.scatter([b2gb(scheduler_lp_det.schedule_aux_data.activation_ram)], [scheduler_lp_det.schedule_aux_data.cpu / 1000],
-                s=markersize ** 2, color="royalblue", marker=marker, label="Deterministic rounding")
+    plt.scatter(
+        [b2gb(scheduler_lp_det.schedule_aux_data.activation_ram)],
+        [scheduler_lp_det.schedule_aux_data.cpu / 1000],
+        s=markersize ** 2,
+        color="royalblue",
+        marker=marker,
+        label="Deterministic rounding",
+    )
 
     if not args.skip_ilp:
         color, marker, markersize = SolveStrategy.get_plot_params(scheduler_result_ilp.solve_strategy)
-        plt.scatter([b2gb(scheduler_result_ilp.schedule_aux_data.activation_ram)], [scheduler_result_ilp.schedule_aux_data.cpu / 1000],
-                    s=markersize ** 2, color=color, marker=marker, label="ILP")
+        plt.scatter(
+            [b2gb(scheduler_result_ilp.schedule_aux_data.activation_ram)],
+            [scheduler_result_ilp.schedule_aux_data.cpu / 1000],
+            s=markersize ** 2,
+            color=color,
+            marker=marker,
+            label="ILP",
+        )
 
     plt.legend()
-    plt.savefig(scratch_dir / "scatter.pdf",
-        bbox_inches="tight",
-        format="pdf")
-    plt.savefig(scratch_dir / "scatter.png",
-        bbox_inches="tight",
-        dpi=300)
+    plt.savefig(scratch_dir / "scatter.pdf", bbox_inches="tight", format="pdf")
+    plt.savefig(scratch_dir / "scatter.png", bbox_inches="tight", dpi=300)
 
     # Save results
     df = pd.DataFrame(data)
@@ -205,7 +222,4 @@ if __name__ == "__main__":
 
     # Save data
     with open(scratch_dir / "data.pickle", "wb") as f:
-        pickle.dump({
-            "data": data,
-            "rounding_stats": rounding_stats
-        }, f, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump({"data": data, "rounding_stats": rounding_stats}, f, protocol=pickle.HIGHEST_PROTOCOL)
