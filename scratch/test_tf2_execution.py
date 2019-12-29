@@ -118,34 +118,31 @@ def _build_model_via_solver(train_signature, solver):
     return sqrtn_fn, train_step_check, test_step_check, train_loss, train_accuracy, test_loss, test_accuracy
 
 
-def save_checkpoint_chrome_trace(log_base):
-    def trace_solver_solution(trace_save_dir: PathLike, prefix: str, train_ds, solver):
+def save_checkpoint_chrome_trace(log_base: PathLike):
+    def trace_solver_solution(save_path: PathLike, train_ds, solver):
         import tensorflow.compat.v1 as tf1
         from tensorflow.python.client import timeline
 
-        sqrtn_fn, *_ = _build_model_via_solver(train_ds.element_spec, solver)
-
         data_iter = train_ds.__iter__()
-        for i in range(1):
-            data_list = [x.numpy() for x in data_iter.next()]
-            with tf1.Session() as sess:
-                run_meta = tf1.RunMetadata()
-                sess.run(tf1.global_variables_initializer())
+        data_list = [x.numpy() for x in data_iter.next()]
+        with tf1.Session() as sess:
+            sqrtn_fn, *_ = _build_model_via_solver(train_ds.element_spec, solver)
+            out = sqrtn_fn(*[tf1.convert_to_tensor(x) for x in data_list])
 
-                data_list_tf = [tf1.convert_to_tensor(x, dtype=tf.float32) for x in data_list]
-                out = sqrtn_fn(*data_list_tf)
-                sess.run(out, options=tf1.RunOptions(trace_level=tf1.RunOptions.FULL_TRACE), run_metadata=run_meta)
+            run_meta = tf1.RunMetadata()
+            sess.run(tf1.global_variables_initializer())
+            sess.run(out, options=tf1.RunOptions(trace_level=tf1.RunOptions.FULL_TRACE), run_metadata=run_meta)
+            t1 = timeline.Timeline(run_meta.step_stats)
+            lctf = t1.generate_chrome_trace_format()
 
-                t1 = timeline.Timeline(run_meta.step_stats)
-                lctf = t1.generate_chrome_trace_format()
-            save_path = Path(trace_save_dir) / "{}_{}.json".format(prefix, i)
-            with save_path.open("w") as f:
-                f.write(lctf)
+        with Path(save_path).open("w") as f:
+            f.write(lctf)
 
+    log_base = Path(log_base)
     log_base.mkdir(parents=True, exist_ok=True)
     train_ds, test_ds = get_data()
-    trace_solver_solution(log_base, "check_all", train_ds, solve_checkpoint_all)
-    # profile_checkpointed(log_base, 'check_sqrtn_noap', train_ds, solve_chen_sqrtn_noap)
+    trace_solver_solution(log_base / "check_all.json", train_ds, solve_checkpoint_all)
+    trace_solver_solution(log_base / "check_sqrtn_noap.json", train_ds, solve_chen_sqrtn_noap)
 
 
 def compare_checkpoint_loss_curves(n_epochs: int = 1):
