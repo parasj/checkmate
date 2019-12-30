@@ -159,7 +159,7 @@ def save_checkpoint_chrome_trace(dataset: str, model_name: str, log_base: PathLi
     trace_solver_solution(log_base / "check_sqrtn_noap.json", train_ds, solve_chen_sqrtn_noap)
 
 
-def compare_checkpoint_loss_curves(dataset: str = "mnist", model_name: str = "test", n_epochs: int = 1, batch_size: int = 32):
+def compare_checkpoint_loss_curves(dataset: str, model_name: str, n_epochs: int = 1, batch_size: int = 32):
     def test_baseline(train_ds, test_ds, epochs=5):
         logging.info("Configuring basic model")
         model = make_model(dataset=dataset, model=model_name)
