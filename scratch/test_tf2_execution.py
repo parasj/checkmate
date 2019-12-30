@@ -161,7 +161,7 @@ def save_checkpoint_chrome_trace(dataset: str, model_name: str, log_base: PathLi
 
 def compare_checkpoint_loss_curves(dataset: str = "mnist", model_name: str = "test", n_epochs: int = 1, batch_size: int = 32):
     def test_baseline(train_ds, test_ds, epochs=5):
-        logging.info("Configuring basic MNIST model")
+        logging.info("Configuring basic model")
         model = make_model(dataset=dataset, model=model_name)
         loss_object = tf.keras.losses.SparseCategoricalCrossentropy()
         optimizer = tf.keras.optimizers.Adam()
