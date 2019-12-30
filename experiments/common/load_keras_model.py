@@ -1,11 +1,10 @@
 import logging
 import re
-from typing import Optional, List, Tuple
+from typing import Optional, Tuple
 
 import tensorflow as tf
-import numpy as np
 import tensorflow.keras as keras
-from tensorflow.keras.layers import LayerNormalization, Dense, Dropout, Activation, Lambda, Reshape
+from tensorflow.keras.layers import LayerNormalization, Dense, Activation, Lambda, Reshape
 
 KERAS_APPLICATION_MODEL_NAMES = [
     "InceptionV3",
@@ -49,51 +48,52 @@ def pretty_model_name(model_name: str):
     return model_name
 
 
-def simple_model():
-    inputs = tf.keras.Input(shape=(224, 224, 3))
+def simple_model(input_shape=(224, 224, 3), num_classes: int = 1000):
+    inputs = tf.keras.Input(shape=input_shape)
     x = tf.keras.layers.Conv2D(64, (3, 3), activation="relu", name="in_conv")(inputs)
     a = tf.keras.layers.Conv2D(128, (1, 1), activation="relu", name="conv1")(x)
     b = tf.keras.layers.Conv2D(128, (1, 1), activation="relu", name="conv2")(x)
     c = tf.keras.layers.Add(name="addc1c2")([a, b])
     d = tf.keras.layers.GlobalAveragePooling2D(name="flatten")(c)
-    predictions = tf.keras.layers.Dense(1000, activation="softmax", name="predictions")(d)
+    predictions = tf.keras.layers.Dense(num_classes, activation="softmax", name="predictions")(d)
     return tf.keras.Model(inputs=inputs, outputs=predictions)
 
 
-def linear_model(i):
-    input = tf.keras.Input(shape=(224, 224, 3))
+def linear_model(i, input_shape=(224, 224, 3), num_classes=1000):
+    input = tf.keras.Input(shape=input_shape)
     x = input
     for i in range(i):
         x = tf.keras.layers.Conv2D(64, (3, 3), activation=None, use_bias=False, name="conv" + str(i))(x)
     d = tf.keras.layers.GlobalAveragePooling2D(name="flatten")(x)
-    predictions = tf.keras.layers.Dense(1000, activation="softmax", name="predictions")(d)
+    predictions = tf.keras.layers.Dense(num_classes, activation="softmax", name="predictions")(d)
     return tf.keras.Model(inputs=input, outputs=predictions)
 
 
-def get_keras_model(model_name: str, input_shape: Optional[Tuple[int, ...]] = None):
+def get_keras_model(model_name: str, input_shape: Optional[Tuple[int, ...]] = None, num_classes=None, pretrained=False):
     if input_shape is not None:
         input_shape = tuple(input_shape)
 
     if model_name == "test":
-        model = simple_model()
+        model = simple_model(input_shape, num_classes)
     elif model_name == "testBERT":
         model = testBertModel(12, 16, input_shape)
     elif model_name in LINEAR_MODEL_NAMES:
         i = int(re.search(r"\d+$", model_name).group())
-        model = linear_model(i)
+        model = linear_model(i, input_shape, num_classes)
     elif model_name in KERAS_APPLICATION_MODEL_NAMES:
         model = eval("tf.keras.applications.{}".format(model_name))
-        model = model(input_shape=input_shape)
+        model = model(input_shape=input_shape, classes=num_classes, weights="imagenet" if pretrained else None)
     elif model_name in SEGMENTATION_MODEL_NAMES:
         model = keras_segmentation.models.model_from_name[model_name]
         if input_shape is not None:
             assert input_shape[2] == 3, "Can only segment 3-channel, channel-last images"
-            model = model(n_classes=NUM_SEGMENTATION_CLASSES, input_height=input_shape[0], input_width=input_shape[1])
+            model = model(
+                n_classes=num_classes or NUM_SEGMENTATION_CLASSES, input_height=input_shape[0], input_width=input_shape[1]
+            )
         else:
-            model = model(n_classes=NUM_SEGMENTATION_CLASSES)
+            model = model(n_classes=num_classes or NUM_SEGMENTATION_CLASSES)
     else:
         raise NotImplementedError("Model {} not available".format(model_name))
-
     return model
 
 
@@ -106,23 +106,11 @@ def get_input_shape(model_name: str, batch_size: Optional[int] = None):
 
 
 def testBertModel(num_layers, heads, input_size):
-
     hidden_size = input_size[1]
     intermediate_size = 4 * hidden_size
     seq_length = input_size[0]
-    # batch = input_size[0]
-
-    # config = BertConfig(hidden_size=hidden_size,
-    #                    num_hidden_layers=num_layers ,
-    #                    num_attention_heads=heads,
-    #                    intermediate_size=4 * hidden_size,
-    #                   hidden_act = "relu",
-    #                   max_position_embeddings=seq_length)
     num_layers = num_layers
-    layer = []
     inputs = keras.Input(shape=(input_size))
-    mask = tf.fill(tf.shape(inputs), 1.0)
-    tids = tf.fill(tf.shape(inputs), 0.0)
     x = inputs
     for i in range(num_layers):
         query = Dense(hidden_size, name="query_{}".format(i))(x)
@@ -143,5 +131,4 @@ def testBertModel(num_layers, heads, input_size):
         shrink = Dense(hidden_size, name="shrink_{}".format(i))(relu1)
         relu2 = Activation("relu", name="relu2_{}".format(i))(shrink)
         x = LayerNormalization(name="layer_out_{}".format(i))(x + relu2)
-
     return keras.Model(inputs=inputs, outputs=x)

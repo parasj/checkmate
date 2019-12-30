@@ -11,6 +11,7 @@ from checkmate.core.utils.definitions import PathLike
 from checkmate.tf2.execution import edit_graph
 from checkmate.tf2.extraction import dfgraph_from_tf_function
 from experiments.common.definitions import checkmate_data_dir
+from experiments.common.load_keras_model import get_keras_model
 
 logging.basicConfig(level=logging.INFO)
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
@@ -19,38 +20,51 @@ solve_chen_sqrtn_noap = lambda g: solve_chen_sqrtn(g, False)
 solve_chen_sqrtn_ap = lambda g: solve_chen_sqrtn(g, True)
 
 
-def get_data(batch_size=32):
-    mnist = tf.keras.datasets.mnist
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    x_train, x_test = x_train / 255.0, x_test / 255.0
-    x_train = x_train[..., tf.newaxis]
-    x_test = x_test[..., tf.newaxis]
-    train_ds = tf.data.Dataset.from_tensor_slices((x_train, y_train)).batch(batch_size)
-    test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(batch_size)
-    return train_ds, test_ds
+def get_data(dataset: str, batch_size=32):
+    if dataset in ["mnist", "cifar10", "cifar100"]:
+        dataset = eval("tf.keras.datasets.{}".format(dataset))
+        (x_train, y_train), (x_test, y_test) = dataset.load_data()
+        x_train, x_test = x_train / 255.0, x_test / 255.0
+        if dataset is "mnist":
+            x_train = x_train[..., tf.newaxis]
+            x_test = x_test[..., tf.newaxis]
+        train_ds = tf.data.Dataset.from_tensor_slices((x_train, y_train)).batch(batch_size)
+        test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(batch_size)
+        return train_ds, test_ds
+    else:
+        raise ValueError("Invalid dataset " + str(dataset))
 
 
-def make_model():
-    from tensorflow.keras import Model
-    from tensorflow.keras.layers import Dense, Flatten, Conv2D, BatchNormalization
+def make_model(dataset: str, model: str = "test"):
+    if model == "test":
+        from tensorflow.keras import Model
+        from tensorflow.keras.layers import Dense, Flatten, Conv2D, BatchNormalization
 
-    class MyModel(Model):
-        def __init__(self):
-            super(MyModel, self).__init__()
-            self.bn = BatchNormalization()
-            self.conv1 = Conv2D(32, 3, activation="relu")
-            self.flatten = Flatten()
-            self.d1 = Dense(128, activation="relu")
-            self.d2 = Dense(10, activation="softmax")
+        class MyModel(Model):
+            def __init__(self):
+                super(MyModel, self).__init__()
+                self.bn = BatchNormalization()
+                self.conv1 = Conv2D(32, 3, activation="relu")
+                self.flatten = Flatten()
+                self.d1 = Dense(128, activation="relu")
+                self.d2 = Dense(10, activation="softmax")
 
-        def call(self, x):
-            x = self.bn(x)
-            x = self.conv1(x)
-            x = self.flatten(x)
-            x = self.d1(x)
-            return self.d2(x)
+            def call(self, x):
+                x = self.bn(x)
+                x = self.conv1(x)
+                x = self.flatten(x)
+                x = self.d1(x)
+                return self.d2(x)
 
-    return MyModel()
+        return MyModel()
+    else:
+        shapes = {
+            "mnist": ((28, 28, 1), 10),
+            "cifar10": ((32, 32, 3), 10),
+            "cifar100": ((32, 32, 3), 100),
+            "imagenet": ((224, 224, 3), 1000),
+        }
+        return get_keras_model(model, input_shape=shapes[dataset][0], num_classes=shapes[dataset][1])
 
 
 def train_model(train_ds, test_ds, train_step, test_step, train_loss, train_accuracy, test_loss, test_accuracy, n_epochs=1):
@@ -76,9 +90,9 @@ def train_model(train_ds, test_ds, train_step, test_step, train_loss, train_accu
     return train_losses
 
 
-def _build_model_via_solver(train_signature, solver):
-    logging.info("Configuring basic MNIST model")
-    model_check = make_model()
+def _build_model_via_solver(dataset: str, model_name: str, train_signature, solver):
+    logging.info("Configuring model " + str(model_name))
+    model_check = make_model(dataset, model_name)
     loss_object = tf.keras.losses.SparseCategoricalCrossentropy()
     optimizer = tf.keras.optimizers.Adam()
 
@@ -118,7 +132,7 @@ def _build_model_via_solver(train_signature, solver):
     return sqrtn_fn, train_step_check, test_step_check, train_loss, train_accuracy, test_loss, test_accuracy
 
 
-def save_checkpoint_chrome_trace(log_base: PathLike):
+def save_checkpoint_chrome_trace(dataset: str, model_name: str, log_base: PathLike, batch_size: int = 32):
     def trace_solver_solution(save_path: PathLike, train_ds, solver):
         import tensorflow.compat.v1 as tf1
         from tensorflow.python.client import timeline
@@ -126,7 +140,7 @@ def save_checkpoint_chrome_trace(log_base: PathLike):
         data_iter = train_ds.__iter__()
         data_list = [x.numpy() for x in data_iter.next()]
         with tf1.Session() as sess:
-            sqrtn_fn, *_ = _build_model_via_solver(train_ds.element_spec, solver)
+            sqrtn_fn, *_ = _build_model_via_solver(dataset, model_name, train_ds.element_spec, solver)
             out = sqrtn_fn(*[tf1.convert_to_tensor(x) for x in data_list])
 
             run_meta = tf1.RunMetadata()
@@ -140,15 +154,15 @@ def save_checkpoint_chrome_trace(log_base: PathLike):
 
     log_base = Path(log_base)
     log_base.mkdir(parents=True, exist_ok=True)
-    train_ds, test_ds = get_data()
+    train_ds, test_ds = get_data(dataset, batch_size=batch_size)
     trace_solver_solution(log_base / "check_all.json", train_ds, solve_checkpoint_all)
     trace_solver_solution(log_base / "check_sqrtn_noap.json", train_ds, solve_chen_sqrtn_noap)
 
 
-def compare_checkpoint_loss_curves(n_epochs: int = 1):
+def compare_checkpoint_loss_curves(dataset: str = "mnist", model_name: str = "test", n_epochs: int = 1, batch_size: int = 32):
     def test_baseline(train_ds, test_ds, epochs=5):
         logging.info("Configuring basic MNIST model")
-        model = make_model()
+        model = make_model(dataset=dataset, model=model_name)
         loss_object = tf.keras.losses.SparseCategoricalCrossentropy()
         optimizer = tf.keras.optimizers.Adam()
 
@@ -181,7 +195,7 @@ def compare_checkpoint_loss_curves(n_epochs: int = 1):
         return orig_losses
 
     def test_checkpointed(train_ds, test_ds, solver, epochs=1):
-        check_model = _build_model_via_solver(train_ds.element_spec, solver)
+        check_model = _build_model_via_solver(dataset, model_name, train_ds.element_spec, solver)
         _, train_step_check, test_step_check, train_loss, train_accuracy, test_loss, test_accuracy = check_model
         logging.info("Training checkpointed model")
         sqrtn_losses = train_model(
@@ -202,23 +216,23 @@ def compare_checkpoint_loss_curves(n_epochs: int = 1):
 
     sns.set_style("darkgrid")
 
-    train_ds, test_ds = get_data()
+    train_ds, test_ds = get_data(dataset, batch_size=batch_size)
     data = {
         "baseline": (test_baseline(train_ds, test_ds, n_epochs)),
         "checkpoint_all": (test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=n_epochs)),
         "checkpoint_sqrtn_ap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_ap, epochs=n_epochs)),
-        "checkpoint_sqrtn_noap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_noap, epochs=n_epochs)),
+        # "checkpoint_sqrtn_noap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_noap, epochs=n_epochs)),
     }
 
     for loss_name, loss_data in data.items():
         plt.plot(loss_data, label=loss_name)
     plt.legend(loc="upper right")
     (checkmate_data_dir() / "exec").mkdir(parents=True, exist_ok=True)
-    plt.savefig(checkmate_data_dir() / "exec" / "test.pdf")
-    plt.savefig(checkmate_data_dir() / "exec" / "test.png")
+    plt.savefig(checkmate_data_dir() / "exec" / "{}_{}_bs{}_epochs{}.pdf".format(dataset, model_name, batch_size, n_epochs))
 
 
 if __name__ == "__main__":
     tf.compat.v1.logging.set_verbosity("ERROR")
-    save_checkpoint_chrome_trace(checkmate_data_dir() / "profile_exec")
-    # compare_checkpoint_loss_curves(n_epochs=5)
+    # save_checkpoint_chrome_trace(checkmate_data_dir() / "profile_exec")
+    # compare_checkpoint_loss_curves(dataset='mnist', model_name='test', n_epochs=1)
+    compare_checkpoint_loss_curves(dataset="cifar10", model_name="ResNet50", n_epochs=1, batch_size=1)
