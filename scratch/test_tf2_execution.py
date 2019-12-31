@@ -225,7 +225,7 @@ def compare_checkpoint_loss_curves(dataset: str, model_name: str, n_epochs: int 
         "baseline": (test_baseline(train_ds, test_ds, n_epochs)),
         "checkpoint_all": (test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=n_epochs)),
         "checkpoint_sqrtn_ap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_ap, epochs=n_epochs)),
-        "checkpoint_sqrtn_noap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_noap, epochs=n_epochs)),
+        # "checkpoint_sqrtn_noap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_noap, epochs=n_epochs)),
     }
 
     for loss_name, loss_data in data.items():
@@ -233,8 +233,10 @@ def compare_checkpoint_loss_curves(dataset: str, model_name: str, n_epochs: int 
     plt.legend(loc="upper right")
     (checkmate_data_dir() / "exec").mkdir(parents=True, exist_ok=True)
     plt.savefig(checkmate_data_dir() / "exec" / "{}_{}_bs{}_epochs{}.pdf".format(dataset, model_name, batch_size, n_epochs))
-    with (checkmate_data_dir() / "exec" / "{}_{}_bs{}_epochs{}.json".format(dataset, model_name, batch_size, n_epochs)).open('w'):
-        json.dump(data)
+    with (checkmate_data_dir() / "exec" / "{}_{}_bs{}_epochs{}.json".format(dataset, model_name, batch_size, n_epochs)).open(
+        "w"
+    ) as f:
+        json.dump(data, f)
 
 
 if __name__ == "__main__":
