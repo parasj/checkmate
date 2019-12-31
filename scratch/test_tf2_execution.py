@@ -1,6 +1,8 @@
+import json
 import logging
 import os
 from pathlib import Path
+import itertools
 
 import tensorflow as tf
 from tqdm import tqdm
@@ -76,11 +78,13 @@ def train_model(train_ds, test_ds, train_step, test_step, train_loss, train_accu
         test_loss.reset_states()
         test_accuracy.reset_states()
 
-        for images, labels in tqdm(train_ds, "Train", total=len(list(train_ds))):
+        train_ds_limit = list(itertools.islice(train_ds, 1000))
+        for images, labels in tqdm(train_ds_limit, "Train", total=len(list(train_ds_limit))):
             train_step(images, labels)
             train_losses.append(train_loss.result())
 
-        for images, labels in tqdm(test_ds, "Test", total=len(list(test_ds))):
+        test_ds_limit = list(itertools.islice(test_ds, 1000))
+        for images, labels in tqdm(test_ds_limit, "Test", total=len(list(test_ds_limit))):
             test_step(images, labels)
 
         print(
@@ -221,7 +225,7 @@ def compare_checkpoint_loss_curves(dataset: str, model_name: str, n_epochs: int 
         "baseline": (test_baseline(train_ds, test_ds, n_epochs)),
         "checkpoint_all": (test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=n_epochs)),
         "checkpoint_sqrtn_ap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_ap, epochs=n_epochs)),
-        # "checkpoint_sqrtn_noap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_noap, epochs=n_epochs)),
+        "checkpoint_sqrtn_noap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_noap, epochs=n_epochs)),
     }
 
     for loss_name, loss_data in data.items():
@@ -229,6 +233,8 @@ def compare_checkpoint_loss_curves(dataset: str, model_name: str, n_epochs: int 
     plt.legend(loc="upper right")
     (checkmate_data_dir() / "exec").mkdir(parents=True, exist_ok=True)
     plt.savefig(checkmate_data_dir() / "exec" / "{}_{}_bs{}_epochs{}.pdf".format(dataset, model_name, batch_size, n_epochs))
+    with (checkmate_data_dir() / "exec" / "{}_{}_bs{}_epochs{}.json".format(dataset, model_name, batch_size, n_epochs)).open('w'):
+        json.dump(data)
 
 
 if __name__ == "__main__":
@@ -236,3 +242,4 @@ if __name__ == "__main__":
     # save_checkpoint_chrome_trace(checkmate_data_dir() / "profile_exec")
     # compare_checkpoint_loss_curves(dataset='mnist', model_name='test', n_epochs=1)
     compare_checkpoint_loss_curves(dataset="cifar10", model_name="ResNet50", n_epochs=1, batch_size=1)
+    # compare_checkpoint_loss_curves(dataset="cifar10", model_name="VGG16", n_epochs=1, batch_size=1)
