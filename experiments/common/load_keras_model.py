@@ -36,8 +36,7 @@ try:
     MODEL_NAMES.extend(SEGMENTATION_MODEL_NAMES)
     NUM_SEGMENTATION_CLASSES = 19  # Cityscapes has 19 evaluation classes
 except ImportError as e:
-    logging.exception(e)
-    logging.error("Failed to load segmentation model names, skipping...")
+    logging.info("Failed to load segmentation model names, skipping...")
     SEGMENTATION_MODEL_NAMES = []
 
 
@@ -69,7 +68,7 @@ def linear_model(i, input_shape=(224, 224, 3), num_classes=1000):
     return tf.keras.Model(inputs=input, outputs=predictions)
 
 
-def get_keras_model(model_name: str, input_shape: Optional[Tuple[int, ...]] = None, num_classes=None, pretrained=False):
+def get_keras_model(model_name: str, input_shape: Optional[Tuple[int, ...]] = None, num_classes=1000, pretrained=False):
     if input_shape is not None:
         input_shape = tuple(input_shape)
 
