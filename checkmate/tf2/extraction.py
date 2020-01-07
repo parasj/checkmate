@@ -1,3 +1,4 @@
+import numpy as np
 from checkmate.core.dfgraph import DFGraph
 from checkmate.core.graph_builder import GraphBuilder
 
@@ -34,7 +35,8 @@ def dfgraph_from_tf_function(fn) -> DFGraph:
 
     # add nodes to dependency graph
     for op in ops:
-        gb.add_node(op.name, cpu_cost=1, ram_cost=1, backward=op.name in grad_nodes)
+        op_ram_cost = sum([np.prod(out.shape) * out.dtype.size for out in op.outputs])
+        gb.add_node(op.name, cpu_cost=1, ram_cost=op_ram_cost, backward=op.name in grad_nodes)
 
     # build dependency graph
     for op in ops:
