@@ -68,7 +68,9 @@ def linear_model(i, input_shape=(224, 224, 3), num_classes=1000):
     return tf.keras.Model(inputs=input, outputs=predictions)
 
 
-def get_keras_model(model_name: str, input_shape: Optional[Tuple[int, ...]] = None, num_classes=1000, pretrained=False):
+def get_keras_model(
+    model_name: str, input_shape: Optional[Tuple[int, ...]] = (224, 224, 3), num_classes=1000, pretrained=False
+):
     if input_shape is not None:
         input_shape = tuple(input_shape)
 
