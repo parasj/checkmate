@@ -27,7 +27,7 @@ def get_data(dataset: str, batch_size=32):
         dataset = eval("tf.keras.datasets.{}".format(dataset))
         (x_train, y_train), (x_test, y_test) = dataset.load_data()
         x_train, x_test = x_train / 255.0, x_test / 255.0
-        if dataset is "mnist":
+        if dataset == "mnist":
             x_train = x_train[..., tf.newaxis]
             x_test = x_test[..., tf.newaxis]
         train_ds = tf.data.Dataset.from_tensor_slices((x_train, y_train)).batch(batch_size)
