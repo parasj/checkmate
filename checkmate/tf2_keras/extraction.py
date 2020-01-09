@@ -4,7 +4,6 @@ from typing import Optional
 
 import tensorflow as tf
 
-from checkmate.core.utils.common import merge_dicts
 from experiments.common.profile.cost_model import CostModel  # todo this really shouldn't be in the core package
 from checkmate.core import dfgraph
 from checkmate.tf2_keras.extraction_hooks import op_hook, MEMORY_MULTIPLIER
@@ -14,6 +13,13 @@ try:
 except ImportError as e:
     # noinspection PyUnresolvedReferences
     from tensorflow.keras.backend import count_params  # TF r1.14
+
+
+def merge_dicts(*dict_args):
+    result = {}
+    for dictionary in dict_args:
+        result.update(dictionary)
+    return result
 
 
 def dfgraph_from_keras(
