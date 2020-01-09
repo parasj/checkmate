@@ -6,10 +6,6 @@ from checkmate.core.schedule import OperatorEvaluation, Schedule
 
 
 def can_replace(orig, replace):
-    # if t1.op._original_op != None:
-    #    o1 = t1.op._original_op
-    # else:
-    #    o1 = t1.op
     replace_op = replace.op if replace.op._original_op is None else replace.op._original_op
     return orig.op == replace_op and orig.value_index == replace.value_index
 
@@ -32,7 +28,6 @@ def edit_graph(fxn, op_dict, schedule: Schedule):
         if type(inst) == OperatorEvaluation:
             args = [arg for i in inst.arg_regs for arg in registers[i]]
             op = op_dict[inst.id]
-            # assert len(op.outputs) == 1, "op {} which output two tensors not yet supported".format(op.name)
 
             # duplicate rematerialized operation
             new_op = op if op in output_ops else copy_op(op, "{}_copy_at_sched_idx{}".format(op.name, i))

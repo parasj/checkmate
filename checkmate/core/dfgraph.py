@@ -34,10 +34,12 @@ class DFGraph:
         self.cost_ram_parameters = cost_ram_parameters
 
     @property
+    @lru_cache(maxsize=1)
     def vfwd(self):
         return list(filter(lambda x: x not in self.backward_nodes, self.v))
 
     @property
+    @lru_cache(maxsize=1)
     def vbwd(self):
         return list(filter(lambda x: x in self.backward_nodes, self.v))
 
@@ -88,7 +90,7 @@ class DFGraph:
         return gcd(*values)
 
     @property
-    @lru_cache(maxsize=None)
+    @lru_cache(maxsize=1)
     def articulation_points(self) -> Set[Vertex]:
         """Determine checkpointable nodes in a forward graph (not backward)"""
         E = list(self.edge_list_fwd)
