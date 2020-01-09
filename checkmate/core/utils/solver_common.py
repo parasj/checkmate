@@ -29,11 +29,12 @@ def gen_s_matrix_fixed_checkpoints(g: DFGraph, segment_set: Set[Vertex]):
     T = len(g.vfwd)
     Ttotal = g.size
     segment_set = list(sorted(segment_set))
-    S = setup_implied_s_backwards(g)
+    S = np.zeros((g.size, g.size), dtype=SOLVER_DTYPE)
     # set minimum input requirements
     for v in g.v:
         for u in g.predecessors(v):
-            S[v, u] = 1
+            for t in range(u + 1, v):
+                S[t, u] = 1
 
     # stripe every k nodes
     for t in range(1, Ttotal):
@@ -66,6 +67,7 @@ def gen_s_matrix_fixed_checkpoints(g: DFGraph, segment_set: Set[Vertex]):
     #             if back_i is not None and back_i < back_t:
     #                 S[back_t, back_i] = 1
 
+    S = setup_implied_s_backwards(g, S)
     return S
 
 

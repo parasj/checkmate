@@ -8,7 +8,7 @@ from checkmate.core.utils.scheduler import schedule_from_rs
 from checkmate.core.utils.timer import Timer
 
 
-def solve_chen_greedy(g: DFGraph, segment_mem_B: int, use_actuation_points: bool):
+def solve_chen_greedy(g: DFGraph, segment_mem_B: int, use_actuation_points: bool = True):
     with Timer("solve_chen_greedy") as timer_solve:
         C = g.articulation_points if use_actuation_points else g.v
         temp = 0
@@ -33,7 +33,7 @@ def solve_chen_greedy(g: DFGraph, segment_mem_B: int, use_actuation_points: bool
     )
 
 
-def solve_chen_sqrtn(g: DFGraph, use_actuation_points: bool) -> ScheduledResult:
+def solve_chen_sqrtn(g: DFGraph, use_actuation_points: bool = True) -> ScheduledResult:
     with Timer("solve_chen_sqrtn") as timer_solve:
         C = g.articulation_points if use_actuation_points else g.v
         k = int(math.sqrt(len(C)))
