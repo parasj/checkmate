@@ -6,7 +6,7 @@ import seaborn as sns
 from checkmate.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
 from checkmate.tf2_keras.extraction import dfgraph_from_keras
 from experiments.common.definitions import checkmate_data_dir
-from experiments.common.load_keras_model import get_keras_model
+from checkmate.tf2.load_keras_model import get_keras_model
 
 if __name__ == "__main__":
     # get sample network and generate a graph on it

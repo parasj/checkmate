@@ -1,6 +1,6 @@
 import logging
 
-from experiments.common.load_keras_model import get_keras_model
+from checkmate.tf2.load_keras_model import get_keras_model
 from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
 from checkmate.tf2_keras.extraction import dfgraph_from_keras
 

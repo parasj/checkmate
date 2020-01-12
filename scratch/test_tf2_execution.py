@@ -13,7 +13,7 @@ from checkmate.core.utils.definitions import PathLike
 from checkmate.tf2.execution import edit_graph
 from checkmate.tf2.extraction import dfgraph_from_tf_function
 from experiments.common.definitions import checkmate_data_dir
-from experiments.common.load_keras_model import get_keras_model
+from checkmate.tf2.load_keras_model import get_keras_model
 
 logging.basicConfig(level=logging.INFO)
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
