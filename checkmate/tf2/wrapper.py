@@ -89,9 +89,9 @@ def compile_tf2(
 
     # create recomputed gradient function
     def clean_bs(tensorspec):
-        newshape = tensorspec.shape
+        newshape = list(tensorspec.shape)
         newshape[0] = None
-        return tf.TensorSpec(shape=newshape, dtype=tensorspec.dtype, name=tensorspec.name)
+        return tf.TensorSpec(shape=newshape, dtype=tensorspec.dtype)
 
     fn_nobatchsize = grads_check.get_concrete_function(clean_bs(input_spec), clean_bs(label_spec))
     grad_fn_check = edit_graph(fn_nobatchsize, g.op_dict, sched_result.schedule)
