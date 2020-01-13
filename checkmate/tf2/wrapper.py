@@ -88,7 +88,13 @@ def compile_tf2(
     logging.debug("[checkmate] Schedule solved")
 
     # create recomputed gradient function
-    grad_fn_check = edit_graph(fn, g.op_dict, sched_result.schedule)
+    def clean_bs(tensorspec):
+        newshape = tensorspec.shape
+        newshape[0] = None
+        return tf.TensorSpec(shape=newshape, dtype=tensorspec.dtype, name=tensorspec.name)
+
+    fn_nobatchsize = grads_check.get_concrete_function(clean_bs(input_spec), clean_bs(label_spec))
+    grad_fn_check = edit_graph(fn_nobatchsize, g.op_dict, sched_result.schedule)
 
     @tf.function
     def train_step_check(data, labels):
