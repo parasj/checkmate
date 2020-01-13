@@ -1,10 +1,8 @@
 import logging
 import subprocess
-from typing import Iterable
 
 import psutil
 import tensorflow as tf
-from tensorflow.python.client import device_lib
 
 from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
 from checkmate.tf2.execution import edit_graph
@@ -15,12 +13,13 @@ def _using_gpu_check():
     return tf.test.is_gpu_available() and tf.test.is_built_with_cuda()
 
 
-def _get_gpu_memory_map_mb():
+def nvidiasmi_query(query="memory.total"):
     # from https://discuss.pytorch.org/t/access-gpu-memory-usage-in-pytorch/3192/4
-    mem = subprocess.check_output(["nvidia-smi", "--query-gpu=memory.free", "--format=csv,nounits,noheader"], encoding="utf-8")
-    gpu_memory = [int(x) for x in mem.strip().split("\n")]
-    gpu_memory_map = dict(zip(range(len(gpu_memory)), gpu_memory))
-    return gpu_memory_map
+    mem = subprocess.check_output(
+        ["nvidia-smi", "--query-gpu={}".format(query), "--format=csv,nounits,noheader"], encoding="utf-8"
+    )
+    query_result_list = [int(x) for x in mem.strip().split("\n")]
+    return dict(zip(range(len(query_result_list)), query_result_list))
 
 
 def compile_tf2(
@@ -54,10 +53,10 @@ def compile_tf2(
     # query budget if not specified
     if budget == "auto":
         if _using_gpu_check():  # choose based on available GPU RAM
-            gpu_ram = _get_gpu_memory_map_mb()
+            gpu_ram = nvidiasmi_query("memory.total")
             budget = min(gpu_ram.values()) * 0.9
             logging.info(
-                "[checkmate] No budget specified; defaulting to the minimum amount of free GPU RAM on any single "
+                "[checkmate] No budget specified; defaulting to the minimum amount of total GPU RAM on any single "
                 "GPU, {0:.2f}MB".format(budget)
             )
         else:  # choose based available system memory
