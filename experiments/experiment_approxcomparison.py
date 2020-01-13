@@ -1,5 +1,4 @@
 import argparse
-import logging
 import pickle
 
 import matplotlib.pyplot as plt
@@ -7,13 +6,12 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory, pretty_platform_name
+from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory
 from experiments.common.profile.cost_model import CostModel
-from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model, CHAIN_GRAPH_MODELS
+from checkmate.tf2.load_keras_model import MODEL_NAMES, get_keras_model
 from experiments.common.graph_plotting import plot_schedule
 from experiments.common.definitions import checkmate_data_dir
 from checkmate.tf2_keras.extraction import dfgraph_from_keras
-from checkmate.core.utils.timer import Timer
 from checkmate.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
 from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
 from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all

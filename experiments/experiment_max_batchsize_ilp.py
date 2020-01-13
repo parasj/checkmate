@@ -12,7 +12,7 @@ import tensorflow as tf
 
 from experiments.common.definitions import checkmate_data_dir
 from experiments.common.graph_plotting import plot_dfgraph, plot_schedule
-from experiments.common.load_keras_model import MODEL_NAMES, get_keras_model
+from checkmate.tf2.load_keras_model import MODEL_NAMES, get_keras_model
 from experiments.common.profile.cost_model import CostModel
 from experiments.common.profile.platforms import PLATFORM_CHOICES, platform_memory
 from experiments.solver_ilp_max_batchsize import MaxBatchILPSolver

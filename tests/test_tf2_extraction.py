@@ -1,11 +1,12 @@
 import tensorflow as tf
 
 from checkmate.tf2.extraction import dfgraph_from_tf_function
-from experiments.common.load_keras_model import get_keras_model
+from checkmate.tf2.load_keras_model import get_keras_model
 
 
 def test_mlpblock_extract():
     vgg = get_keras_model("VGG16")
+
     @tf.function
     def get_grads(inputs):
         y = vgg(inputs)

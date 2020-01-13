@@ -12,6 +12,7 @@ setup(
         "pandas",
         "tensorflow>=2.0.0",
         "toposort",
+        "psutil",
     ],
     extras_require={
         "gpu": ["tensorflow-gpu>=2.0.0"],
