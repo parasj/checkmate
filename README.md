@@ -16,6 +16,7 @@ pip install https://github.com/parasj/checkmate/archive/master.zip#egg=checkmate
 
 
 
+
 # Citation
 If you use Checkmate in your work, please cite us with:
 ```
