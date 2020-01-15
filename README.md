@@ -1,22 +1,36 @@
 ![Checkmate logo](https://checkmateai.github.io/img/dark_logo.png)
 
-# Training huge DNNs on a single GPU
 [![Actions Status](https://github.com/parasj/checkmate/workflows/Python%20package%20testsuite%20(checkmate)/badge.svg)](https://github.com/parasj/checkmate/actions)
 
-**See the paper**: https://arxiv.org/abs/1910.02653
+*See the paper!* [https://arxiv.org/abs/1910.02653](https://arxiv.org/abs/1910.02653)
 
 `checkmate` breaks the GPU memory wall by enabling researchers to train large state-of-the-art models that do not fit in GPU memory. Checkmate applies optimal tensor rematerialization (as detailed in our paper at MLSys 2020) to trade off space and time.
 
-At the moment, Checkmate only supports TensorFlow 2.0. PyTorch support is coming soon! Please  
+At the moment, Checkmate only supports TensorFlow 2.0. PyTorch support is coming soon! To follow updates on PyTorch support, please suscribe to our [Google Group](https://groups.google.com/forum/#!forum/checkmate-dev).
 
+**Installation:** `pip install "https://github.com/parasj/checkmate/archive/master.zip#egg=checkmate"`
 
 # Quick start
-Adapt Keras model
+**Get started in 10m with our [TF2.0 quickstart tutorial](https://colab.research.google.com/github/parasj/checkmate/blob/master/tutorials/tutorial_basic_tf2_example.ipynb)**
 
-# Installation
-```bash
-pip install https://github.com/parasj/checkmate/archive/master.zip#egg=checkmate
+Adapt your Keras model to fit within the memory constraints of a single GPU:
+```python
+import checkmate
+model = tf.keras.applications.vgg19.VGG19(...)
+loss = tf.keras.losses.SparseCategoricalCrossentropy()
+optimizer = tf.keras.optimizers.Adam()
+model.compile(optimizer=optimizer, loss=loss)
+sample_input = train_ds.__iter__().__next__()
+
+train_iteration = checkmate.compile_tf2(
+    model,
+    loss=loss,
+    optimizer=optimizer,
+    input_spec=sample_input[0],  # retrieve first element of dataset
+    label_spec=sample_input[1]
+)
 ```
+
 
 # Citation
 If you use Checkmate in your work, please cite us with:
