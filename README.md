@@ -20,18 +20,10 @@ Adapt your Keras model to fit within the memory constraints of a single GPU:
 ```python
 import checkmate
 model = tf.keras.applications.vgg19.VGG19(...)
-loss = tf.keras.losses.SparseCategoricalCrossentropy()
-optimizer = tf.keras.optimizers.Adam()
-model.compile(optimizer=optimizer, loss=loss)
-sample_input = train_ds.__iter__().__next__()
+...
 
-train_iteration_fn = checkmate.compile_tf2(
-    model,
-    loss=loss,
-    optimizer=optimizer,
-    input_spec=sample_input[0],  # retrieve first element of dataset
-    label_spec=sample_input[1]
-)
+train_iteration_fn = checkmate.compile_tf2(model, loss, optimizer,
+    input_spec=sample_input[0], label_spec=sample_input[1])
 
 for image, label in train_ds:
     prediction, loss = train_iteration_fn(image, label)
