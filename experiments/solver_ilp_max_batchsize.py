@@ -108,6 +108,25 @@ class MaxBatchILPSolver:
                     for eidx, (i, k) in enumerate(self.g.edge_list):
                         self.m.addLConstr(_max_num_hazards(t, i, k) * (1 - self.Free_E[t, eidx]), GRB.GREATER_EQUAL,
                                           _num_hazards(t, i, k))
+            #==additional, unnecessary constraints to increase tightness of relaxation
+            with self.profiler("Constraint: sum_k Free_{t,i,k} <= 1",
+                               extra_data={'T': str(T), 'budget': str(budget)}):
+                for t in range(T):
+                    for i in range(T):
+                        self.m.addLConstr(quicksum(self.Free_E[t, eidx] for eidx, (j, _) in enumerate(self.g.edge_list) if i == j), GRB.LESS_EQUAL, 1)
+            with self.profiler("Constraint: Free_{t,i,k} <= 1 - S_{t+1, i}",
+                               extra_data={'T': str(T), 'budget': str(budget)}):
+                for t in range(T-1):
+                    for eidx, (i, k) in enumerate(self.g.edge_list):
+                        self.m.addLConstr(self.Free_E[t, eidx] + self.S[t+1, i], GRB.LESS_EQUAL, 1)
+            with self.profiler("Constraint: Free_{t,i,k} <= 1 - R_{t, j}",
+                               extra_data={'T': str(T), 'budget': str(budget)}):
+                for t in range(T):
+                    for eidx, (i, k) in enumerate(self.g.edge_list):
+                        for j in self.g.successors(i):
+                            if j > k:
+                                self.m.addLConstr(self.Free_E[t, eidx] + self.R[t, j], GRB.LESS_EQUAL, 1)
+            #==end additional constraints
             with self.profiler("Constraint: initialize memory usage (includes spurious checkpoints)",
                                extra_data={'T': str(T), 'budget': str(budget)}):
                 for t in range(T):
