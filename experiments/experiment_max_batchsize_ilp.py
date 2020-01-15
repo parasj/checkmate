@@ -35,7 +35,7 @@ def extract_params():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     # due to bug on havoc, limit parallelism on high-core machines
     if os.cpu_count() > 48:
         os.environ["OMP_NUM_THREADS"] = "1"
@@ -77,7 +77,7 @@ if __name__ == "__main__":
                                    gurobi_params=param_dict, cpu_fwd_factor=2)
     ilp_solver.build_model()
     result, batch_size = ilp_solver.solve()
-    logging.info(f"Max batch size = {batch_size}")
+    logging.info(f"Max batch size = {int(batch_size)}")
 
     save_file = log_base / f'{model}_plot.png'
     plot(result, plot_mem_usage=True, save_file=save_file)

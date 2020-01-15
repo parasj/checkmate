@@ -81,10 +81,11 @@ def plot(sched_result: ScheduledResult, plot_mem_usage=False, save_file: Optiona
 
     if plot_mem_usage:
         fig, axs = plt.subplots(1, 4)
-        vmax = sched_result.schedule_aux_data.mem_grid
+        vmax = np.max(sched_result.schedule_aux_data.mem_grid)
         if sched_result.ilp_aux_data is not None:
             U = sched_result.ilp_aux_data.U
-            vmax = vmax if (U is None) else max(vmax, np.max(U))
+            if U is not None:
+                vmax = max(vmax, np.max(U)) 
         else:
             U = None
 

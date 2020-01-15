@@ -1,14 +1,15 @@
 # Checkmate: Breaking the Memory Wall with Optimal Tensor Rematerialization
 
-This document contains instructions for reproducing results in the MLSys 2020 paper "Checkmate: Breaking the Memory Wall with Optimal Tensor Rematerialization".
+This document contains instructions for reproducing plots in the MLSys 2020 paper "Checkmate: Breaking the Memory Wall with Optimal Tensor Rematerialization".
 
 ## Background
-`remat` is a package to compute schedules for rematerializing tensors in DFGraphs (tensor dataflow graphs). For details about our approach, please see the following paper,
+`remat` is a package to compute memory-efficient schedules for evaluating neural network dataflow graphs created by the backpropagation algorithm. To save memory, the package deletes and rematerializes intermediate values via recomputation. The schedule with minimum recomputation for a given memory budget is chosen by solving an integer linear program. For details about our approach, please see the following paper,
 ```
-@article{jain2019checkmate,
+@inproceedings{jain2019checkmate,
   title={Checkmate: Breaking the Memory Wall with Optimal Tensor Rematerialization},
   author={Jain, Paras and Jain, Ajay and Nrusimha, Aniruddha and Gholami, Amir and Abbeel, Pieter and Keutzer, Kurt and Stoica, Ion and Gonzalez, Joseph E},
-  journal={arXiv preprint arXiv:1910.02653},
+  booktitle = {Proceedings of the 3rd Conference on Machine Learning and Systems},
+  series = {MLSys 2020},
   year={2019}
 }
 ```
@@ -64,6 +65,7 @@ python experiments/experiment_budget_sweep.py --model-name "vgg_unet" -b 32 --pl
 ## Reproducing Figure 5: Maximum model batch size
 We provide instructions for the VGG19 architecture. Batch size can be maximized for other architectures by changing the `--model-name` argument to, e.g. `vgg_unet`, `MobileNet`, `segnet`, and `fcn_8`.
 
+### Maximum batch size using baseline strategies
 We find the maximum batch size that baselines can support by reevaluating our implementations of their strategies at each budget in a range. To run the baselines,
 ```
 python experiments/experiment_max_batchsize_baseline.py --model-name VGG19 --platform flops
@@ -78,22 +80,24 @@ This produces the following results,
 4     SolveStrategy.CHECKPOINT_ALL         164
 5        SolveStrategy.CHEN_GREEDY         260
 ```
-As VGG19 is a linear-chain architecture, the articulation point and linearized (NOAP) generalizations of baselines are the same. For the default resolution for the VGG19 implementation used in this repository, we find that checkpointing all nodes supports batch sizes up to 164 on a V100 (result 4), Chen's sqrt(n) strategy can achieve a batch size of 196, and Chen's greedy strategy can achieve a batch size of 260. The batch size reported for the checkpoint all baseline is lower than that in the paper as we computed the paper's number optimistically via a calculation that assumes activation memory scales linearly with batch size, whereas this code actually finds the schedule that retains all activations. Since submitting the paper, we also increased the number of points evaluated in the hyperparameter search for Chen's greedy baseline, improving its results slightly at the expense of longer solve time.
+As VGG19 is a linear-chain architecture, the articulation point and linearized (NOAP) generalizations of baselines are the same. For the default resolution for the VGG19 implementation used in this repository, we find that checkpointing all nodes supports batch sizes up to 164 on a V100 (result 4), Chen's sqrt(n) strategy can achieve a batch size of 196, and Chen's greedy strategy can achieve a batch size of 260. The batch size reported for the checkpoint all baseline is lower than that in the paper as we computed the paper's number optimistically via a calculation that assumes activation memory scales linearly with batch size, whereas this code actually finds the schedule that retains all activations. Since submitting the paper, we also increased the number of points evaluated in the hyperparameter search for Chen's greedy baseline, improving its results slightly at the expense of longer solve time. Results will be updated.
 
-The optimization problem used to generate Figure 5 is computationally intensive to solve, but reasonable for VGG19. To run the experiment (up to 10 minutes on 12 cores),
+### Maximum batch size using Checkmate
+The optimization problem used to generate Figure 5 is computationally intensive to solve, but reasonable for VGG19. To run the experiment (5-10 minutes on 12 cores),
 ```
 python experiments/experiment_max_batchsize_ilp.py --model-name VGG19 --platform flops --batch-size-min 160
 ```
-
 For other networks that take longer to solve, you can monitor the highest feasible batch size found during the solving process. During solving, Checkmate prints the best incumbent solution and lowest upper bound for the batch size. For example, in the following log message, `289.0...` denotes the highest batch size for which a schedule has been found so far (Incumbent), and `371.5...` denotes the lowest certifiable upper bound on the maximum batch size so far (BestBd). Solving will terminate when the incumbent and best bound have a sufficiently small gap.
 ```
 INFO:gurobipy: Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
 ...
 INFO:gurobipy:   117   133  350.00957    9  729  289.03459  371.53971  28.5%   576   77s
 ```
-The maximum batch size found is fractional as the optimization problem essentially maximizes a real multiplier for the memory consumption. Round this value down for integral batch size.
-
-You can terminate the solving process early by pressing Ctrl-C.
+Incumbents may be fractional as the optimization problem maximizes a real multiplier for the memory consumption. The final, max batch size found will be printed, e.g.:
+```
+INFO:root:Max batch size = 289
+```
+You can terminate the solving process early by pressing Ctrl-C if desired. After completion, the model, dataflow graph, and final schedule will be visualized as PNG, PDF and PNG files, respectively, in `data/max_batch_size_ilp/flops_VGG19_None/`.
 
 
 ## Troubleshooting
@@ -101,9 +105,8 @@ If Gurobi is unable to locate your license file, set its path via an environment
 ```
 export GRB_LICENSE_FILE=/path/to/gurobi.lic
 ```
-The licence is stored by default at `$HOME/gurobi.lic`.
+For example, the licence is stored by default at `$HOME/gurobi.lic`.
 
 
 ## All supported model architectures
-The following architectures are supported via the `--model-name` argument: DenseNet121,DenseNet169,DenseNet201,InceptionV3,MobileNet,MobileNetV2,NASNetLarge,NASNetMobile,ResNet101,ResNet101V2,ResNet152,ResNet152V2,ResNet50,ResNet50V2,VGG16,VGG19,Xception,fcn_32,fcn_32_mobilenet,fcn_32_resnet50,fcn_32_vgg,fcn_8,fcn_8_mobilenet,fcn_8_resnet50,fcn_8_vgg,linear0,linear1,linear10,linear11,linear12,linear13,linear14,linear15,linear16,linear17,linear18,linear19,linear2,linear20,linear21,linear22,linear23,linear24,linear25,linear26,linear27,linear28,linear29,linear3,linear30,linear31,linear4,linear5,linear6,linear7,linear8,linear9,mobilenet_segnet,mobilenet_unet,pspnet,pspnet_101,pspnet_50,resnet50_pspnet,resnet50_segnet,resnet50_unet,segnet,test,unet,unet_mini,vgg_pspnet,vgg_segnet,vgg_unet
-
+The following architectures are implemented via the `--model-name` argument: DenseNet121,DenseNet169,DenseNet201,InceptionV3,MobileNet,MobileNetV2,NASNetLarge,NASNetMobile,ResNet101,ResNet101V2,ResNet152,ResNet152V2,ResNet50,ResNet50V2,VGG16,VGG19,Xception,fcn_32,fcn_32_mobilenet,fcn_32_resnet50,fcn_32_vgg,fcn_8,fcn_8_mobilenet,fcn_8_resnet50,fcn_8_vgg,linear0,linear1,linear10,linear11,linear12,linear13,linear14,linear15,linear16,linear17,linear18,linear19,linear2,linear20,linear21,linear22,linear23,linear24,linear25,linear26,linear27,linear28,linear29,linear3,linear30,linear31,linear4,linear5,linear6,linear7,linear8,linear9,mobilenet_segnet,mobilenet_unet,pspnet,pspnet_101,pspnet_50,resnet50_pspnet,resnet50_segnet,resnet50_unet,segnet,test,unet,unet_mini,vgg_pspnet,vgg_segnet,vgg_unet
