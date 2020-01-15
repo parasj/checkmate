@@ -5,12 +5,12 @@ This document contains instructions for reproducing plots in the MLSys 2020 pape
 ## Background
 `remat` is a package to compute memory-efficient schedules for evaluating neural network dataflow graphs created by the backpropagation algorithm. To save memory, the package deletes and rematerializes intermediate values via recomputation. The schedule with minimum recomputation for a given memory budget is chosen by solving an integer linear program. For details about our approach, please see the following paper,
 ```
-@inproceedings{jain2019checkmate,
+@inproceedings{jain2020checkmate,
   title={Checkmate: Breaking the Memory Wall with Optimal Tensor Rematerialization},
   author={Jain, Paras and Jain, Ajay and Nrusimha, Aniruddha and Gholami, Amir and Abbeel, Pieter and Keutzer, Kurt and Stoica, Ion and Gonzalez, Joseph E},
   booktitle = {Proceedings of the 3rd Conference on Machine Learning and Systems},
   series = {MLSys 2020},
-  year={2019}
+  year={2020}
 }
 ```
 
@@ -45,49 +45,62 @@ Checkmate uses the Gurobi optimziation library to solve an integer linear progra
 This experiment evaluates rematerialization strategies at a range of memory budgets. In the MLSys 2020 submission, Figure 4 includes results for the VGG16, MobileNet, and U-Net computer vision neural network architectures.
 
 ### Figure 4, VGG16
-Results for VGG16 can be reproduced quickly, as the network is simple and small. Run the following command (expected runtime TODO):
+Results for VGG16 can be reproduced relatively quickly, as the network is simple and small. Run the following command:
 ```
-python experiments/experiment_budget_sweep.py --model-name "VGG16" -b 256 --platform p32xlarge
+$ python experiments/experiment_budget_sweep.py --model-name "VGG16" -b 256 --platform p32xlarge
 ```
 The error `ERROR:root:Infeasible model, check constraints carefully. Insufficient memory?` is expected. For some of the attempted memory budgets, Checkmate or a baseline with not be able to find a feasible (in-memory) schedule. The results plot will be written to `data/budget_sweep/p32xlarge_VGG16_256_None/plot_budget_sweep_VGG16_p32xlarge_b256.pdf`. The experiment uses a profile-based cost model based on the AWS p32xlarge server, which includes a NVIDIA V100 GPU.
 ### Figure 4, MobileNet
 Run the following command:
 ```
-python experiments/experiment_budget_sweep.py --model-name "MobileNet" -b 512 --platform p32xlarge
+$ python experiments/experiment_budget_sweep.py --model-name "MobileNet" -b 512 --platform p32xlarge
 ```
+The results plot will be written to `data/budget_sweep/p32xlarge_MobileNet_512_None/plot_budget_sweep_MobileNet_p32xlarge_b512.pdf`.
 ### Figure 4, U-Net
 Run the following command:
 ```
-python experiments/experiment_budget_sweep.py --model-name "vgg_unet" -b 32 --platform p32xlarge
+$ python experiments/experiment_budget_sweep.py --model-name "vgg_unet" -b 32 --platform p32xlarge
 ```
+The results plot will be written to `data/budget_sweep/p32xlarge_vgg_unet_32_None/plot_budget_sweep_vgg_unet_p32xlarge_b32.pdf`.
+
+The expected results plots form the subplots of Figure 4 in the paper.
 
 
-## Reproducing Figure 5: Maximum model batch size
-We provide instructions for the VGG19 architecture. Batch size can be maximized for other architectures by changing the `--model-name` argument to, e.g. `vgg_unet`, `MobileNet`, `segnet`, and `fcn_8`.
+## Reproducing Figure 6: Maximum model batch size
 
 ### Maximum batch size using baseline strategies
-We find the maximum batch size that baselines can support by reevaluating our implementations of their strategies at each budget in a range. To run the baselines,
+We find the maximum batch size that baselines can support by reevaluating our implementations of their strategies at each budget in a range. To run the baselines (7 minutes),
 ```
-python experiments/experiment_max_batchsize_baseline.py --model-name VGG19 --platform flops
+$ python experiments/experiment_max_batchsize_baseline.py --model-name VGG19 --batch-size-min 160 --batch-size-max 300 --batch-size-increment 1
 ```
-This produces the following results,
+For a coarser search, use `--batch-size-increment 8`. Arguments `--batch-size-min` and `--batch-size-max` control the search interval, allowing you to narrow the search range. The above command produces the following results,
 ```
                           strategy  batch_size
-0    SolveStrategy.CHEN_SQRTN_NOAP         196
-1         SolveStrategy.CHEN_SQRTN         196
-2   SolveStrategy.CHEN_GREEDY_NOAP         260
-3  SolveStrategy.CHECKPOINT_ALL_AP         164
-4     SolveStrategy.CHECKPOINT_ALL         164
-5        SolveStrategy.CHEN_GREEDY         260
+0    SolveStrategy.CHEN_SQRTN_NOAP         197
+1   SolveStrategy.CHEN_GREEDY_NOAP         266
+2     SolveStrategy.CHECKPOINT_ALL         167
+3  SolveStrategy.CHECKPOINT_ALL_AP         167
+4         SolveStrategy.CHEN_SQRTN         197
+5        SolveStrategy.CHEN_GREEDY         266
 ```
-As VGG19 is a linear-chain architecture, the articulation point and linearized (NOAP) generalizations of baselines are the same. For the default resolution for the VGG19 implementation used in this repository, we find that checkpointing all nodes supports batch sizes up to 164 on a V100 (result 4), Chen's sqrt(n) strategy can achieve a batch size of 196, and Chen's greedy strategy can achieve a batch size of 260. The batch size reported for the checkpoint all baseline is lower than that in the paper as we computed the paper's number optimistically via a calculation that assumes activation memory scales linearly with batch size, whereas this code actually finds the schedule that retains all activations. Since submitting the paper, we also increased the number of points evaluated in the hyperparameter search for Chen's greedy baseline, improving its results slightly at the expense of longer solve time. Results will be updated.
+Note that as VGG19 is a linear-chain architecture, the articulation point and linearized (NOAP) generalizations of baselines are the same. For the default resolution for the VGG19 implementation used in this repository, we find that checkpointing all nodes supports batch sizes up to 167 on a V100 (result 4), Chen's sqrt(n) strategy can achieve a batch size of 197, and Chen's greedy strategy can achieve a batch size of 266. The batch size reported for the checkpoint all baseline is lower than that in the paper as we computed the paper's number via a calculation that assumes activation memory scales linearly with batch size, whereas this code actually finds the schedule that retains all activations; this is more realistic. Since submitting the paper, we also modified the greedy and sqrtn baselines to more closely match the 2016 paper that proposed these heuristics, and increased number of hyperparameters searched for greedy, so results will slightly differ. Camera ready results will be updated. However, Checkmate results should be the same if sufficient time is allowed for optimization.
+
+Baseline commands (again, feel free to use `--batch-size-increment 8` to get approximate results):
+```
+$ python experiments/experiment_max_batchsize_baseline.py --model-name vgg_unet --batch-size-min 10 --batch-size-max 40 --batch-size-increment 1
+$ python experiments/experiment_max_batchsize_baseline.py --model-name fcn_8_vgg --batch-size-min 10 --batch-size-max 80 --batch-size-increment 1
+$ python experiments/experiment_max_batchsize_baseline.py --model-name segnet --batch-size-min 20 --batch-size-max 50 --batch-size-increment 1
+$ python experiments/experiment_max_batchsize_baseline.py --model-name ResNet50 --batch-size-min 90 --batch-size-max 200 --batch-size-increment 1
+$ python experiments/experiment_max_batchsize_baseline.py --model-name VGG19 --batch-size-min 160 --batch-size-max 300 --batch-size-increment 1
+$ python experiments/experiment_max_batchsize_baseline.py --model-name MobileNet --batch-size-min 200 --batch-size-max 650 --batch-size-increment 1
+```
 
 ### Maximum batch size using Checkmate
-The optimization problem used to generate Figure 5 is computationally intensive to solve, but reasonable for VGG19. To run the experiment (5-10 minutes on 12 cores),
+The optimization problem used to generate Figure 6 is computationally intensive to solve, but reasonable for VGG19. To run the experiment (about 10 minutes),
 ```
-python experiments/experiment_max_batchsize_ilp.py --model-name VGG19 --platform flops --batch-size-min 160
+$ python experiments/experiment_max_batchsize_ilp.py --model-name VGG19 --batch-size-min 160
 ```
-For other networks that take longer to solve, you can monitor the highest feasible batch size found during the solving process. During solving, Checkmate prints the best incumbent solution and lowest upper bound for the batch size. For example, in the following log message, `289.0...` denotes the highest batch size for which a schedule has been found so far (Incumbent), and `371.5...` denotes the lowest certifiable upper bound on the maximum batch size so far (BestBd). Solving will terminate when the incumbent and best bound have a sufficiently small gap.
+The argument `--num-threads <number>` can be used to enable multicore optimization, which significantly accelerates scheduling. For other networks that take longer to solve, you can monitor the highest feasible batch size found during the solving process. During solving, Checkmate prints the best incumbent solution and lowest upper bound for the batch size. For example, in the following log message, `289.0...` denotes the highest batch size for which a schedule has been found so far (Incumbent), and `371.5...` denotes the lowest certifiable upper bound on the maximum batch size so far (BestBd). Solving will terminate when the incumbent and best bound have a sufficiently small gap.
 ```
 INFO:gurobipy: Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
 ...
@@ -98,6 +111,18 @@ Incumbents may be fractional as the optimization problem maximizes a real multip
 INFO:root:Max batch size = 289
 ```
 You can terminate the solving process early by pressing Ctrl-C if desired. After completion, the model, dataflow graph, and final schedule will be visualized as PNG, PDF and PNG files, respectively, in `data/max_batch_size_ilp/flops_VGG19_None/`.
+
+ILP solve commands (provide `--num-threads <number>` to speed up solving):
+```
+$ python experiments/experiment_max_batchsize_ilp.py --model-name vgg_unet --batch-size-min 20  # Reaches 57 batch size after approx. 30 min (suboptimal)
+$ python experiments/experiment_max_batchsize_ilp.py --model-name fcn_8_vgg --batch-size-min 20  # Can reach at least 60. Reaches 57 batch size after approx. 10 min (suboptimal)
+$ python experiments/experiment_max_batchsize_ilp.py --model-name segnet --batch-size-min 20  # Can reach at least 62 batch size.
+$ python experiments/experiment_max_batchsize_ilp.py --model-name ResNet50 --batch-size-min 100  # Can reach at least 193. Very computationally intensive.
+                                                                                                 # In the paper, earlier, slower form of ILP was run for approx. 2 days.
+$ python experiments/experiment_max_batchsize_ilp.py --model-name VGG19 --batch-size-min 160  # Reaches 289 batch size after approx. 10 min (certifiably optimal)
+$ python experiments/experiment_max_batchsize_ilp.py --model-name MobileNet --batch-size-min 450  # Can reach at least 1105. Very computationally intensive.
+                                                                                                  # In the paper, earlier, slower form of ILP was run for approx. 2 days.
+```
 
 
 ## Troubleshooting

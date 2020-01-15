@@ -114,16 +114,16 @@ if __name__ == "__main__":
 
         ray.shutdown()
 
-    max_batch_sizes = defaultdict(int)
-    for bs, strategy_results in result_dict.items():
-        for strategy, results in strategy_results.items():
-            is_valid = lambda r: r.schedule_aux_data is not None \
-                                 and r.schedule_aux_data.peak_ram <= platform_ram - bs_param_ram_cost[bs] \
-                                 and r.schedule_aux_data.cpu <= bs_fwd2xcost[bs]
-            if any(map(is_valid, results)):
-                max_batch_sizes[strategy] = max(bs, max_batch_sizes[strategy])
-                logging.info(f"SolveStrategy {strategy} succeeded at batch size {bs}")
+        max_batch_sizes = defaultdict(int)
+        for bs, strategy_results in result_dict.items():
+            for strategy, results in strategy_results.items():
+                is_valid = lambda r: r.schedule_aux_data is not None \
+                                    and r.schedule_aux_data.peak_ram <= platform_ram - bs_param_ram_cost[bs] \
+                                    and r.schedule_aux_data.cpu <= bs_fwd2xcost[bs]
+                if any(map(is_valid, results)):
+                    max_batch_sizes[strategy] = max(bs, max_batch_sizes[strategy])
+                    logging.info(f"SolveStrategy {strategy} succeeded at batch size {bs}")
 
-    df = pandas.DataFrame([{'strategy': k, 'batch_size': v} for k, v in max_batch_sizes.items()])
-    df.to_csv(log_base / 'max_batch_size.csv')
-    print(df)
+        df = pandas.DataFrame([{'strategy': k, 'batch_size': v} for k, v in max_batch_sizes.items()])
+        df.to_csv(log_base / 'max_batch_size.csv')
+        print(df)

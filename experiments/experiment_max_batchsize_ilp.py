@@ -28,6 +28,7 @@ def extract_params():
     parser.add_argument('--model-name', default="VGG16", choices=list(sorted(MODEL_NAMES)))
     parser.add_argument("-s", "--input-shape", type=int, nargs="+", default=[])
     parser.add_argument("--batch-size-min", type=int, default=1)
+    parser.add_argument("--num-threads", type=int, default=1)
 
     _args = parser.parse_args()
     _args.input_shape = _args.input_shape if _args.input_shape else None
@@ -71,7 +72,7 @@ if __name__ == "__main__":
     model_file = str(log_base / f"max_bs_{model_name}.mps")
     param_dict = {'LogToConsole': 1,
                   'LogFile': str(log_base / f"max_bs_{model_name}.solve.log"),
-                  'Threads': os.cpu_count(),
+                  'Threads': args.num_threads,
                   'TimeLimit': math.inf}
     ilp_solver = MaxBatchILPSolver(g, budget=platform_memory("p32xlarge") - g.cost_ram_fixed, model_file=model_file,
                                    gurobi_params=param_dict, cpu_fwd_factor=2)
