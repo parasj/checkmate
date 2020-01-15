@@ -24,6 +24,6 @@ setup(
             "seaborn",
             "tqdm",
         ],
-        "test": ["graphviz", "pytest"],
+        "test": ["graphviz", "pytest", "tensorflow>=2.0.0"],
     },
 )
