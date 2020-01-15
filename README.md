@@ -8,9 +8,12 @@
 
 At the moment, Checkmate only supports TensorFlow 2.0. PyTorch support is coming soon! To follow updates on PyTorch support, please suscribe to our [Google Group](https://groups.google.com/forum/#!forum/checkmate-dev).
 
-**Installation:** `pip install "https://github.com/parasj/checkmate/archive/master.zip#egg=checkmate"`
+## Installation
+Get started with `pip install "https://github.com/parasj/checkmate/archive/master.zip#egg=checkmate"`
 
-# Quick start
+Ensure you have installed either `tensorflow-gpu>=2.0.0` or `tensorflow`.
+
+## Quick start
 **Get started in 10m with our [TF2.0 quickstart tutorial](https://colab.research.google.com/github/parasj/checkmate/blob/master/tutorials/tutorial_basic_tf2_example.ipynb)**
 
 Adapt your Keras model to fit within the memory constraints of a single GPU:
@@ -22,13 +25,16 @@ optimizer = tf.keras.optimizers.Adam()
 model.compile(optimizer=optimizer, loss=loss)
 sample_input = train_ds.__iter__().__next__()
 
-train_iteration = checkmate.compile_tf2(
+train_iteration_fn = checkmate.compile_tf2(
     model,
     loss=loss,
     optimizer=optimizer,
     input_spec=sample_input[0],  # retrieve first element of dataset
     label_spec=sample_input[1]
 )
+
+for image, label in train_ds:
+    prediction, loss = train_iteration_fn(image, label)
 ```
 
 
