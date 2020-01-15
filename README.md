@@ -1,7 +1,17 @@
-# Checkmate: Training huge DNNs on a single GPU
+![Checkmate logo](https://checkmateai.github.io/img/dark_logo.png)
+
+# Training huge DNNs on a single GPU
 [![Actions Status](https://github.com/parasj/checkmate/workflows/Python%20package%20testsuite%20(checkmate)/badge.svg)](https://github.com/parasj/checkmate/actions)
 
-`checkmate` is a package to compute schedules for rematerializing tensors in DFGraphs (tensor dataflow graphs).
+**See the paper**: https://arxiv.org/abs/1910.02653
+
+`checkmate` breaks the GPU memory wall by enabling researchers to train large state-of-the-art models that do not fit in GPU memory. Checkmate applies optimal tensor rematerialization (as detailed in our paper at MLSys 2020) to trade off space and time.
+
+At the moment, Checkmate only supports TensorFlow 2.0. PyTorch support is coming soon! Please  
+
+
+# Quick start
+Adapt Keras model
 
 # Installation
 ```bash
