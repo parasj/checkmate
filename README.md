@@ -22,7 +22,7 @@ import checkmate
 model = tf.keras.applications.vgg19.VGG19(...)
 ...
 
-train_iteration_fn = checkmate.compile_tf2(model, loss, optimizer,
+train_iteration_fn = checkmate.tf2.compile(model, loss, optimizer,
     input_spec=sample_input[0], label_spec=sample_input[1])
 
 for image, label in train_ds:

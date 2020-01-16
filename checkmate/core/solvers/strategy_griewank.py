@@ -1,5 +1,4 @@
 import logging
-import pathlib
 import shutil
 import urllib.request
 
@@ -9,7 +8,7 @@ import pandas as pd
 from checkmate.core.dfgraph import DFGraph
 from checkmate.core.utils.solver_common import solve_r_opt, setup_implied_s_backwards
 from checkmate.core.utils.timer import Timer
-from experiments.common.definitions import checkmate_cache_dir
+from checkmate.plot.definitions import checkmate_cache_dir
 
 
 def solve_griewank(g: DFGraph, budget: int):
