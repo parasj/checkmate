@@ -4,7 +4,7 @@ import logging
 from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
 from checkmate.core.utils.timer import Timer
 from checkmate.tf2.extraction import dfgraph_from_tf_function
-from checkmate.tf2.load_keras_model import get_keras_model
+from checkmate.tf2.util.load_keras_model import get_keras_model
 
 BS = 128
 
