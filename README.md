@@ -14,7 +14,7 @@ Get started with `pip install "https://github.com/parasj/checkmate/archive/maste
 Ensure you have installed either `tensorflow-gpu>=2.0.0` or `tensorflow`.
 
 ## Quick start
-**Get started in 10m with our [TF2.0 quickstart tutorial](https://colab.research.google.com/github/parasj/checkmate/blob/master/tutorials/tutorial_basic_tf2_example.ipynb)**
+**Get started in 5m with our [TF2.0 quickstart tutorial](https://colab.research.google.com/github/parasj/checkmate/blob/master/tutorials/tutorial_basic_tf2_example.ipynb)**
 
 Adapt your Keras model to fit within the memory constraints of a single GPU:
 ```python
@@ -52,7 +52,8 @@ If you use Checkmate in your work, please cite us with:
 ```
 @article{jain2019checkmate,
   title={Checkmate: Breaking the Memory Wall with Optimal Tensor Rematerialization},
-  author={Jain, Paras and Jain, Ajay and Nrusimha, Aniruddha and Gholami, Amir and Abbeel, Pieter and Keutzer, Kurt and Stoica, Ion and Gonzalez, Joseph E},
+  author={Jain, Paras and Jain, Ajay and Nrusimha, Aniruddha and Gholami, Amir and
+          Abbeel, Pieter and Keutzer, Kurt and Stoica, Ion and Gonzalez, Joseph E},
   journal={arXiv preprint arXiv:1910.02653},
   year={2020}
 }
