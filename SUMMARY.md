@@ -1,3 +1,5 @@
-# Summary
-<!-- https://github.com/GitbookIO/gitbook/blob/master/docs/pages.md -->
-* [Getting started](docs/getting-started.md)
+# Table of contents
+
+* [Introduction](README.md)
+* [Getting started](getting-started.md)
+
