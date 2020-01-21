@@ -1,8 +1,6 @@
 # Introduction
 
-![Checkmate logo](https://checkmateai.github.io/img/dark_logo.png)
-
-[!\[Actions Status\]\(https://github.com/parasj/checkmate/workflows/Python%20package%20testsuite%20\(checkmate\)/badge.svg\)](https://github.com/parasj/checkmate/actions)
+![](https://checkmateai.github.io/img/dark_logo.png)
 
 _See the paper!_ [https://arxiv.org/abs/1910.02653](https://arxiv.org/abs/1910.02653)
 
