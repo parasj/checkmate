@@ -1,4 +1,4 @@
-![](https://checkmateai.github.io/img/dark_logo.png)
+# Introduction
 
 _See the paper!_ [https://arxiv.org/abs/1910.02653](https://arxiv.org/abs/1910.02653)
 
