@@ -4,7 +4,7 @@ _See the paper!_ [https://arxiv.org/abs/1910.02653](https://arxiv.org/abs/1910.0
 
 `checkmate` breaks the GPU memory wall by enabling researchers to train large state-of-the-art models that do not fit in GPU memory. Checkmate applies optimal tensor rematerialization \(as detailed in our paper at MLSys 2020\) to trade off space and time.
 
-At the moment, Checkmate only supports TensorFlow 2.0. PyTorch support is coming soon! To follow updates on PyTorch support, please suscribe to our [Google Group](https://groups.google.com/forum/#!forum/checkmate-dev).
+At the moment, Checkmate only supports TensorFlow 2.0. PyTorch support is coming soon!<!-- To follow updates on PyTorch support, please suscribe to our [Google Group](https://groups.google.com/forum/#!forum/checkmate-dev). -->
 
 ## Installation
 
