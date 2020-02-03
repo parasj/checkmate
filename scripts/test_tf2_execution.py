@@ -2,7 +2,7 @@ import json
 import logging
 import os
 from pathlib import Path
-import itertools
+import itertools, contextlib
 
 import tensorflow as tf
 from tqdm import tqdm
@@ -239,7 +239,21 @@ def compare_checkpoint_loss_curves(dataset: str, model_name: str, n_epochs: int 
         json.dump(data, f)
 
 
+@contextlib.contextmanager
+def options(options):
+    old_opts = tf.config.optimizer.get_experimental_options()
+    tf.config.optimizer.set_experimental_options(options)
+    try:
+        yield
+    finally:
+        tf.config.optimizer.set_experimental_options(old_opts)
+
 if __name__ == "__main__":
+    tf.config.optimizer.set_jit(False)
+    opts = {}
+    opts["dependency"] = False
+    opts["remapper"] = False
+    options(opts)
     tf.compat.v1.logging.set_verbosity("ERROR")
     # save_checkpoint_chrome_trace(checkmate_data_dir() / "profile_exec")
     # compare_checkpoint_loss_curves(dataset='mnist', model_name='test', n_epochs=1)
