@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import itertools, contextlib
 
+import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
 
@@ -221,12 +222,23 @@ def compare_checkpoint_loss_curves(dataset: str, model_name: str, n_epochs: int 
     sns.set_style("darkgrid")
 
     train_ds, test_ds = get_data(dataset, batch_size=batch_size)
-    data = {
-        "baseline": (test_baseline(train_ds, test_ds, n_epochs)),
-        "checkpoint_all": (test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=n_epochs)),
-        "checkpoint_sqrtn_ap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_ap, epochs=n_epochs)),
+    memdmp = "TF_BFC_MEMORY_DUMP"
+    if memdmp in os.environ.keys():
+        memdir = os.environ[memdmp]
+    else:
+        memdir = False
+
+    data = {}
+
+    #TODO test:  does changing order change results?  If so, refactor
+
+    if memdir: os.environ[memdmp] = memdir + "/baseline"
+    data["baseline"]= listify(test_baseline(train_ds, test_ds, n_epochs)),
+    data["checkpoint_all"]= listify(test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=n_epochs)),
+    if memdir: os.environ[memdmp] = memdir + "/ckpt_all"
+    data["checkpoint_sqrtn_ap"]= listify(test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_ap, epochs=n_epochs)),
+    if memdir: os.environ[memdmp] = memdir + "/ckpt_sqrt"
         # "checkpoint_sqrtn_noap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_noap, epochs=n_epochs)),
-    }
 
     for loss_name, loss_data in data.items():
         plt.plot(loss_data, label=loss_name)
@@ -238,7 +250,8 @@ def compare_checkpoint_loss_curves(dataset: str, model_name: str, n_epochs: int 
     ) as f:
         json.dump(data, f)
 
-
+def listify(res):
+    return np.array(res).tolist()
 @contextlib.contextmanager
 def options(options):
     old_opts = tf.config.optimizer.get_experimental_options()
@@ -253,9 +266,9 @@ if __name__ == "__main__":
     opts = {}
     opts["dependency"] = False
     opts["remapper"] = False
-    options(opts)
-    tf.compat.v1.logging.set_verbosity("ERROR")
-    # save_checkpoint_chrome_trace(checkmate_data_dir() / "profile_exec")
-    # compare_checkpoint_loss_curves(dataset='mnist', model_name='test', n_epochs=1)
-    compare_checkpoint_loss_curves(dataset="cifar10", model_name="ResNet50", n_epochs=1, batch_size=1)
-    # compare_checkpoint_loss_curves(dataset="cifar10", model_name="VGG16", n_epochs=1, batch_size=1)
+    with options(opts)
+        tf.compat.v1.logging.set_verbosity("ERROR")
+        # save_checkpoint_chrome_trace(checkmate_data_dir() / "profile_exec")
+        # compare_checkpoint_loss_curves(dataset='mnist', model_name='test', n_epochs=1)
+        compare_checkpoint_loss_curves(dataset="cifar10", model_name="ResNet50", n_epochs=1, batch_size=1)
+        # compare_checkpoint_loss_curves(dataset="cifar10", model_name="VGG16", n_epochs=1, batch_size=1)
