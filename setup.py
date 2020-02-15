@@ -16,7 +16,6 @@ setup(
         "ray>=0.7.5",
         "graphviz",
         "python-dotenv",
-        "tensorflow>=2.0.0",
         "pytest",
         "pillow",
         "gym",

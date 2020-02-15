@@ -24,19 +24,33 @@ $ conda activate checkmate-mlsys-artifact
 ```
 
 ### Step 2: Install the `remat` package and dependencies
+Clone this repository and check out the `mlsys20_artifact` branch:
+```
+$ git clone git@github.com:parasj/checkmate.git
+$ cd checkmate
+$ git checkput mlsys20_artifact
+```
 From this directory,
 ```
 $ conda install -c conda-forge python-graphviz
 $ pip install -e .
 ```
+If you are running setup on a machine without a GPU, run,
+```
+$ pip install tensorflow-cpu
+```
+CPU-only is enough to use this artifact. If you have a GPU-enabled machine with CUDA installed, you can instead run
+```
+$ pip install tensorflow>=2.0.0
+```
 
 ### Step 3: Install Gurobi
 Checkmate uses the Gurobi optimziation library to solve an integer linear program that chooses a recomputation schedule for a given neural network architecture. This requires a license to Gurobi, which is free for academic use. The `grbgetkey` command used below must be run on a computer connected to a university network directly or via a VPN.
 
-1. Please follow these instructions to install Gurobi on your system: https://www.gurobi.com/documentation/quickstart.html
+1. Please follow these instructions to install Gurobi on your system: https://www.gurobi.com/documentation/quickstart.html. For example, on Linux, follow `https://www.gurobi.com/documentation/9.0/quickstart_linux/software_installation_guid.html`.
 2. Make an academic account with Gurobi at: https://pages.gurobi.com/registration
 3. Request an acadmic license at: https://www.gurobi.com/downloads/end-user-license-agreement-academic/
-4. Install the license by running the `grbgetkey` command at the end of the page. Ensure you are on an academic network like Airbears2.
+4. Install the license by running the `grbgetkey` command at the end of the page. Ensure you are on an academic network like Airbears2 for UC Berkeley. If you save the license to a non-default location (outside your home directory), you will need to export the `GRB_LICENSE_FILE` variable with the path to the licence.
 5. Set up the gurobipy Anaconda channel by running `conda config --add channels http://conda.anaconda.org/gurobi`
 6. Install gurobipy by running: `conda install gurobi`
 
