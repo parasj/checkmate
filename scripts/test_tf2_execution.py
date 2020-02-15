@@ -266,7 +266,7 @@ if __name__ == "__main__":
     opts = {}
     opts["dependency"] = False
     opts["remapper"] = False
-    with options(opts)
+    with options(opts):
         tf.compat.v1.logging.set_verbosity("ERROR")
         # save_checkpoint_chrome_trace(checkmate_data_dir() / "profile_exec")
         # compare_checkpoint_loss_curves(dataset='mnist', model_name='test', n_epochs=1)
