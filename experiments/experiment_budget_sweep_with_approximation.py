@@ -36,7 +36,7 @@ from remat.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
 from remat.tensorflow2.extraction import dfgraph_from_keras
 
 # ILP solve params
-NUM_ILP_CORES = os.environ.get("ILP_CORES", 12 if os.cpu_count() > 12 else 4)
+NUM_ILP_CORES = os.environ.get("ILP_CORES", 12)
 
 # Budget selection parameters
 NUM_ILP_GLOBAL = 32

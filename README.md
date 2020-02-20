@@ -140,6 +140,7 @@ $ python experiments/experiment_max_batchsize_ilp.py --model-name MobileNet --ba
 
 
 ## Troubleshooting
+### Gurobi license errors
 If Gurobi is unable to locate your license file, set its path via an environment variable:
 ```
 export GRB_LICENSE_FILE=/path/to/gurobi.lic
@@ -147,5 +148,12 @@ export GRB_LICENSE_FILE=/path/to/gurobi.lic
 For example, the licence is stored by default at `$HOME/gurobi.lic`.
 
 
+### Evaluation machine resources
+* 2x Intel E5-2670 CPUs - (Haswell 12 Cores / 24 Threads)
+* 256GB DDR4 RAM
+* 4TB HDD
+* Kernel: `Ubuntu 18.04.3 LTS (GNU/Linux 5.3.0-24-generic x86_64)`
+
 ## All supported model architectures
-The following architectures are implemented via the `--model-name` argument: DenseNet121,DenseNet169,DenseNet201,InceptionV3,MobileNet,MobileNetV2,NASNetLarge,NASNetMobile,ResNet101,ResNet101V2,ResNet152,ResNet152V2,ResNet50,ResNet50V2,VGG16,VGG19,Xception,fcn_32,fcn_32_mobilenet,fcn_32_resnet50,fcn_32_vgg,fcn_8,fcn_8_mobilenet,fcn_8_resnet50,fcn_8_vgg,linear0,linear1,linear10,linear11,linear12,linear13,linear14,linear15,linear16,linear17,linear18,linear19,linear2,linear20,linear21,linear22,linear23,linear24,linear25,linear26,linear27,linear28,linear29,linear3,linear30,linear31,linear4,linear5,linear6,linear7,linear8,linear9,mobilenet_segnet,mobilenet_unet,pspnet,pspnet_101,pspnet_50,resnet50_pspnet,resnet50_segnet,resnet50_unet,segnet,test,unet,unet_mini,vgg_pspnet,vgg_segnet,vgg_unet
+The following architectures are implemented via the `--model-name` argument:
+```DenseNet121,DenseNet169,DenseNet201,InceptionV3,MobileNet,MobileNetV2,NASNetLarge,NASNetMobile,ResNet101,ResNet101V2,ResNet152,ResNet152V2,ResNet50,ResNet50V2,VGG16,VGG19,Xception,fcn_32,fcn_32_mobilenet,fcn_32_resnet50,fcn_32_vgg,fcn_8,fcn_8_mobilenet,fcn_8_resnet50,fcn_8_vgg,linear0,linear1,linear10,linear11,linear12,linear13,linear14,linear15,linear16,linear17,linear18,linear19,linear2,linear20,linear21,linear22,linear23,linear24,linear25,linear26,linear27,linear28,linear29,linear3,linear30,linear31,linear4,linear5,linear6,linear7,linear8,linear9,mobilenet_segnet,mobilenet_unet,pspnet,pspnet_101,pspnet_50,resnet50_pspnet,resnet50_segnet,resnet50_unet,segnet,test,unet,unet_mini,vgg_pspnet,vgg_segnet,vgg_unet```
