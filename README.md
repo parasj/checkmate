@@ -28,7 +28,7 @@ Clone this repository and check out the `mlsys20_artifact` branch:
 ```
 $ git clone git@github.com:parasj/checkmate.git
 $ cd checkmate
-$ git checkput mlsys20_artifact
+$ git checkout mlsys20_artifact
 ```
 From this directory,
 ```
