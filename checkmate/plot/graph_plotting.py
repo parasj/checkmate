@@ -9,36 +9,6 @@ from checkmate.core.schedule import Schedule, OperatorEvaluation, ScheduledResul
 from checkmate.core.utils.definitions import PathLike
 
 
-# TODO (paras) fix this function
-def tensor_plot(g: DFGraph, sched: Schedule, directory, tag=None, format="pdf", quiet=True):
-    dot = Digraph("!TensorPlot_{}".format(tag), engine="dot")
-    if sched is None:
-        return
-    for op in sched:
-        if isinstance(op, OperatorEvaluation):
-            if g.is_forward_node(op.id):
-                node_name = g.node_names.get(op.id)
-                node_name = node_name if node_name is None else "{} ({})".format(node_name, str(op.id))
-            elif g.is_backward_node(op.id):
-                node_name = "Grad {}".format(op.id)
-            else:
-                raise ValueError("Unknown operation")
-            # dot.node("op{}".format(op.id), node_name, shape="diamond")
-            # dot.edge("op{}".format(op.id), "reg{}".format(op.out_register))
-            dot.node("reg{}".format(op.out_register), "Register {} for {}".format(op.out_register, node_name), shape="box")
-            for dep_op, dep_reg in op.arg_regs.items():
-                dot.edge(
-                    "reg{}".format(dep_reg),
-                    "reg{}".format(op.out_register),
-                    style="dashed",
-                    label=str(g.args[op.id].index(dep_op)),
-                )
-    try:
-        dot.render(directory=directory, format=format, quiet=quiet)
-    except TypeError:
-        dot.render(directory=directory, format=format)
-
-
 def plot_dfgraph(g: DFGraph, directory, format="pdf", quiet=True, name=""):
     """Generate Graphviz-formatted edge list for visualization, and write pdf"""
     dot = Digraph("render_dfgraph" + str(name))

@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
 from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
+from checkmate.core.solvers.strategy_optimal_ilp import solve_optimal_ilp
 from checkmate.core.utils.definitions import PathLike
 from checkmate.tf2.execution import edit_graph
 from checkmate.tf2.extraction import dfgraph_from_tf_function
@@ -234,12 +235,12 @@ def compare_checkpoint_loss_curves(dataset: str, model_name: str, n_epochs: int 
 
     if memdir: os.environ[memdmp] = memdir + "/baseline"
     data["baseline"]= listify(test_baseline(train_ds, test_ds, n_epochs)),
-    data["checkpoint_all"]= listify(test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=n_epochs)),
     if memdir: os.environ[memdmp] = memdir + "/ckpt_all"
-    data["checkpoint_sqrtn_ap"]= listify(test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_ap, epochs=n_epochs)),
+    data["checkpoint_all"]= listify(test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=n_epochs)),
     if memdir: os.environ[memdmp] = memdir + "/ckpt_sqrt"
+    data["checkpoint_sqrtn_ap"]= listify(test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_ap, epochs=n_epochs)),
         # "checkpoint_sqrtn_noap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_noap, epochs=n_epochs)),
-
+    data["optimal_ilp"]= listify(test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_ap, epochs=n_epochs)),
     for loss_name, loss_data in data.items():
         plt.plot(loss_data, label=loss_name)
     plt.legend(loc="upper right")
