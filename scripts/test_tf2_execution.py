@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
 from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
-from checkmate.core.solvers.strategy_optimal_ilp import solve_optimal_ilp
+from checkmate.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
 from checkmate.core.utils.definitions import PathLike
 from checkmate.tf2.execution import edit_graph
 from checkmate.tf2.extraction import dfgraph_from_tf_function
