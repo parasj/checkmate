@@ -25,7 +25,8 @@ jobs:
     - name: Install CBC
       run: |
         pip install numpy
-        sudo apt-get install coinor-cbc
+        sudo apt update
+        sudo apt install -y git pkg-config coinor-libcbc-dev coinor-libosi-dev coinor-libcoinutils-dev coinor-libcgl-dev
         COIN_INSTALL_DIR=/usr/ pip install --pre cylp
     - name: Install dependencies
       run: pip install -e ".[test]"
