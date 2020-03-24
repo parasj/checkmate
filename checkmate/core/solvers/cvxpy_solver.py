@@ -50,9 +50,9 @@ class ILPSolverCVXPY:
             constraints.extend([self.Free_E >= 0, self.Free_E <= 1])
             constraints.extend([self.U >= 0, self.U <= budget])
             constraints.append(cp.diag(self.R) == 1)
+            constraints.append(cp.diag(self.S) == 0)
             constraints.append(cp.upper_tri(self.R) == 0)
             constraints.append(cp.upper_tri(self.S) == 0)
-            constraints.append(cp.diag(self.S) == 0)
 
         with Timer("Correctness constraints"):
             # ensure all checkpoints are in memory
@@ -97,24 +97,30 @@ class ILPSolverCVXPY:
                 constraints.append(self.U[:, k + 1] == self.U[:, k] + self.R[:, k + 1] * ram_costs[k + 1] - mem_freed)
         return constraints
 
-    def solve(self):
+    def solve(self, solver_override=None):
         installed_solvers = cp.installed_solvers()
         with Timer("Solve", print_results=True) as solve_timer:
-            if 'MOSEK' in installed_solvers:
+            if solver_override is not None:
+                self.problem.solve(verbose=True, solver=solver_override)
+            elif 'MOSEK' in installed_solvers:
                 # https://docs.mosek.com/9.0/pythonapi/parameters.html
                 self.problem.solve(verbose=True, solver=cp.MOSEK, mosek_params={}, save_file='/tmp/model.mps')
+            elif 'GUROBI' in installed_solvers:
+                self.problem.solve(verbose=True, solver=cp.GUROBI)
             elif 'CBC' in installed_solvers:
                 self.problem.solve(verbose=True, solver=cp.CBC, numberThreads=self.num_threads)
+            else:
+                self.problem.solve(verbose=True)
         self.solve_time = solve_timer.elapsed
         if self.problem.status in ["infeasible", "unbounded"]:
             raise ValueError("Model infeasible")
         return self.R.value, self.S.value, self.U.value, self.Free_E.value
 
 
-def solve_checkmate_cvxpy(g, budget, rounding_thresholds=(0.5,)):
+def solve_checkmate_cvxpy(g, budget, rounding_thresholds=(0.5,), solver_override=None):
     lpsolver = ILPSolverCVXPY(g, int(0.9 * budget))  # rounding threshold
     try:
-        r, s, u, free_e = lpsolver.solve()
+        r, s, u, free_e = lpsolver.solve(solver_override=solver_override)
         lp_feasible = True
     except ValueError as e:
         logging.exception(e)
@@ -150,19 +156,3 @@ def solve_checkmate_cvxpy(g, budget, rounding_thresholds=(0.5,)):
             approx_deterministic_round_threshold=min_threshold
         ),
     )
-
-
-if __name__ == '__main__':
-    import tensorflow as tf
-    with Timer("Load keras model", print_results=True):
-        model = get_keras_model("VGG19")
-        @tf.function
-        def get_grads(inputs):
-            y = model(inputs)
-            y = tf.reduce_mean(y)
-            return tf.gradients(y, model.trainable_variables)
-
-        x = tf.ones(shape=(1, 224, 224, 3), name="input")
-        grad_conc = get_grads.get_concrete_function(x)
-        g = dfgraph_from_tf_function(grad_conc)
-    sched_result = solve_checkmate_cvxpy(g, sum(g.cost_ram.values()) * 0.5)
