@@ -113,6 +113,7 @@ class ILPSolverCVXPY:
                 self.problem.solve(verbose=True)
         self.solve_time = solve_timer.elapsed
         if self.problem.status in ["infeasible", "unbounded"]:
+            print("Infeasible model!")
             raise ValueError("Model infeasible")
         return self.R.value, self.S.value, self.U.value, self.Free_E.value
 
