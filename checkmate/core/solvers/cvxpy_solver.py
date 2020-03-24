@@ -113,12 +113,11 @@ class ILPSolverCVXPY:
                 self.problem.solve(verbose=True)
         self.solve_time = solve_timer.elapsed
         if self.problem.status in ["infeasible", "unbounded"]:
-            print("Infeasible model!")
             raise ValueError("Model infeasible")
         return self.R.value, self.S.value, self.U.value, self.Free_E.value
 
 
-def solve_checkmate_cvxpy(g, budget, rounding_thresholds=(0.5,), solver_override=None):
+def solve_checkmate_cvxpy(g, budget, solver_override=None):
     lpsolver = ILPSolverCVXPY(g, int(0.9 * budget))  # rounding threshold
     try:
         r, s, u, free_e = lpsolver.solve(solver_override=solver_override)
@@ -129,18 +128,11 @@ def solve_checkmate_cvxpy(g, budget, rounding_thresholds=(0.5,), solver_override
         lp_feasible = False
     schedule, aux_data, min_threshold = None, None, None
     if lp_feasible:  # round the solution
-        for threshold in rounding_thresholds:
-            s_ = (s >= threshold).astype(np.int)
-            r_ = solve_r_opt(g, s_)
-            schedule_, aux_data_ = schedule_from_rs(g, r_, s_)
-            if aux_data_.activation_ram <= budget and (aux_data is None or aux_data_.cpu <= aux_data.cpu):
-                aux_data = aux_data_
-                schedule = schedule_
-                min_threshold = threshold
-    solve_strategy = SolveStrategy.APPROX_DET_ROUND_LP_05_THRESH if len(
-        rounding_thresholds) == 1 else SolveStrategy.APPROX_DET_ROUND_LP_SWEEP
+        s_ = (s >= 0.5).astype(np.int)
+        r_ = solve_r_opt(g, s_)
+        schedule, aux_data = schedule_from_rs(g, r_, s_)
     return ScheduledResult(
-        solve_strategy=solve_strategy,
+        solve_strategy=SolveStrategy.APPROX_DET_ROUND_LP_05_THRESH,
         solver_budget=budget,
         feasible=lp_feasible and aux_data is not None,
         schedule=schedule,
@@ -154,6 +146,6 @@ def solve_checkmate_cvxpy(g, budget, rounding_thresholds=(0.5,), solver_override
             ilp_eps_noise=0.0,
             ilp_num_constraints=lpsolver.num_vars,
             ilp_num_variables=lpsolver.num_constraints,
-            approx_deterministic_round_threshold=min_threshold
+            approx_deterministic_round_threshold=0.5
         ),
     )
