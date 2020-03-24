@@ -26,7 +26,7 @@ jobs:
       run: |
         pip install numpy
         sudo apt-get install coinor-cbc
-        pip install cylp
+        COIN_INSTALL_DIR=/usr/ pip install --pre cylp
     - name: Install dependencies
       run: pip install -e ".[test]"
     - name: Lint with flake8
