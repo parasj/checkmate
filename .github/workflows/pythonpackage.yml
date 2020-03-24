@@ -24,6 +24,7 @@ jobs:
       run: python -m pip install --upgrade pip
     - name: Install CBC
       run: |
+        pip install numpy
         sudo apt-get install coinor-cbc
         pip install cylp
     - name: Install dependencies
