@@ -8,7 +8,7 @@ setup(
     python_requires=">=3.5",
     install_requires=[
         # "keras_segmentation @ https://github.com/ajayjain/image-segmentation-keras/archive/master.zip#egg=keras_segmentation-0.2.0remat",
-        "ortools",
+        "cvxpy",
         "numpy",
         "pandas",
         "toposort",
