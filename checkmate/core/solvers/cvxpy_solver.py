@@ -13,8 +13,7 @@ from checkmate.core.utils.timer import Timer
 
 
 class ILPSolverCVXPY:
-    def __init__(self, g: DFGraph, budget: int, num_threads=os.cpu_count()):
-        self.num_threads = num_threads
+    def __init__(self, g: DFGraph, budget: int):
         self.budget = budget
         self.g = g
         self.T = self.g.size
@@ -80,20 +79,19 @@ class ILPSolverCVXPY:
                 constraints.append(self.U[:, k + 1] == self.U[:, k] + self.R[:, k + 1] * ram_costs[k + 1] - mem_freed)
         return constraints
 
-    def solve(self, solver_override=None):
+    def solve(self, solver_override=None, verbose=False, num_threads=os.cpu_count()):
         installed_solvers = cp.installed_solvers()
-        with Timer("Solve", print_results=True) as solve_timer:
+        with Timer("Solve", print_results=verbose) as solve_timer:
             if solver_override is not None:
-                self.problem.solve(verbose=True, solver=solver_override)
+                self.problem.solve(verbose=verbose, solver=solver_override)
             elif "MOSEK" in installed_solvers:
-                # https://docs.mosek.com/9.0/pythonapi/parameters.html
-                self.problem.solve(verbose=True, solver=cp.MOSEK, mosek_params={}, save_file="/tmp/model.mps")
+                self.problem.solve(verbose=verbose, solver=cp.MOSEK)
             elif "GUROBI" in installed_solvers:
-                self.problem.solve(verbose=True, solver=cp.GUROBI)
+                self.problem.solve(verbose=verbose, solver=cp.GUROBI)
             elif "CBC" in installed_solvers:
-                self.problem.solve(verbose=True, solver=cp.CBC, numberThreads=self.num_threads)
+                self.problem.solve(verbose=verbose, solver=cp.CBC, numberThreads=num_threads)
             else:
-                self.problem.solve(verbose=True)
+                self.problem.solve(verbose=verbose)
         self.solve_time = solve_timer.elapsed
         if self.problem.status in ["infeasible", "unbounded"]:
             raise ValueError("Model infeasible")
