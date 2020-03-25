@@ -12,10 +12,6 @@ from checkmate.core.utils.solver_common import solve_r_opt
 from checkmate.core.utils.timer import Timer
 
 
-def cvx_dot(X, Y):
-    return cp.sum(cp.multiply(X, Y))
-
-
 class ILPSolverCVXPY:
     def __init__(self, g: DFGraph, budget: int, num_threads=os.cpu_count()):
         self.num_threads = num_threads
