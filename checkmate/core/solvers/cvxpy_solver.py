@@ -5,13 +5,11 @@ import cvxpy as cp
 import numpy as np
 
 from checkmate.core.dfgraph import DFGraph
-from checkmate.core.enum_strategy import ImposedSchedule, SolveStrategy
+from checkmate.core.enum_strategy import SolveStrategy
 from checkmate.core.schedule import ScheduledResult, ILPAuxData
 from checkmate.core.utils.scheduler import schedule_from_rs
 from checkmate.core.utils.solver_common import solve_r_opt
 from checkmate.core.utils.timer import Timer
-from checkmate.tf2.extraction import dfgraph_from_tf_function
-from checkmate.tf2.util.load_keras_model import get_keras_model
 
 
 def cvx_dot(X, Y):
@@ -63,17 +61,6 @@ class ILPSolverCVXPY:
                 constraints.append(self.R[:, v] <= self.R[:, u] + self.S[:, u])
 
         with Timer("Free_E constraints"):
-            # Extra, unnecessary constraints
-            # for eidx, (i, k) in enumerate(self.g.edge_list):
-            #     num_hazards = 1 - self.R[:-1, k] + self.S[1:, i] + cp.sum([self.R[:-1, j] for j in self.g.successors(i) if j > k], axis=0)
-            #     num_uses_after_k = sum(1 for j in self.g.successors(i) if j > k)
-            #     max_num_hazards = 2 + num_uses_after_k
-            #     constraints.append(max_num_hazards * (1 - self.Free_E[:-1, eidx]) >= num_hazards)
-            #     constraints.append(1 - self.Free_E[:-1, eidx] <= num_hazards)
-            #     num_hazards = 1 - self.R[-1, k] + cp.sum([self.R[-1, j] for j in self.g.successors(i) if j > k])
-            #     constraints.append(max_num_hazards * (1 - self.Free_E[-1, eidx]) >= num_hazards)
-            #     constraints.append(1 - self.Free_E[-1, eidx] <= num_hazards)
-
             # Constraint: sum_k Free_{t,i,k} <= 1
             for i in range(T):
                 frees = [self.Free_E[:, eidx] for eidx, (j, _) in enumerate(self.g.edge_list) if i == j]
@@ -102,12 +89,12 @@ class ILPSolverCVXPY:
         with Timer("Solve", print_results=True) as solve_timer:
             if solver_override is not None:
                 self.problem.solve(verbose=True, solver=solver_override)
-            elif 'MOSEK' in installed_solvers:
+            elif "MOSEK" in installed_solvers:
                 # https://docs.mosek.com/9.0/pythonapi/parameters.html
-                self.problem.solve(verbose=True, solver=cp.MOSEK, mosek_params={}, save_file='/tmp/model.mps')
-            elif 'GUROBI' in installed_solvers:
+                self.problem.solve(verbose=True, solver=cp.MOSEK, mosek_params={}, save_file="/tmp/model.mps")
+            elif "GUROBI" in installed_solvers:
                 self.problem.solve(verbose=True, solver=cp.GUROBI)
-            elif 'CBC' in installed_solvers:
+            elif "CBC" in installed_solvers:
                 self.problem.solve(verbose=True, solver=cp.CBC, numberThreads=self.num_threads)
             else:
                 self.problem.solve(verbose=True)
@@ -136,8 +123,11 @@ def solve_checkmate_cvxpy(g, budget, rounding_thresholds=(0.1, 0.2, 0.3, 0.4, 0.
                 aux_data = aux_data_
                 schedule = schedule_
                 min_threshold = threshold
-    solve_strategy = SolveStrategy.APPROX_DET_ROUND_LP_05_THRESH if len(
-        rounding_thresholds) == 1 else SolveStrategy.APPROX_DET_ROUND_LP_SWEEP
+    solve_strategy = (
+        SolveStrategy.APPROX_DET_ROUND_LP_05_THRESH
+        if len(rounding_thresholds) == 1
+        else SolveStrategy.APPROX_DET_ROUND_LP_SWEEP
+    )
     return ScheduledResult(
         solve_strategy=solve_strategy,
         solver_budget=budget,
@@ -153,6 +143,19 @@ def solve_checkmate_cvxpy(g, budget, rounding_thresholds=(0.1, 0.2, 0.3, 0.4, 0.
             ilp_eps_noise=0.0,
             ilp_num_constraints=lpsolver.num_vars,
             ilp_num_variables=lpsolver.num_constraints,
-            approx_deterministic_round_threshold=min_threshold
+            approx_deterministic_round_threshold=min_threshold,
         ),
     )
+
+
+# Extra, unnecessary constraints
+# for eidx, (i, k) in enumerate(self.g.edge_list):
+#     num_hazards = 1 - self.R[:-1, k] + self.S[1:, i]
+#       + cp.sum([self.R[:-1, j] for j in self.g.successors(i) if j > k], axis=0)
+#     num_uses_after_k = sum(1 for j in self.g.successors(i) if j > k)
+#     max_num_hazards = 2 + num_uses_after_k
+#     constraints.append(max_num_hazards * (1 - self.Free_E[:-1, eidx]) >= num_hazards)
+#     constraints.append(1 - self.Free_E[:-1, eidx] <= num_hazards)
+#     num_hazards = 1 - self.R[-1, k] + cp.sum([self.R[-1, j] for j in self.g.successors(i) if j > k])
+#     constraints.append(max_num_hazards * (1 - self.Free_E[-1, eidx]) >= num_hazards)
+#     constraints.append(1 - self.Free_E[-1, eidx] <= num_hazards)
