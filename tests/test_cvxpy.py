@@ -18,7 +18,7 @@ def get_testnet_graph():
     return dfgraph_from_tf_function(grad_conc)
 
 
-@pytest.mark.parametrize("budget_threshold", [(1.2,), (1.0,), (0.9,), (0.5,), (0.1,), (0.05,)])
+@pytest.mark.parametrize("budget_threshold", [1.2, 1.0, 0.9, 0.5, 0.1, 0.05])
 def test_cvxpy(budget_threshold):
     from checkmate.core.solvers.cvxpy_solver import solve_checkmate_cvxpy
     g = get_testnet_graph()
