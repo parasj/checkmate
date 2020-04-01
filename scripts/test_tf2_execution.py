@@ -10,7 +10,6 @@ from tqdm import tqdm
 
 from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
 from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
-from checkmate.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
 from checkmate.core.utils.definitions import PathLike
 from checkmate.tf2.execution import edit_graph
 from checkmate.tf2.extraction import dfgraph_from_tf_function
@@ -262,14 +261,3 @@ def options(options):
     finally:
         tf.config.optimizer.set_experimental_options(old_opts)
 
-if __name__ == "__main__":
-    tf.config.optimizer.set_jit(False)
-    opts = {}
-    opts["dependency"] = False
-    opts["remapper"] = False
-    with options(opts):
-        tf.compat.v1.logging.set_verbosity("ERROR")
-        # save_checkpoint_chrome_trace(checkmate_data_dir() / "profile_exec")
-        # compare_checkpoint_loss_curves(dataset='mnist', model_name='test', n_epochs=1)
-        compare_checkpoint_loss_curves(dataset="cifar10", model_name="ResNet50", n_epochs=1, batch_size=1)
-        # compare_checkpoint_loss_curves(dataset="cifar10", model_name="VGG16", n_epochs=1, batch_size=1)
