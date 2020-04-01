@@ -21,6 +21,31 @@ def nvidiasmi_query(query="memory.total"):
     query_result_list = [int(x) for x in mem.strip().split("\n")]
     return dict(zip(range(len(query_result_list)), query_result_list))
 
+def _get_gpu_memory():
+    if _using_gpu_check():  # choose based on available GPU RAM
+        gpu_ram = nvidiasmi_query("memory.total")
+        budget = min(gpu_ram.values()) * 0.9
+        logging.info(
+            "[checkmate] No budget specified; defaulting to the minimum amount of total GPU RAM on any single "
+            "GPU, {0:.2f}MB".format(budget)
+        )
+    else:  # choose based available system memory
+        budget = psutil.virtual_memory().available * 0.8 / 1000000
+        logging.debug("[checkmate] No GPU detected, using system DRAM on CPU")
+        logging.info("[checkmate] No budget specified; defaulting to {0:.2f}MB".format(budget))
+    return budget
+
+def get_function(model, input_shape, label_shape, optimizer, loss):
+    @tf.function
+    def grads_check(data, label):
+        with tf.GradientTape() as check_tape:
+            predictions = model(data)
+            loss_val = loss(label, predictions)
+        gradients = check_tape.gradient(loss_val, model.trainable_variables)
+        return predictions, loss_val, gradients
+    return grads_check
+
+
 
 def compile_tf2(
     model: tf.keras.Model,
@@ -52,17 +77,7 @@ def compile_tf2(
 
     # query budget if not specified
     if budget == "auto":
-        if _using_gpu_check():  # choose based on available GPU RAM
-            gpu_ram = nvidiasmi_query("memory.total")
-            budget = min(gpu_ram.values()) * 0.9
-            logging.info(
-                "[checkmate] No budget specified; defaulting to the minimum amount of total GPU RAM on any single "
-                "GPU, {0:.2f}MB".format(budget)
-            )
-        else:  # choose based available system memory
-            budget = psutil.virtual_memory().available * 0.8 / 1000000
-            logging.debug("[checkmate] No GPU detected, using system DRAM on CPU")
-            logging.info("[checkmate] No budget specified; defaulting to {0:.2f}MB".format(budget))
+        return _get_gpu_memory()
 
     # build gradient function for model
     @tf.function
