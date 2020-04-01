@@ -5,9 +5,17 @@ import psutil
 import tensorflow as tf
 
 from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
+from checkmate.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
 from checkmate.tf2.execution import edit_graph
 from checkmate.tf2.extraction import dfgraph_from_tf_function
 
+
+def set_opts():
+    opts = {}
+    #tf.config.optimizer.set_jit(False)
+    #opts["dependency"] = False
+    opts["remapper"] = False
+    tf.config.optimizer.set_experimental_options(opts)
 
 def _using_gpu_check():
     return tf.test.is_gpu_available() and tf.test.is_built_with_cuda()
@@ -53,8 +61,11 @@ def compile_tf2(
     optimizer: tf.optimizers.Optimizer,
     input_spec=None,
     label_spec=None,
+    scheduler = solve_chen_sqrtn,
     budget="auto",
+    **kwargs
 ):
+    set_opts()
     """
     Checkmate optimizes your DNN graphs to consume less GPU memory. Call this function using a tf.function
     :param model: a keras Model to optimize
@@ -98,7 +109,10 @@ def compile_tf2(
     )
     logging.debug("[checkmate] Solving for recomputation schedule, may take a while")
     logging.debug("[checkmate] Using Chen et al. (2016) sqrt(n) algorithm")
-    sched_result = solve_chen_sqrtn(g, True)
+    if scheduler != solve_ilp_gurobi :
+        sched_result = solve_chen_sqrtn(g, **kwargs)
+    else:
+        sched_result = scheduler(g, budget, **kwargs)
     logging.debug("[checkmate] Schedule solved")
 
     # create recomputed gradient function
