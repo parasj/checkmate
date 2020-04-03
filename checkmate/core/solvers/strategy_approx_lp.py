@@ -8,7 +8,7 @@ import numpy as np
 from checkmate.core.dfgraph import DFGraph
 from checkmate.core.enum_strategy import SolveStrategy, ImposedSchedule
 from checkmate.core.schedule import ILPAuxData, ScheduledResult
-from checkmate.core.solvers.strategy_optimal_ilp import ILPSolver
+from checkmate.core.solvers.gurobi_solver import ILPSolverGurobi
 from checkmate.core.utils.definitions import PathLike
 from checkmate.core.utils.scheduler import schedule_from_rs
 from checkmate.core.utils.solver_common import solve_r_opt
@@ -39,7 +39,7 @@ def solve_approx_lp_deterministic_sweep(
         "Presolve": 2,
         "StartNodeLimit": 10000000,
     }
-    lpsolver = ILPSolver(
+    lpsolver = ILPSolverGurobi(
         g,
         int(0.9 * budget),  # hack to get values under the budget
         gurobi_params=param_dict,
@@ -189,7 +189,7 @@ def solve_approx_lp_randomized(
         "Presolve": 2,
         "StartNodeLimit": 10000000,
     }
-    lpsolver = ILPSolver(
+    lpsolver = ILPSolverGurobi(
         g,
         int(0.9 * budget),  # hack to get values under the budget
         gurobi_params=param_dict,

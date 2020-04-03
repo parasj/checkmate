@@ -97,7 +97,7 @@ def test_ilp():
         logging.exception(e)
         logging.warning("Continuing with tests, gurobi not installed")
         return
-    from checkmate.core.solvers.strategy_optimal_ilp import solve_ilp_gurobi
+    from checkmate.core.solvers.gurobi_solver import solve_ilp_gurobi
 
     for graph_length in test_points:
         g = gen_linear_graph(graph_length)
