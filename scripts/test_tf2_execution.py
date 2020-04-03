@@ -230,16 +230,19 @@ def compare_checkpoint_loss_curves(dataset: str, model_name: str, n_epochs: int 
 
     data = {}
 
-    #TODO test:  does changing order change results?  If so, refactor
+    # TODO test:  does changing order change results?  If so, refactor
 
-    if memdir: os.environ[memdmp] = memdir + "/baseline"
-    data["baseline"]= listify(test_baseline(train_ds, test_ds, n_epochs)),
-    if memdir: os.environ[memdmp] = memdir + "/ckpt_all"
-    data["checkpoint_all"]= listify(test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=n_epochs)),
-    if memdir: os.environ[memdmp] = memdir + "/ckpt_sqrt"
-    data["checkpoint_sqrtn_ap"]= listify(test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_ap, epochs=n_epochs)),
-        # "checkpoint_sqrtn_noap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_noap, epochs=n_epochs)),
-    data["optimal_ilp"]= listify(test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_ap, epochs=n_epochs)),
+    if memdir:
+        os.environ[memdmp] = memdir + "/baseline"
+    data["baseline"] = (listify(test_baseline(train_ds, test_ds, n_epochs)),)
+    if memdir:
+        os.environ[memdmp] = memdir + "/ckpt_all"
+    data["checkpoint_all"] = (listify(test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=n_epochs)),)
+    if memdir:
+        os.environ[memdmp] = memdir + "/ckpt_sqrt"
+    data["checkpoint_sqrtn_ap"] = (listify(test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_ap, epochs=n_epochs)),)
+    # "checkpoint_sqrtn_noap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_noap, epochs=n_epochs)),
+    data["optimal_ilp"] = (listify(test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_ap, epochs=n_epochs)),)
     for loss_name, loss_data in data.items():
         plt.plot(loss_data, label=loss_name)
     plt.legend(loc="upper right")
@@ -250,8 +253,11 @@ def compare_checkpoint_loss_curves(dataset: str, model_name: str, n_epochs: int 
     ) as f:
         json.dump(data, f)
 
+
 def listify(res):
     return np.array(res).tolist()
+
+
 @contextlib.contextmanager
 def options(options):
     old_opts = tf.config.optimizer.get_experimental_options()
@@ -260,4 +266,3 @@ def options(options):
         yield
     finally:
         tf.config.optimizer.set_experimental_options(old_opts)
-

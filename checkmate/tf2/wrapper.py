@@ -10,17 +10,18 @@ except:
     try:
         from checkmate.core.solvers.cvxpy_solver import solve_checkmate_cvxpy as solver
     except:
-        from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
+        from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn as solver
 from checkmate.tf2.execution import edit_graph
 from checkmate.tf2.extraction import dfgraph_from_tf_function
 
 
 def set_opts():
     opts = {}
-    #tf.config.optimizer.set_jit(False)
-    #opts["dependency"] = False
+    # tf.config.optimizer.set_jit(False)
+    # opts["dependency"] = False
     opts["remapper"] = False
     tf.config.optimizer.set_experimental_options(opts)
+
 
 def _using_gpu_check():
     return tf.test.is_gpu_available() and tf.test.is_built_with_cuda()
@@ -33,6 +34,7 @@ def nvidiasmi_query(query="memory.total"):
     )
     query_result_list = [int(x) for x in mem.strip().split("\n")]
     return dict(zip(range(len(query_result_list)), query_result_list))
+
 
 def _get_gpu_memory():
     if _using_gpu_check():  # choose based on available GPU RAM
@@ -48,6 +50,7 @@ def _get_gpu_memory():
         logging.info("[checkmate] No budget specified; defaulting to {0:.2f}MB".format(budget))
     return budget
 
+
 def get_function(model, input_shape, label_shape, optimizer, loss):
     @tf.function
     def grads_check(data, label):
@@ -56,8 +59,8 @@ def get_function(model, input_shape, label_shape, optimizer, loss):
             loss_val = loss(label, predictions)
         gradients = check_tape.gradient(loss_val, model.trainable_variables)
         return predictions, loss_val, gradients
-    return grads_check
 
+    return grads_check
 
 
 def compile_tf2(
@@ -66,7 +69,7 @@ def compile_tf2(
     optimizer: tf.optimizers.Optimizer,
     input_spec=None,
     label_spec=None,
-    scheduler = solve_chen_sqrtn,
+    scheduler=solver,
     budget="auto",
     **kwargs
 ):
@@ -114,7 +117,7 @@ def compile_tf2(
     )
     logging.debug("[checkmate] Solving for recomputation schedule, may take a while")
     logging.debug("[checkmate] Using Chen et al. (2016) sqrt(n) algorithm")
-    if scheduler != solve_ilp_gurobi :
+    if scheduler != solve_ilp_gurobi:
         sched_result = solve_chen_sqrtn(g, **kwargs)
     else:
         sched_result = scheduler(g, budget, **kwargs)

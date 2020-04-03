@@ -51,5 +51,3 @@ def edit_graph(fxn, op_dict, schedule: Schedule):
         registers[inst.out_register] = new_op.outputs
 
     return fxn
-
-
