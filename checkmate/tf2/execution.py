@@ -49,4 +49,5 @@ def edit_graph(fxn, op_dict, schedule: Schedule):
                 if can_replace(inp, arg):
                     new_op._update_input(j, arg)
         registers[inst.out_register] = new_op.outputs
+
     return fxn

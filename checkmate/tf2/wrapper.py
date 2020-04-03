@@ -5,8 +5,23 @@ import psutil
 import tensorflow as tf
 
 from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
+try:
+    from checkmate.core.solvers.gurobi_solver import solve_ilp_gurobi as solver
+except:
+    try:
+        from checkmate.core.solvers.cvxpy_solver import solve_checkmate_cvxpy as solver
+    except:
+        solver = solve_chen_sqrtn
 from checkmate.tf2.execution import edit_graph
 from checkmate.tf2.extraction import dfgraph_from_tf_function
+
+
+def set_opts():
+    opts = {}
+    # tf.config.optimizer.set_jit(False)
+    # opts["dependency"] = False
+    opts["remapper"] = False
+    tf.config.optimizer.set_experimental_options(opts)
 
 
 def _using_gpu_check():
@@ -22,14 +37,44 @@ def nvidiasmi_query(query="memory.total"):
     return dict(zip(range(len(query_result_list)), query_result_list))
 
 
+def _get_gpu_memory():
+    if _using_gpu_check():  # choose based on available GPU RAM
+        gpu_ram = nvidiasmi_query("memory.total")
+        budget = min(gpu_ram.values()) * 0.9
+        logging.info(
+            "[checkmate] No budget specified; defaulting to the minimum amount of total GPU RAM on any single "
+            "GPU, {0:.2f}MB".format(budget)
+        )
+    else:  # choose based available system memory
+        budget = psutil.virtual_memory().available * 0.8 / 1000000
+        logging.debug("[checkmate] No GPU detected, using system DRAM on CPU")
+        logging.info("[checkmate] No budget specified; defaulting to {0:.2f}MB".format(budget))
+    return budget
+
+
+def get_function(model, input_shape, label_shape, optimizer, loss):
+    @tf.function
+    def grads_check(data, label):
+        with tf.GradientTape() as check_tape:
+            predictions = model(data)
+            loss_val = loss(label, predictions)
+        gradients = check_tape.gradient(loss_val, model.trainable_variables)
+        return predictions, loss_val, gradients
+
+    return grads_check
+
+
 def compile_tf2(
     model: tf.keras.Model,
     loss: tf.losses.Loss,
     optimizer: tf.optimizers.Optimizer,
     input_spec=None,
     label_spec=None,
+    scheduler=solver,
     budget="auto",
+    **kwargs
 ):
+    set_opts()
     """
     Checkmate optimizes your DNN graphs to consume less GPU memory. Call this function using a tf.function
     :param model: a keras Model to optimize
@@ -52,17 +97,7 @@ def compile_tf2(
 
     # query budget if not specified
     if budget == "auto":
-        if _using_gpu_check():  # choose based on available GPU RAM
-            gpu_ram = nvidiasmi_query("memory.total")
-            budget = min(gpu_ram.values()) * 0.9
-            logging.info(
-                "[checkmate] No budget specified; defaulting to the minimum amount of total GPU RAM on any single "
-                "GPU, {0:.2f}MB".format(budget)
-            )
-        else:  # choose based available system memory
-            budget = psutil.virtual_memory().available * 0.8 / 1000000
-            logging.debug("[checkmate] No GPU detected, using system DRAM on CPU")
-            logging.info("[checkmate] No budget specified; defaulting to {0:.2f}MB".format(budget))
+        return _get_gpu_memory()
 
     # build gradient function for model
     @tf.function
@@ -83,7 +118,10 @@ def compile_tf2(
     )
     logging.debug("[checkmate] Solving for recomputation schedule, may take a while")
     logging.debug("[checkmate] Using Chen et al. (2016) sqrt(n) algorithm")
-    sched_result = solve_chen_sqrtn(g, True)
+    if solver != solve_chen_sqrtn:
+        sched_result = scheduler(g, budget, **kwargs)
+    else:
+        sched_result = solver(g, **kwargs)
     logging.debug("[checkmate] Schedule solved")
 
     # create recomputed gradient function
