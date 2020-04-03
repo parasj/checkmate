@@ -18,7 +18,7 @@ from checkmate.core.utils.solver_common import solve_r_opt
 from checkmate.core.utils.timer import Timer
 
 
-class ILPSolver:
+class ILPSolverGurobi:
     def __init__(
         self,
         g: DFGraph,
@@ -266,7 +266,7 @@ def solve_ilp_gurobi(
         "Presolve": 2,
         "StartNodeLimit": 10000000,
     }
-    ilpsolver = ILPSolver(
+    ilpsolver = ILPSolverGurobi(
         g,
         budget,
         gurobi_params=param_dict,
