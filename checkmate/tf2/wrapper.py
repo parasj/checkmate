@@ -21,6 +21,8 @@ def nvidiasmi_query(query="memory.total"):
     query_result_list = [int(x) for x in mem.strip().split("\n")]
     return dict(zip(range(len(query_result_list)), query_result_list))
 
+def get_profiles(fn):
+    pass
 
 def compile_tf2(
     model: tf.keras.Model,
@@ -74,6 +76,7 @@ def compile_tf2(
         return predictions, loss_val, gradients
 
     fn = grads_check.get_concrete_function(input_spec, label_spec)
+    return fn
     g = dfgraph_from_tf_function(fn)
 
     # choose solver and calculate solver
