@@ -222,24 +222,10 @@ def compare_checkpoint_loss_curves(dataset: str, model_name: str, n_epochs: int 
     sns.set_style("darkgrid")
 
     train_ds, test_ds = get_data(dataset, batch_size=batch_size)
-    memdmp = "TF_BFC_MEMORY_DUMP"
-    if memdmp in os.environ.keys():
-        memdir = os.environ[memdmp]
-    else:
-        memdir = False
-
     data = {}
 
-    # TODO test:  does changing order change results?  If so, refactor
-
-    if memdir:
-        os.environ[memdmp] = memdir + "/baseline"
     data["baseline"] = (listify(test_baseline(train_ds, test_ds, n_epochs)),)
-    if memdir:
-        os.environ[memdmp] = memdir + "/ckpt_all"
     data["checkpoint_all"] = (listify(test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=n_epochs)),)
-    if memdir:
-        os.environ[memdmp] = memdir + "/ckpt_sqrt"
     data["checkpoint_sqrtn_ap"] = (listify(test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_ap, epochs=n_epochs)),)
     # "checkpoint_sqrtn_noap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_noap, epochs=n_epochs)),
     data["optimal_ilp"] = (listify(test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_ap, epochs=n_epochs)),)
