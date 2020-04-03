@@ -117,10 +117,10 @@ def compile_tf2(
     )
     logging.debug("[checkmate] Solving for recomputation schedule, may take a while")
     logging.debug("[checkmate] Using Chen et al. (2016) sqrt(n) algorithm")
-    if scheduler != solve_ilp_gurobi:
-        sched_result = solve_chen_sqrtn(g, **kwargs)
-    else:
+    if solver != solve_chen_sqrtn:
         sched_result = scheduler(g, budget, **kwargs)
+    else:
+        sched_result = solver(g, **kwargs)
     logging.debug("[checkmate] Schedule solved")
 
     # create recomputed gradient function
