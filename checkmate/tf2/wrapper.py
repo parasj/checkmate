@@ -97,7 +97,7 @@ def compile_tf2(
 
     # query budget if not specified
     if budget == "auto":
-        return _get_gpu_memory()
+        budget = _get_gpu_memory()
 
     # build gradient function for model
     @tf.function
