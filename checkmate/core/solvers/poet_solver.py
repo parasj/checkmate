@@ -5,11 +5,6 @@ import cvxpy as cp
 import numpy as np
 
 from checkmate.core.dfgraph import DFGraph
-from checkmate.core.enum_strategy import SolveStrategy
-from checkmate.core.graph_builder import gen_linear_graph
-from checkmate.core.schedule import ScheduledResult, ILPAuxData
-from checkmate.core.utils.scheduler import schedule_from_rs
-from checkmate.core.utils.solver_common import solve_r_opt
 from checkmate.core.utils.timer import Timer
 
 
@@ -19,12 +14,12 @@ class POETSolverCVXPY:
         self.g = g
         self.T = self.g.size
 
-        self.R = cp.Variable((self.T, self.T), name="R")
-        self.Sram = cp.Variable((self.T, self.T), name="S_RAM")
-        self.Ssd = cp.Variable((self.T, self.T), name="S_SD")
-        self.Min = cp.Variable((self.T, self.T), name="M_in")
-        self.Mout = cp.Variable((self.T, self.T), name="M_out")
-        self.Free_E = cp.Variable((self.T, len(self.g.edge_list)), name="FREE_E")
+        self.R = cp.Variable((self.T, self.T), name="R", integer=integral)
+        self.Sram = cp.Variable((self.T, self.T), name="S_RAM", integer=integral)
+        self.Ssd = cp.Variable((self.T, self.T), name="S_SD", integer=integral)
+        self.Min = cp.Variable((self.T, self.T), name="M_in", integer=integral)
+        self.Mout = cp.Variable((self.T, self.T), name="M_out", integer=integral)
+        self.Free_E = cp.Variable((self.T, len(self.g.edge_list)), name="FREE_E", integer=integra)
         self.U = cp.Variable((self.T, self.T), name="U")
 
         assert cpu_cost_vec.shape == (self.T, 1)
@@ -108,7 +103,7 @@ class POETSolverCVXPY:
         self.solve_time = solve_timer.elapsed
         if self.problem.status in ["infeasible", "unbounded"]:
             raise ValueError("Model infeasible")
-        return self.R.value, self.S.value, self.U.value, self.Free_E.value
+        return self.R.value, self.Sram.value, self.Ssd.value, self.Min.value, self.Mout.value, self.U.value, self.Free_E.value
 
 
 def extract_costs_from_dfgraph(g: DFGraph, sd_card_multipler=5.0):
@@ -122,34 +117,26 @@ def extract_costs_from_dfgraph(g: DFGraph, sd_card_multipler=5.0):
 def solve_poet_cvxpy(g, budget, cpu_cost, page_in_cost, page_out_cost, integral=True, solver_override=None):
     poet_solver = POETSolverCVXPY(g, budget, cpu_cost, page_in_cost, page_out_cost, integral=integral)
     try:
-        r, s, u, free_e = poet_solver.solve(solver_override=solver_override)
+        r, s_ram, s_sd, m_in, m_out, u, free_e = poet_solver.solve(solver_override=solver_override)
         lp_feasible = True
         # r_ = solve_r_opt(g, s)
-        schedule, aux_data = schedule_from_rs(g, r, s)
+        # schedule, aux_data = schedule_from_rs(g, r, s_ram)
     except ValueError as e:
         logging.exception(e)
-        r, s, u, free_e, lp_feasible, schedule, aux_data = (None, None, None, None, False, None, None)
-
-    return ScheduledResult(
-        solve_strategy=SolveStrategy.OPTIMAL_ILP_GC,
-        solver_budget=budget,
-        feasible=lp_feasible,
-        schedule=schedule,
-        schedule_aux_data=aux_data,
-        solve_time_s=poet_solver.solve_time,
-        ilp_aux_data=ILPAuxData(
-            U=u,
-            Free_E=free_e,
-            ilp_approx=False,
-            ilp_time_limit=None,
-            ilp_eps_noise=0.0,
-            ilp_num_constraints=poet_solver.num_vars,
-            ilp_num_variables=poet_solver.num_constraints,
-        ),
-    )
-
-
-if __name__ == "__main__":
-    g = gen_linear_graph(12)
-    cpu_cost, page_in_cost, page_out_cost = extract_costs_from_dfgraph(g, 3.0)
-    solve_poet_cvxpy(g, 1e9, cpu_cost, page_in_cost, page_out_cost, solver_override="GUROBI")
+        r, s_ram, s_sd, m_in, m_out, u, free_e = (None,) * 7
+        lp_feasible, schedule, aux_data = False, None, None
+    return r, s_ram, s_sd, m_in, m_out
+    # return ScheduledResult(
+    #     solve_strategy=SolveStrategy.OPTIMAL_ILP_GC,
+    #     solver_budget=budget,
+    #     feasible=lp_feasible,
+    #     schedule=schedule,
+    #     schedule_aux_data=aux_data,
+    #     solve_time_s=poet_solver.solve_time,
+    #     ilp_aux_data=ILPAuxData(
+    #         U=u,
+    #         Free_E=free_e,
+    #         ilp_approx=False,
+    #         ilp_time_limit=None,
+    #         ilp_eps_noise=0.0,
+    #         ilp_num_constraints=poet_solver.num_vars,
