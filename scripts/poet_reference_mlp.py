@@ -13,8 +13,7 @@ print(x_train.shape)
 train_ds = tf.data.Dataset.from_tensor_slices((x_train, y_train)).batch(batch_size)
 test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(batch_size)
 
-
-# Deine a new model
+# Define a new model
 model = models.Sequential()
 model.add(layers.Flatten(input_shape=(28, 28)))
 model.add(layers.Dense(120, activation='relu', use_bias=False))
