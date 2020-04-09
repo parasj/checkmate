@@ -24,16 +24,15 @@ RPi = {
 # Network
 LIN_NET = [[784, 120], [120, 120], [120, 100], [100, 60], [60, 10], [10, 10]]  # linear network 124 X 100 X 60 X 10 X 10
 
-"""
-Energy consumed for computing the activations of the given layer
-
- @param device Choose a device - associated parameters
- @param network network whose layers are to be evaluated
- @returns energy in joules
-"""
-
 
 def compute_power(device, network):
+    """
+    Energy consumed for computing the activations of the given layer
+
+     @param device Choose a device - associated parameters
+     @param network network whose layers are to be evaluated
+     @returns energy in joules
+    """
     power_list = []
     for layer in network:
         _no_parameters = (layer[0]) * layer[1]  # +1 for the bias term
@@ -48,17 +47,15 @@ def compute_power(device, network):
     return power_list
 
 
-"""
-Energy consumed for paging in activations of the given layer
- from SD card. Assuming we read 512 byte blocks.
-
- @param device Choose a device - associated parameters
- @param network network whose layers are to be evaluated
- @returns energy in joules
-"""
-
-
 def pagein_power(device, network):
+    """
+    Energy consumed for paging in activations of the given layer
+     from SD card. Assuming we read 512 byte blocks.
+
+     @param device Choose a device - associated parameters
+     @param network network whose layers are to be evaluated
+     @returns energy in joules
+    """
     power_list = []
     for layer in network:
         _bytes = layer[1] * device["TYPE"]
@@ -79,17 +76,15 @@ def pagein_power(device, network):
     return power_list
 
 
-"""
-Energy consumed for paging out activations of the given layer
- from SD card. Assuming we read 512 byte blocks.
-
- @param device Choose a device - associated parameters
- @param network network whose layers are to be evaluated
- @returns energy in joules
-"""
-
-
 def pageout_power(device, network):
+    """
+    Energy consumed for paging out activations of the given layer
+     from SD card. Assuming we read 512 byte blocks.
+
+     @param device Choose a device - associated parameters
+     @param network network whose layers are to be evaluated
+     @returns energy in joules
+    """
     power_list = []
     for layer in network:
         _bytes = layer[1] * device["TYPE"]
@@ -110,17 +105,15 @@ def pageout_power(device, network):
     return power_list
 
 
-"""
-Memory in bytes consumed for activations of each layer
-
- @param device Choose a device - associated parameters
- @param network network whose layers are to be evaluated
- @returns memory for each layers activation in bytes
- 	The len(array)/2 memory is that of loss 
-"""
-
-
 def activation_memory(device, network):
+    """
+    Memory in bytes consumed for activations of each layer
+
+     @param device Choose a device - associated parameters
+     @param network network whose layers are to be evaluated
+     @returns memory for each layers activation in bytes.
+        The len(array)/2 memory is that of loss
+    """
     memory_list = []
     for layer in network:
         _bytes = layer[1] * device["TYPE"]
@@ -135,12 +128,9 @@ def activation_memory(device, network):
     return memory_list
 
 
-def main():
-    compute_list = compute_power(MKR1000, LIN_NET)
-    pagein_list = pagein_power(MKR1000, LIN_NET)
-    pageout_list = pageout_power(MKR1000, LIN_NET)
-    memory_list = activation_memory(MKR1000, LIN_NET)
-
-
-if __name__ == "__main__":
-    main()
+def get_net_costs(device=MKR1000, net=LIN_NET):
+    compute_list = compute_power(device, net)
+    pagein_list = pagein_power(device, net)
+    pageout_list = pageout_power(device, net)
+    memory_list = activation_memory(device, net)
+    return dict(compute=compute_list, memory=memory_list, pagein_cost=pagein_list, pageout_cost=pageout_list)
