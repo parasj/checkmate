@@ -19,7 +19,7 @@ class POETSolverCVXPY:
         self.Ssd = cp.Variable((self.T, self.T), name="S_SD", integer=integral)
         self.Min = cp.Variable((self.T, self.T), name="M_in", integer=integral)
         self.Mout = cp.Variable((self.T, self.T), name="M_out", integer=integral)
-        self.Free_E = cp.Variable((self.T, len(self.g.edge_list)), name="FREE_E", integer=integra)
+        self.Free_E = cp.Variable((self.T, len(self.g.edge_list)), name="FREE_E", integer=integral)
         self.U = cp.Variable((self.T, self.T), name="U")
 
         assert cpu_cost_vec.shape == (self.T, 1)
@@ -114,10 +114,10 @@ def extract_costs_from_dfgraph(g: DFGraph, sd_card_multipler=5.0):
     return cpu_cost_vec, page_in_cost_vec, page_out_cost_vec
 
 
-def solve_poet_cvxpy(g, budget, cpu_cost, page_in_cost, page_out_cost, integral=True, solver_override=None):
+def solve_poet_cvxpy(g, budget, cpu_cost, page_in_cost, page_out_cost, integral=True, solver_override=None, verbose=False):
     poet_solver = POETSolverCVXPY(g, budget, cpu_cost, page_in_cost, page_out_cost, integral=integral)
     try:
-        r, s_ram, s_sd, m_in, m_out, u, free_e = poet_solver.solve(solver_override=solver_override)
+        r, s_ram, s_sd, m_in, m_out, u, free_e = poet_solver.solve(solver_override=solver_override, verbose=verbose)
         lp_feasible = True
         # r_ = solve_r_opt(g, s)
         # schedule, aux_data = schedule_from_rs(g, r, s_ram)
