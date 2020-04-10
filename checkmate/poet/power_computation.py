@@ -141,7 +141,3 @@ def get_net_costs(device=None, net=None):
 
     return dict(compute=compute_list, memory=ram_list, param_memory=param_ram_list,
                 pagein_cost=pagein_cost, pageout_cost=pageout_cost)
-
-
-if __name__ == "__main__":
-    print(get_net_costs())
