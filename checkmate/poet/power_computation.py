@@ -111,7 +111,8 @@ class GradientLayer(DNNLayer):
 
 
 def make_linear_network():
-    linear_layers = [[784, 120], [120, 120], [120, 100], [100, 60], [60, 10], [10, 10]]
+    linear_layers = [[256, 256] for _ in range(6)] + [[256, 10]]
+    # linear_layers = [[784, 10], [10, 120], [120, 100], [100, 200], [200, 10], [10, 10]]
     layers = []
     for in_dim, out_dim in linear_layers:
         last_layer = layers[-1] if len(layers) > 0 else None

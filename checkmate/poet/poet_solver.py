@@ -60,8 +60,8 @@ class POETSolverCVXPY:
             # ensure all checkpoints are in memory
             constraints.append(self.Sram[1:, :] <= self.R[:-1, :] + self.Sram[:-1, :] + self.Min[:-1, :])
             constraints.append(self.Ssd[1:, :] <= self.Ssd[:-1, :] + self.Mout[:-1, :])
-            constraints.append(self.Min[1:, :] <= self.Ssd[:-1, :])
-            constraints.append(self.Mout[1:, :] <= self.Sram[:-1, :])
+            constraints.append(self.Min <= self.Ssd)
+            constraints.append(self.Mout <= self.Sram)
 
         with Timer("Free_E constraints"):
             # Constraint: sum_k Free_{t,i,k} <= 1

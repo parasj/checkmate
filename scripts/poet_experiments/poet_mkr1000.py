@@ -79,7 +79,7 @@ if __name__ == "__main__":
     shutil.rmtree(data_dir, ignore_errors=True)
     data_dir.mkdir(parents=True, exist_ok=True)
     data = []
-    for budget in tqdm(np.linspace(1000, 1600, num=10)):
+    for budget in tqdm(np.linspace(1000, 32000, num=25)):
         try:
             solution_dict = solve(budget)
             write_visualization(solution_dict['solution'], data_dir / "budget_{}.png".format(budget))
