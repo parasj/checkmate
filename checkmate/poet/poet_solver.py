@@ -125,7 +125,7 @@ def solve_poet_cvxpy(g, budget, cpu_cost, page_in_cost, page_out_cost, integral=
         logging.exception(e)
         r, s_ram, s_sd, m_in, m_out, u, free_e = (None,) * 7
         lp_feasible, schedule, aux_data = False, None, None
-    return r, s_ram, s_sd, m_in, m_out
+    return r, s_ram, s_sd, m_in, m_out, u
     # return ScheduledResult(
     #     solve_strategy=SolveStrategy.OPTIMAL_ILP_GC,
     #     solver_budget=budget,

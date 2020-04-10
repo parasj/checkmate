@@ -55,17 +55,21 @@ def solve(budget):
 
 def write_visualization(solution, out_path: PathLike):
     plt.figure()
-    fig, axarr = plt.subplots(1, 5, figsize=(25, 5))
-    for arr, ax, name in zip(solution, axarr, ['R', 'S_RAM', 'S_SD', 'M_sd2ram', 'M_ram2sd']):
-        ax.invert_yaxis()
-        ax.pcolormesh(arr, cmap="Greys", vmin=0, vmax=1)
-        ax.set_title(name)
+    fig, axarr = plt.subplots(1, 6, figsize=(30, 5))
+    for arr, ax, name in zip(solution, axarr, ['R', 'S_RAM', 'S_SD', 'M_sd2ram', 'M_ram2sd', 'U']):
+        if name is 'U':
+            ax.matshow(arr)
+            ax.set_title('U')
+        else:
+            ax.invert_yaxis()
+            ax.pcolormesh(arr, cmap="Greys", vmin=0, vmax=1)
+            ax.set_title(name)
     fig.savefig(out_path)
 
 
 def featurize_row(data_row):
     out_vec = dict(budget=data_row['budget'])
-    R, S_RAM, S_SD, M_sd2ram, M_ram2sd = data_row['solution']
+    R, S_RAM, S_SD, M_sd2ram, M_ram2sd, U = data_row['solution']
     out_vec['total_compute_runtime'] = np.sum(R @ data_row['cpu_cost'])
     out_vec['total_page_cost'] = np.sum(M_sd2ram @ data_row['page_out_cost']) + np.sum(M_ram2sd @ data_row['page_in_cost'])
     return out_vec
