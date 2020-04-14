@@ -79,10 +79,10 @@ def write_visualization(solution, out_path: PathLike):
     solution.pop(3)
     solution.insert(3, M_combined)
     for arr, ax, name in zip(solution, axarr, ["R", "S_RAM", "S_SD", "Move", "U"]):
-        if name is "U":
+        if name == "U":
             ax.matshow(arr)
             ax.set_title("U", fontsize=20)
-        elif name is "Move":
+        elif name == "Move":
             ax.invert_yaxis()
             ax.pcolormesh(arr, cmap="Greys", vmin=0, vmax=2)
             ax.set_title(name, fontsize=20)
