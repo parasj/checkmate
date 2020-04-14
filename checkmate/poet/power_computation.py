@@ -10,7 +10,7 @@ MKR1000 = {
     "PAGEIN_THROUGHPUT": 4616.51 * 10 ** (3),  # in bytes per second
     "PAGEOUT_LATENCY": 0.113 * 10 ** (-3),  # in seconds
     "PAGEOUT_THROUGHPUT": 4440 * 10 ** (3),  # in byte per second
-    "MEMORY_POWER": 100 * 10 ** (-3) * 3.3,  # in ampere*volt
+    "MEMORY_POWER": 100 * 10 ** (-3) * 3.3 * 10,  # in ampere*volt
     "TYPE": 4,  # in bytes; Float - 4, Int - 4, long - 8
 }
 
@@ -111,7 +111,12 @@ class GradientLayer(DNNLayer):
 
 
 def make_linear_network():
-    linear_layers = [[256, 256] for _ in range(6)] + [[256, 10]]
+    linear_layers = []
+    for i in range(3):
+        linear_layers.append([256, 64])
+        linear_layers.append([64, 64])
+        linear_layers.append([64, 256])
+    linear_layers.append([256, 10])
     # linear_layers = [[784, 10], [10, 120], [120, 100], [100, 200], [200, 10], [10, 10]]
     layers = []
     for in_dim, out_dim in linear_layers:
