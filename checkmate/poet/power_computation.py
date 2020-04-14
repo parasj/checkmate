@@ -145,5 +145,6 @@ def get_net_costs(device=None, net=None):
         pagein_cost.append(layer.power_sd2ram(device))
         pageout_cost.append(layer.power_ram2sd(device))
 
-    return dict(compute=compute_list, memory=ram_list, param_memory=param_ram_list,
-                pagein_cost=pagein_cost, pageout_cost=pageout_cost)
+    return dict(
+        compute=compute_list, memory=ram_list, param_memory=param_ram_list, pagein_cost=pagein_cost, pageout_cost=pageout_cost
+    )

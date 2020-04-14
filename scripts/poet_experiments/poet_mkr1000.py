@@ -17,18 +17,18 @@ from checkmate.poet.power_computation import MKR1000, make_linear_network, get_n
 
 def make_dfgraph_costs(net, device):
     power_specs = get_net_costs(device, net)
-    per_layer_specs = pd.DataFrame(power_specs).to_dict(orient='records')
+    per_layer_specs = pd.DataFrame(power_specs).to_dict(orient="records")
 
     layer_names, power_cost_dict, page_in_cost_dict, page_out_cost_dict = {}, {}, {}, {}
     gb = GraphBuilder()
     for idx, (layer, specs) in enumerate(zip(net, per_layer_specs)):
         layer_name = "layer{}_{}".format(idx, layer.__class__.__name__)
         layer_names[layer] = layer_name
-        gb.add_node(layer_name, cpu_cost=specs['compute'], ram_cost=specs['memory'], backward=isinstance(layer, GradientLayer))
-        gb.set_parameter_cost(gb.parameter_cost + specs['param_memory'])
-        page_in_cost_dict[layer_name] = specs['pagein_cost']
-        page_out_cost_dict[layer_name] = specs['pageout_cost']
-        power_cost_dict[layer_name] = specs['compute']
+        gb.add_node(layer_name, cpu_cost=specs["compute"], ram_cost=specs["memory"], backward=isinstance(layer, GradientLayer))
+        gb.set_parameter_cost(gb.parameter_cost + specs["param_memory"])
+        page_in_cost_dict[layer_name] = specs["pagein_cost"]
+        page_out_cost_dict[layer_name] = specs["pageout_cost"]
+        power_cost_dict[layer_name] = specs["compute"]
         for dep in layer.depends_on:
             gb.add_deps(layer_name, layer_names[dep])
     g = gb.make_graph()
@@ -47,10 +47,25 @@ def solve(budget, paging=True, remat=True):
     net = make_linear_network()
     device = MKR1000
     g, compute_costs, page_in_costs, page_out_costs = make_dfgraph_costs(net, device)
-    solution = solve_poet_cvxpy(g, budget, compute_costs, page_in_costs, page_out_costs,
-                                solver_override="GUROBI", verbose=True, paging=paging, remat=remat)
-    return dict(budget=budget, solution=solution, dfgraph=g, cpu_cost=compute_costs,
-                page_in_cost=page_in_costs, page_out_cost=page_out_costs)
+    solution = solve_poet_cvxpy(
+        g,
+        budget,
+        compute_costs,
+        page_in_costs,
+        page_out_costs,
+        solver_override="GUROBI",
+        verbose=True,
+        paging=paging,
+        remat=remat,
+    )
+    return dict(
+        budget=budget,
+        solution=solution,
+        dfgraph=g,
+        cpu_cost=compute_costs,
+        page_in_cost=page_in_costs,
+        page_out_cost=page_out_costs,
+    )
 
 
 def write_visualization(solution, out_path: PathLike):
@@ -63,10 +78,10 @@ def write_visualization(solution, out_path: PathLike):
     solution.pop(4)
     solution.pop(3)
     solution.insert(3, M_combined)
-    for arr, ax, name in zip(solution, axarr, ['R', 'S_RAM', 'S_SD', 'Move', 'U']):
-        if name is 'U':
+    for arr, ax, name in zip(solution, axarr, ["R", "S_RAM", "S_SD", "Move", "U"]):
+        if name is "U":
             ax.matshow(arr)
-            ax.set_title('U', fontsize=20)
+            ax.set_title("U", fontsize=20)
         elif name is "Move":
             ax.invert_yaxis()
             ax.pcolormesh(arr, cmap="Greys", vmin=0, vmax=2)
@@ -79,10 +94,10 @@ def write_visualization(solution, out_path: PathLike):
 
 
 def featurize_row(data_row):
-    out_vec = dict(budget=data_row['budget'])
-    R, S_RAM, S_SD, M_sd2ram, M_ram2sd, U = data_row['solution']
-    out_vec['total_compute_runtime'] = np.sum(R @ data_row['cpu_cost'])
-    out_vec['total_page_cost'] = np.sum(M_sd2ram @ data_row['page_out_cost']) + np.sum(M_ram2sd @ data_row['page_in_cost'])
+    out_vec = dict(budget=data_row["budget"])
+    R, S_RAM, S_SD, M_sd2ram, M_ram2sd, U = data_row["solution"]
+    out_vec["total_compute_runtime"] = np.sum(R @ data_row["cpu_cost"])
+    out_vec["total_page_cost"] = np.sum(M_sd2ram @ data_row["page_out_cost"]) + np.sum(M_ram2sd @ data_row["page_in_cost"])
     return out_vec
 
 
@@ -94,7 +109,7 @@ def run_config(config_name, paging, remat):
     for budget in tqdm(np.linspace(1000, 32000, num=25)):
         try:
             solution_dict = solve(budget, paging=paging, remat=remat)
-            write_visualization(solution_dict['solution'], data_dir / "{}_budget_{}.png".format(config_name, budget))
+            write_visualization(solution_dict["solution"], data_dir / "{}_budget_{}.png".format(config_name, budget))
             data.append(solution_dict)
         except Exception as e:
             logging.exception(e)
@@ -104,9 +119,9 @@ def run_config(config_name, paging, remat):
 
 
 if __name__ == "__main__":
-    sns.set('notebook')
-    sns.set_style('dark')
-    run_config('pretty', True, True)
-    run_config('no_paging', False, True)
-    run_config('no_remat', True, False)
-    run_config('baseline', False, False)
+    sns.set("notebook")
+    sns.set_style("dark")
+    run_config("pretty", True, True)
+    run_config("no_paging", False, True)
+    run_config("no_remat", True, False)
+    run_config("baseline", False, False)

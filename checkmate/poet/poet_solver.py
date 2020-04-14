@@ -9,7 +9,17 @@ from checkmate.core.utils.timer import Timer
 
 
 class POETSolverCVXPY:
-    def __init__(self, g: DFGraph, budget: int, cpu_cost_vec, page_in_cost_vec, page_out_cost_vec, integral=True, paging=True, remat=True):
+    def __init__(
+        self,
+        g: DFGraph,
+        budget: int,
+        cpu_cost_vec,
+        page_in_cost_vec,
+        page_out_cost_vec,
+        integral=True,
+        paging=True,
+        remat=True,
+    ):
         self.budget = budget
         self.g = g
         self.T = self.g.size
@@ -122,9 +132,21 @@ def extract_costs_from_dfgraph(g: DFGraph, sd_card_multipler=5.0):
     return cpu_cost_vec, page_in_cost_vec, page_out_cost_vec
 
 
-def solve_poet_cvxpy(g, budget, cpu_cost, page_in_cost, page_out_cost, integral=True, solver_override=None, verbose=False,
-                     paging=True, remat=True):
-    poet_solver = POETSolverCVXPY(g, budget, cpu_cost, page_in_cost, page_out_cost, integral=integral, paging=paging, remat=remat)
+def solve_poet_cvxpy(
+    g,
+    budget,
+    cpu_cost,
+    page_in_cost,
+    page_out_cost,
+    integral=True,
+    solver_override=None,
+    verbose=False,
+    paging=True,
+    remat=True,
+):
+    poet_solver = POETSolverCVXPY(
+        g, budget, cpu_cost, page_in_cost, page_out_cost, integral=integral, paging=paging, remat=remat
+    )
     try:
         r, s_ram, s_sd, m_in, m_out, u, free_e = poet_solver.solve(solver_override=solver_override, verbose=verbose)
         lp_feasible = True

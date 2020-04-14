@@ -16,11 +16,11 @@ test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(batch_size)
 # Define a new model
 model = models.Sequential()
 model.add(layers.Flatten(input_shape=(28, 28)))
-model.add(layers.Dense(120, activation='relu', use_bias=False))
-model.add(layers.Dense(120, activation='relu', use_bias=False))
-model.add(layers.Dense(100, activation='relu', use_bias=False))
-model.add(layers.Dense(60, activation='relu', use_bias=False))
-model.add(layers.Dense(10, activation='relu', use_bias=False))
+model.add(layers.Dense(120, activation="relu", use_bias=False))
+model.add(layers.Dense(120, activation="relu", use_bias=False))
+model.add(layers.Dense(100, activation="relu", use_bias=False))
+model.add(layers.Dense(60, activation="relu", use_bias=False))
+model.add(layers.Dense(10, activation="relu", use_bias=False))
 model.add(layers.Dense(10))
 loss = loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 optimizer = tf.keras.optimizers.Adam()
@@ -30,9 +30,9 @@ model.compile(optimizer=optimizer, loss=loss)
 model.summary()
 
 # Train
-print('Training')
+print("Training")
 model.fit(x_train, y_train, epochs=10)
 
-#Test
-print('Test')
-model.evaluate(x_test,  y_test, verbose=2)
+# Test
+print("Test")
+model.evaluate(x_test, y_test, verbose=2)
