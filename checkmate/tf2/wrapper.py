@@ -5,16 +5,13 @@ import psutil
 import tensorflow as tf
 
 from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
-
-solver = solve_chen_sqrtn
 try:
-    from checkmate.core.solvers.gurobi_solver import solve_ilp_gurobi as solver
 except:
+    from checkmate.core.solvers.gurobi_solver import solve_ilp_gurobi as solver
     try:
         from checkmate.core.solvers.cvxpy_solver import solve_checkmate_cvxpy as solver
     except:
-        pass
-
+        solver = solve_chen_sqrtn
 from checkmate.tf2.execution import edit_graph
 from checkmate.tf2.extraction import dfgraph_from_tf_function
 
@@ -100,7 +97,7 @@ def compile_tf2(
 
     # query budget if not specified
     if budget == "auto":
-        return _get_gpu_memory()
+        budget = _get_gpu_memory()
 
     # build gradient function for model
     @tf.function

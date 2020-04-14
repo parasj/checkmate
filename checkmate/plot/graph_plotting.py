@@ -5,7 +5,7 @@ import numpy as np
 from graphviz import Digraph
 
 from checkmate.core.dfgraph import DFGraph
-from checkmate.core.schedule import Schedule, OperatorEvaluation, ScheduledResult
+from checkmate.core.schedule import ScheduledResult
 from checkmate.core.utils.definitions import PathLike
 
 
