@@ -15,19 +15,19 @@ from checkmate.core.utils.solver_common import solve_r_opt
 
 
 def solve_approx_lp_deterministic_sweep(
-    g: DFGraph,
-    budget: int,
-    seed_s: Optional[np.ndarray] = None,
-    approx=True,
-    time_limit: Optional[int] = None,
-    write_log_file: Optional[PathLike] = None,
-    print_to_console=True,
-    write_model_file: Optional[PathLike] = None,
-    eps_noise=0.01,
-    solver_cores=os.cpu_count(),
-    thresholds=(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
-    imposed_schedule: ImposedSchedule = ImposedSchedule.FULL_SCHEDULE,
-    allow_return_infeasible_schedule=False,
+        g: DFGraph,
+        budget: int,
+        seed_s: Optional[np.ndarray] = None,
+        approx=True,
+        time_limit: Optional[int] = None,
+        write_log_file: Optional[PathLike] = None,
+        print_to_console=True,
+        write_model_file: Optional[PathLike] = None,
+        eps_noise=0.01,
+        solver_cores=os.cpu_count(),
+        thresholds=(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
+        imposed_schedule: ImposedSchedule = ImposedSchedule.FULL_SCHEDULE,
+        allow_return_infeasible_schedule=False,
 ):
     param_dict = {
         "LogToConsole": 1 if print_to_console else 0,
@@ -65,7 +65,7 @@ def solve_approx_lp_deterministic_sweep(
             r_ = solve_r_opt(g, s_)
             schedule_, aux_data_ = schedule_from_rs(g, r_, s_)
             if (allow_return_infeasible_schedule and aux_data is None) or (
-                aux_data_.activation_ram <= budget and (aux_data is None or aux_data_.cpu <= aux_data.cpu)
+                    aux_data_.activation_ram <= budget and (aux_data is None or aux_data_.cpu <= aux_data.cpu)
             ):
                 aux_data = aux_data_
                 schedule = schedule_
@@ -91,17 +91,17 @@ def solve_approx_lp_deterministic_sweep(
 
 
 def solve_approx_lp_deterministic_rand_threshold(
-    g: DFGraph,
-    budget: int,
-    seed_s: Optional[np.ndarray] = None,
-    approx=True,
-    time_limit: Optional[int] = None,
-    write_log_file: Optional[PathLike] = None,
-    print_to_console=True,
-    write_model_file: Optional[PathLike] = None,
-    eps_noise=0.01,
-    solver_cores=os.cpu_count(),
-    n_samples=1,
+        g: DFGraph,
+        budget: int,
+        seed_s: Optional[np.ndarray] = None,
+        approx=True,
+        time_limit: Optional[int] = None,
+        write_log_file: Optional[PathLike] = None,
+        print_to_console=True,
+        write_model_file: Optional[PathLike] = None,
+        eps_noise=0.01,
+        solver_cores=os.cpu_count(),
+        n_samples=1,
 ):
     thresholds = [min(1.0, max(0.0, np.random.normal(0.5, 0.5))) for i in range(n_samples)]
     return solve_approx_lp_deterministic_sweep(
@@ -120,18 +120,18 @@ def solve_approx_lp_deterministic_rand_threshold(
 
 
 def solve_approx_lp_deterministic_05_threshold(
-    g: DFGraph,
-    budget: int,
-    seed_s: Optional[np.ndarray] = None,
-    approx=True,
-    time_limit: Optional[int] = None,
-    write_log_file: Optional[PathLike] = None,
-    print_to_console=True,
-    write_model_file: Optional[PathLike] = None,
-    eps_noise=0.01,
-    solver_cores=os.cpu_count(),
-    n_samples=1,
-    allow_return_infeasible_schedule=False,
+        g: DFGraph,
+        budget: int,
+        seed_s: Optional[np.ndarray] = None,
+        approx=True,
+        time_limit: Optional[int] = None,
+        write_log_file: Optional[PathLike] = None,
+        print_to_console=True,
+        write_model_file: Optional[PathLike] = None,
+        eps_noise=0.01,
+        solver_cores=os.cpu_count(),
+        n_samples=1,
+        allow_return_infeasible_schedule=False,
 ):
     return solve_approx_lp_deterministic_sweep(
         g,
@@ -150,35 +150,19 @@ def solve_approx_lp_deterministic_05_threshold(
 
 
 def solve_approx_lp_randomized(
-    g: DFGraph,
-    budget: int,
-    seed_s: Optional[np.ndarray] = None,
-    approx=True,
-    time_limit: Optional[int] = None,
-    write_log_file: Optional[PathLike] = None,
-    print_to_console=True,
-    write_model_file: Optional[PathLike] = None,
-    eps_noise=0.01,
-    solver_cores=os.cpu_count(),
-    num_rounds=100,
-    return_rounds=False,
+        g: DFGraph,
+        budget: int,
+        seed_s: Optional[np.ndarray] = None,
+        approx=True,
+        time_limit: Optional[int] = None,
+        write_log_file: Optional[PathLike] = None,
+        print_to_console=True,
+        write_model_file: Optional[PathLike] = None,
+        eps_noise=0.01,
+        solver_cores=os.cpu_count(),
+        num_rounds=100,
+        return_rounds=False,
 ):
-    """Randomized rounding of LP relaxation
-    
-    Args:
-        g: 
-        budget: 
-        seed_s: 
-        approx: 
-        time_limit: 
-        write_log_file: 
-        print_to_console: 
-        write_model_file: 
-        eps_noise:
-        solver_cores:
-        num_rounds: 
-        return_rounds: If True, return tuple (ScheduledResult, rounding_statistics)
-    """
     param_dict = {
         "LogToConsole": 1 if print_to_console else 0,
         "LogFile": str(write_log_file) if write_log_file is not None else "",
@@ -226,7 +210,7 @@ def solve_approx_lp_randomized(
                 best_solution = (aux_data.cpu, schedule, aux_data)
 
             if (i + 1) % 1 == 0:
-                print(f"Rounded relaxation argmin {i+1} / num_rounds times, best cost {best_solution[0]}")
+                print(f"Rounded relaxation argmin {i + 1} / num_rounds times, best cost {best_solution[0]}")
     schedule, aux_data = best_solution[1], best_solution[2]
 
     scheduled_result = ScheduledResult(

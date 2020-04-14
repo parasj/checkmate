@@ -35,7 +35,7 @@ try:
     SEGMENTATION_MODEL_NAMES = list(keras_segmentation.models.model_from_name.keys())
     MODEL_NAMES.extend(SEGMENTATION_MODEL_NAMES)
     NUM_SEGMENTATION_CLASSES = 19  # Cityscapes has 19 evaluation classes
-except ImportError as e:
+except ImportError:
     logging.error("Failed to load segmentation model names, skipping...")
     SEGMENTATION_MODEL_NAMES = []
 
