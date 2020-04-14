@@ -1,8 +1,9 @@
+import contextlib
+import itertools
 import json
 import logging
 import os
 from pathlib import Path
-import itertools, contextlib
 
 import numpy as np
 import tensorflow as tf
@@ -11,9 +12,9 @@ from tqdm import tqdm
 from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
 from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
 from checkmate.core.utils.definitions import PathLike
+from checkmate.plot.definitions import checkmate_data_dir
 from checkmate.tf2.execution import edit_graph
 from checkmate.tf2.extraction import dfgraph_from_tf_function
-from checkmate.plot.definitions import checkmate_data_dir
 from checkmate.tf2.util.load_keras_model import get_keras_model
 
 logging.basicConfig(level=logging.INFO)
