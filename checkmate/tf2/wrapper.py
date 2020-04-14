@@ -5,6 +5,7 @@ import psutil
 import tensorflow as tf
 
 from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
+
 try:
     from checkmate.core.solvers.gurobi_solver import solve_ilp_gurobi as solver
 except:
