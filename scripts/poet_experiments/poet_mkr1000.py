@@ -43,27 +43,38 @@ def make_dfgraph_costs(net, device):
     return g, compute_costs, page_in_costs, page_out_costs
 
 
-def solve(budget):
+def solve(budget, paging=True, remat=True):
     net = make_linear_network()
     device = MKR1000
     g, compute_costs, page_in_costs, page_out_costs = make_dfgraph_costs(net, device)
     solution = solve_poet_cvxpy(g, budget, compute_costs, page_in_costs, page_out_costs,
-                                solver_override="GUROBI", verbose=True)
+                                solver_override="GUROBI", verbose=True, paging=paging, remat=remat)
     return dict(budget=budget, solution=solution, dfgraph=g, cpu_cost=compute_costs,
                 page_in_cost=page_in_costs, page_out_cost=page_out_costs)
 
 
 def write_visualization(solution, out_path: PathLike):
     plt.figure()
-    fig, axarr = plt.subplots(1, 6, figsize=(30, 5))
-    for arr, ax, name in zip(solution, axarr, ['R', 'S_RAM', 'S_SD', 'M_sd2ram', 'M_ram2sd', 'U']):
+    fig, axarr = plt.subplots(1, 5, figsize=(30, 5))
+    M_sd2ram = solution[3]
+    M_ram2sd = solution[4]
+    M_combined = 2 * M_ram2sd + M_sd2ram
+    solution = list(solution)
+    solution.pop(4)
+    solution.pop(3)
+    solution.insert(3, M_combined)
+    for arr, ax, name in zip(solution, axarr, ['R', 'S_RAM', 'S_SD', 'Move', 'U']):
         if name is 'U':
             ax.matshow(arr)
-            ax.set_title('U')
+            ax.set_title('U', fontsize=20)
+        elif name is "Move":
+            ax.invert_yaxis()
+            ax.pcolormesh(arr, cmap="Greys", vmin=0, vmax=2)
+            ax.set_title(name, fontsize=20)
         else:
             ax.invert_yaxis()
             ax.pcolormesh(arr, cmap="Greys", vmin=0, vmax=1)
-            ax.set_title(name)
+            ax.set_title(name, fontsize=20)
     fig.savefig(out_path)
 
 
@@ -75,21 +86,27 @@ def featurize_row(data_row):
     return out_vec
 
 
-if __name__ == "__main__":
-    sns.set('notebook')
-    sns.set_style('dark')
-
-    data_dir = checkmate_data_dir() / "poet_mkr1000"
+def run_config(config_name, paging, remat):
+    data_dir = checkmate_data_dir() / "poet_mkr1000_{}".format(config_name)
     shutil.rmtree(data_dir, ignore_errors=True)
     data_dir.mkdir(parents=True, exist_ok=True)
     data = []
     for budget in tqdm(np.linspace(1000, 32000, num=25)):
         try:
-            solution_dict = solve(budget)
-            write_visualization(solution_dict['solution'], data_dir / "budget_{}.png".format(budget))
+            solution_dict = solve(budget, paging=paging, remat=remat)
+            write_visualization(solution_dict['solution'], data_dir / "{}_budget_{}.png".format(config_name, budget))
             data.append(solution_dict)
         except Exception as e:
             logging.exception(e)
 
     df = pd.DataFrame(map(featurize_row, data))
-    df.to_pickle(str((data_dir / "results.pkl").resolve()))
+    df.to_pickle(str((data_dir / "results_{}.pkl".format(config_name)).resolve()))
+
+
+if __name__ == "__main__":
+    sns.set('notebook')
+    sns.set_style('dark')
+    run_config('pretty', True, True)
+    run_config('no_paging', False, True)
+    run_config('no_remat', True, False)
+    run_config('baseline', False, False)
