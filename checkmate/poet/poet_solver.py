@@ -9,7 +9,7 @@ from checkmate.core.utils.timer import Timer
 
 
 class POETSolverCVXPY:
-    def __init__(self, g: DFGraph, budget: int, cpu_cost_vec, page_in_cost_vec, page_out_cost_vec, integral=True):
+    def __init__(self, g: DFGraph, budget: int, cpu_cost_vec, page_in_cost_vec, page_out_cost_vec, integral=True, paging=True, remat=True):
         self.budget = budget
         self.g = g
         self.T = self.g.size
@@ -25,6 +25,14 @@ class POETSolverCVXPY:
         assert cpu_cost_vec.shape == (self.T, 1)
         objective = cp.Minimize(cp.sum(self.R @ cpu_cost_vec + self.Min @ page_in_cost_vec + self.Mout @ page_out_cost_vec))
         constraints = self.make_constraints(budget)
+        if not paging:
+            constraints.append(self.Mout == 0)
+            constraints.append(self.Min == 0)
+            constraints.append(self.Ssd == 0)
+
+        if not remat:
+            constraints.append(self.R == np.eye(self.T))
+
         self.problem = cp.Problem(objective, constraints)
         self.num_vars = self.problem.size_metrics.num_scalar_variables
         self.num_constraints = self.problem.size_metrics.num_scalar_eq_constr + self.problem.size_metrics.num_scalar_leq_constr
@@ -114,8 +122,9 @@ def extract_costs_from_dfgraph(g: DFGraph, sd_card_multipler=5.0):
     return cpu_cost_vec, page_in_cost_vec, page_out_cost_vec
 
 
-def solve_poet_cvxpy(g, budget, cpu_cost, page_in_cost, page_out_cost, integral=True, solver_override=None, verbose=False):
-    poet_solver = POETSolverCVXPY(g, budget, cpu_cost, page_in_cost, page_out_cost, integral=integral)
+def solve_poet_cvxpy(g, budget, cpu_cost, page_in_cost, page_out_cost, integral=True, solver_override=None, verbose=False,
+                     paging=True, remat=True):
+    poet_solver = POETSolverCVXPY(g, budget, cpu_cost, page_in_cost, page_out_cost, integral=integral, paging=paging, remat=remat)
     try:
         r, s_ram, s_sd, m_in, m_out, u, free_e = poet_solver.solve(solver_override=solver_override, verbose=verbose)
         lp_feasible = True
