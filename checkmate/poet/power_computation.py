@@ -1,8 +1,12 @@
+import pickle
+from pathlib import Path
 from typing import List
 
 import numpy as np
 
 # List of Device characteristics
+from checkmate.core.utils.definitions import PathLike
+
 MKR1000 = {
     # Theoretical FLOPS_PER_WATT = 48 X 10^(6) / (100 X 3 X 20 X 10^(-3) X 3.3)  = 2.42 M FLOP / J
     "FLOPS_PER_WATT": 2000 / (0.012 * 0.020 * 3.3),  # also flop per joule
@@ -28,6 +32,8 @@ RPi = {
 class DNNLayer:
     def __init__(self, out_shape, depends_on: List["DNNLayer"] = tuple(), param_count=0):
         assert out_shape is not None  # get around varargs restriction
+        self.extra_repr_params = {}
+        self.unique_idx = "{}{:02d}".format(self.__class__.__name__, id(self) % 100)
         self.out_shape = out_shape
         self.depends_on = depends_on
         self.param_count = param_count
@@ -73,10 +79,19 @@ class DNNLayer:
         """
         return self.param_count * device["TYPE"]
 
+    def __repr__(self):
+        args = self.extra_repr_params
+        args["out_shape"] = self.out_shape
+        args["param_count"] = self.param_count
+        args["depends_on"] = "[{}]".format(", ".join([x.unique_idx for x in self.depends_on]))
+        return "{}({})".format(self.unique_idx, ",".join(["{}={}".format(k, v) for k, v in args.items()]))
+
 
 class LinearLayer(DNNLayer):
     def __init__(self, in_features, out_features, input: DNNLayer):
         super().__init__((out_features,), [input] if input is not None else [], param_count=(in_features * out_features))
+        self.extra_repr_params["in_features"] = in_features
+        self.extra_repr_params["out_features"] = out_features
         self.in_features = in_features
         self.out_features = out_features
 
@@ -92,9 +107,10 @@ class ReLULayer(DNNLayer):
         return np.prod(self.out_shape) / device["FLOPS_PER_WATT"]
 
 
-class LossLayer(DNNLayer):
+class CrossEntropyLoss(DNNLayer):
     def __init__(self, input: DNNLayer, n_classes=10):
         super().__init__(out_shape=(n_classes,), depends_on=[input])
+        self.extra_repr_params["n_classes"] = n_classes
         self.n_classes = n_classes
 
     def power(self, device) -> float:
@@ -108,6 +124,16 @@ class GradientLayer(DNNLayer):
 
     def power(self, device):
         return 2 * self.output.power(device)
+
+
+def save_network_repr(net: List[DNNLayer], readable_path: PathLike = None, pickle_path: PathLike = None):
+    if readable_path is not None:
+        with Path(readable_path).open("w") as f:
+            for layer in net:
+                f.write("{}\n".format(layer))
+    if pickle_path is not None:
+        with Path(pickle_path).open("wb") as f:
+            pickle.dump(net, f)
 
 
 def make_linear_network():
@@ -124,7 +150,7 @@ def make_linear_network():
         lin_layer = LinearLayer(in_dim, out_dim, input=last_layer)
         act_layer = ReLULayer(lin_layer)
         layers.extend([lin_layer, act_layer])
-    layers.append(LossLayer(layers[-1], n_classes=10))
+    layers.append(CrossEntropyLoss(layers[-1], n_classes=10))
     reverse_layers = list(reversed(layers))
     for input, output in zip(reverse_layers[:-1], reverse_layers[1:]):
         layers.append(GradientLayer(output, input, layers[-1]))

@@ -1,5 +1,7 @@
 import logging
 import shutil
+from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 import numpy as np
@@ -12,7 +14,7 @@ from checkmate.core.graph_builder import GraphBuilder
 from checkmate.poet.poet_solver import solve_poet_cvxpy
 from checkmate.core.utils.definitions import PathLike
 from checkmate.plot.definitions import checkmate_data_dir
-from checkmate.poet.power_computation import MKR1000, make_linear_network, get_net_costs, GradientLayer
+from checkmate.poet.power_computation import MKR1000, make_linear_network, get_net_costs, GradientLayer, save_network_repr
 
 
 def make_dfgraph_costs(net, device):
@@ -43,8 +45,10 @@ def make_dfgraph_costs(net, device):
     return g, compute_costs, page_in_costs, page_out_costs
 
 
-def solve(budget, paging=True, remat=True):
+def solve(budget, paging=True, remat=True, logdir_path: Optional[PathLike] = None):
     net = make_linear_network()
+    if logdir_path is not None:
+        save_network_repr(net, Path(logdir_path) / "network.txt", Path(logdir_path) / "network.pkl")
     device = MKR1000
     g, compute_costs, page_in_costs, page_out_costs = make_dfgraph_costs(net, device)
     solution = solve_poet_cvxpy(
@@ -106,14 +110,14 @@ def run_config(config_name, paging, remat):
     shutil.rmtree(data_dir, ignore_errors=True)
     data_dir.mkdir(parents=True, exist_ok=True)
     data = []
-    for budget in tqdm(np.linspace(1000, 32000, num=25)):
+    for idx, budget in enumerate(tqdm(np.linspace(1000, 32000, num=25))):
         try:
-            solution_dict = solve(budget, paging=paging, remat=remat)
-            write_visualization(solution_dict["solution"], data_dir / "{}_budget_{}.png".format(config_name, budget))
+            # logdir is None for budgets after the first config to avoid duplicate network dumps
+            solution_dict = solve(budget, paging=paging, remat=remat, logdir_path=data_dir if idx == 0 else None)
+            write_visualization(solution_dict["solution"], data_dir / "{}_budget_{:.2f}.png".format(config_name, budget))
             data.append(solution_dict)
         except Exception as e:
             logging.exception(e)
-
     df = pd.DataFrame(map(featurize_row, data))
     df.to_pickle(str((data_dir / "results_{}.pkl".format(config_name)).resolve()))
 
