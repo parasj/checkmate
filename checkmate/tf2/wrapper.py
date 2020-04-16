@@ -63,7 +63,7 @@ def get_function(model, input_shape, label_shape, optimizer, loss):
 def compile_tf2(
     model: tf.keras.Model,
     loss,
-    optimizer: tf.optimizers.Optimizer,
+    optimizer,
     input_spec=None,
     label_spec=None,
     scheduler=solver,
@@ -109,6 +109,9 @@ def compile_tf2(
 
     # choose solver and calculate solver
     sched_result = scheduler(g, budget, **kwargs)
+    if not sched_result.feasible:
+        logging.error("[checkmate] Checkmate solver could find no feasible schedule for the specificed budget of {}".format(budget))
+        raise ValueError("No feasible solution for specified budget of {}".format(budget))
     logging.debug("[checkmate] Schedule solved")
 
     # create recomputed gradient function
