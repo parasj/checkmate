@@ -37,9 +37,7 @@ def dfgraph_from_tf_function(fn) -> DFGraph:
     for op in ops:
         out_elem_count = [np.prod([i or 1 for i in list(out.shape or [])]) for out in op.outputs]
         out_dtype_len = [out.dtype.size or 4 for out in op.outputs]
-        op_ram_cost_dot = np.dot(out_dtype_len, out_elem_count)
-        print(op_ram_cost_dot, out_dtype_len, out_elem_count, [out.shape for out in op.outputs])
-        op_ram_cost = int(op_ram_cost_dot)
+        op_ram_cost = int(np.dot(out_dtype_len, out_elem_count))
         gb.add_node(op.name, cpu_cost=1, ram_cost=op_ram_cost, backward=op.name in grad_nodes)
 
     # build dependency graph
