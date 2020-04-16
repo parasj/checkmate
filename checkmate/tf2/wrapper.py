@@ -4,15 +4,10 @@ import subprocess
 import psutil
 import tensorflow as tf
 
-from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
-
 try:
     from checkmate.core.solvers.gurobi_solver import solve_ilp_gurobi as solver
 except:
-    try:
-        from checkmate.core.solvers.cvxpy_solver import solve_checkmate_cvxpy as solver
-    except:
-        solver = solve_chen_sqrtn
+    from checkmate.core.solvers.cvxpy_solver import solve_checkmate_cvxpy as solver
 from checkmate.tf2.execution import edit_graph
 from checkmate.tf2.extraction import dfgraph_from_tf_function
 
@@ -67,7 +62,7 @@ def get_function(model, input_shape, label_shape, optimizer, loss):
 
 def compile_tf2(
     model: tf.keras.Model,
-    loss: tf.losses.Loss,
+    loss,
     optimizer: tf.optimizers.Optimizer,
     input_spec=None,
     label_spec=None,
@@ -113,16 +108,7 @@ def compile_tf2(
     g = dfgraph_from_tf_function(fn)
 
     # choose solver and calculate solver
-    logging.error(
-        "[checkmate] At the moment, Checkmate does not guarentee scheduling under the specified budget. "
-        "This feature will appear soon."
-    )
-    logging.debug("[checkmate] Solving for recomputation schedule, may take a while")
-    logging.debug("[checkmate] Using Chen et al. (2016) sqrt(n) algorithm")
-    if solver != solve_chen_sqrtn:
-        sched_result = scheduler(g, budget, **kwargs)
-    else:
-        sched_result = solver(g, **kwargs)
+    sched_result = scheduler(g, budget, **kwargs)
     logging.debug("[checkmate] Schedule solved")
 
     # create recomputed gradient function
