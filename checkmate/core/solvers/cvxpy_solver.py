@@ -98,7 +98,9 @@ class ILPSolverCVXPY:
         return self.R.value, self.S.value, self.U.value, self.Free_E.value
 
 
-def solve_checkmate_cvxpy(g, budget, rounding_thresholds=(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9), solver_override=None, verbose=True):
+def solve_checkmate_cvxpy(
+    g, budget, rounding_thresholds=(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9), solver_override=None, verbose=True
+):
     lpsolver = ILPSolverCVXPY(g, int(0.9 * budget))  # rounding threshold
     try:
         r, s, u, free_e = lpsolver.solve(solver_override=solver_override, verbose=verbose)
