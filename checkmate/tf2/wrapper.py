@@ -33,7 +33,7 @@ def nvidiasmi_query(query="memory.total"):
     return dict(zip(range(len(query_result_list)), query_result_list))
 
 
-def _get_gpu_memory():
+def _get_gpu_memory_bytes():
     if _using_gpu_check():  # choose based on available GPU RAM
         gpu_ram = nvidiasmi_query("memory.total")
         budget = min(gpu_ram.values()) * 0.9
@@ -45,7 +45,7 @@ def _get_gpu_memory():
         budget = psutil.virtual_memory().available * 0.8 / 1000000
         logging.debug("[checkmate] No GPU detected, using system DRAM on CPU")
         logging.info("[checkmate] No budget specified; defaulting to {0:.2f}MB".format(budget))
-    return budget
+    return budget * 1000000
 
 
 def get_function(model, input_shape, label_shape, optimizer, loss):
@@ -93,7 +93,7 @@ def compile_tf2(
 
     # query budget if not specified
     if budget == "auto":
-        budget = _get_gpu_memory()
+        budget = _get_gpu_memory_bytes()
 
     # build gradient function for model
     @tf.function
