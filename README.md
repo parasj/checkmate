@@ -8,9 +8,32 @@ At the moment, Checkmate only supports TensorFlow 2.0. PyTorch support is coming
 
 ## Installation
 
-Get started with `pip install "https://github.com/parasj/checkmate/archive/master.zip#egg=checkmate"`
+Checkmate depends on:
+* [TensorFlow 2.0](https://www.tensorflow.org/install), i.e. `pip install tensorflow` or `pip install tensorflow-gpu`.
+* [CyLP solver](https://github.com/coin-or/CyLP)
+    <details><summary>Installing CyLP on Debian Linux / Ubuntu</summary>
+    <p>
 
-Ensure you have installed either `tensorflow-gpu>=2.0.0` or `tensorflow`.
+    ```bash
+    $ sudo apt install coinor-cbc coinor-libcbc-dev
+    $ pip install cylp
+    ```
+    </p>
+    </details>
+    <details><summary>Installing CyLP on MacOS</summary>
+    <p>
+    
+    The easiest way to set up CyLP is using [homebrew](https://brew.sh/).
+    ```bash
+    $ brew tap coin-or-tools/coinor
+    $ brew install coin-or-tools/coinor/cbc pkg-config
+    $ pip install cylp
+    ```
+    </p>
+    </details>
+
+
+Once TensorFlow 2.0 and CyLP are installed, Checkmate can be installed using pip via `pip install "https://github.com/parasj/checkmate/archive/master.zip#egg=checkmate"`.
 
 ## Quick start
 
@@ -33,7 +56,6 @@ for image, label in train_ds:
 ## Key ideas
 
 From our [paper at MLSys 2020](https://arxiv.org/abs/1910.02653):
-
 ```text
 Modern neural networks are increasingly bottlenecked by the limited capacity of on-device
 GPU memory. Prior work explores dropping activations as a strategy to scale to larger
@@ -62,4 +84,3 @@ If you use Checkmate in your work, please cite us with:
   year={2020}
 }
 ```
-
