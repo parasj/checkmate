@@ -1,4 +1,4 @@
-name: Python package testsuite (checkmate)
+name: PyPI Checkmate
 on: [push]
 jobs:
   build:
