@@ -34,7 +34,7 @@ jobs:
         sudo apt install -y git pkg-config coinor-libcbc-dev coinor-libosi-dev coinor-libcoinutils-dev coinor-libcgl-dev
         COIN_INSTALL_DIR=/usr/ pip install --pre cylp
     - name: Install Tensorflow
-      run: pip install "ternsorflow==${{ matrix.tf-version }}"
+      run: pip install "tensorflow==${{ matrix.tf-version }}"
     - name: Install dependencies
       run: pip install -e ".[test]"
     - name: Lint with flake8
