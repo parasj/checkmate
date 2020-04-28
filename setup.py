@@ -14,5 +14,5 @@ setup(
         "toposort",
         "psutil",
     ],
-    extras_require={"test": ["pytest", "tensorflow>=2.0.0", "matplotlib", "graphviz"]},
+    extras_require={"test": ["pytest", "tensorflow", "matplotlib", "graphviz"]},
 )
