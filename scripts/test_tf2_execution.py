@@ -1,18 +1,20 @@
+import contextlib
+import itertools
 import json
 import logging
 import os
 from pathlib import Path
-import itertools
 
+import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
 
 from checkmate.core.solvers.strategy_checkpoint_all import solve_checkpoint_all
 from checkmate.core.solvers.strategy_chen import solve_chen_sqrtn
 from checkmate.core.utils.definitions import PathLike
+from checkmate.plot.definitions import checkmate_data_dir
 from checkmate.tf2.execution import edit_graph
 from checkmate.tf2.extraction import dfgraph_from_tf_function
-from checkmate.plot.definitions import checkmate_data_dir
 from checkmate.tf2.util.load_keras_model import get_keras_model
 
 logging.basicConfig(level=logging.INFO)
@@ -221,13 +223,13 @@ def compare_checkpoint_loss_curves(dataset: str, model_name: str, n_epochs: int 
     sns.set_style("darkgrid")
 
     train_ds, test_ds = get_data(dataset, batch_size=batch_size)
-    data = {
-        "baseline": (test_baseline(train_ds, test_ds, n_epochs)),
-        "checkpoint_all": (test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=n_epochs)),
-        "checkpoint_sqrtn_ap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_ap, epochs=n_epochs)),
-        # "checkpoint_sqrtn_noap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_noap, epochs=n_epochs)),
-    }
+    data = {}
 
+    data["baseline"] = (listify(test_baseline(train_ds, test_ds, n_epochs)),)
+    data["checkpoint_all"] = (listify(test_checkpointed(train_ds, test_ds, solve_checkpoint_all, epochs=n_epochs)),)
+    data["checkpoint_sqrtn_ap"] = (listify(test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_ap, epochs=n_epochs)),)
+    # "checkpoint_sqrtn_noap": (test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_noap, epochs=n_epochs)),
+    data["optimal_ilp"] = (listify(test_checkpointed(train_ds, test_ds, solve_chen_sqrtn_ap, epochs=n_epochs)),)
     for loss_name, loss_data in data.items():
         plt.plot(loss_data, label=loss_name)
     plt.legend(loc="upper right")
@@ -239,9 +241,15 @@ def compare_checkpoint_loss_curves(dataset: str, model_name: str, n_epochs: int 
         json.dump(data, f)
 
 
-if __name__ == "__main__":
-    tf.compat.v1.logging.set_verbosity("ERROR")
-    # save_checkpoint_chrome_trace(checkmate_data_dir() / "profile_exec")
-    # compare_checkpoint_loss_curves(dataset='mnist', model_name='test', n_epochs=1)
-    compare_checkpoint_loss_curves(dataset="cifar10", model_name="ResNet50", n_epochs=1, batch_size=1)
-    # compare_checkpoint_loss_curves(dataset="cifar10", model_name="VGG16", n_epochs=1, batch_size=1)
+def listify(res):
+    return np.array(res).tolist()
+
+
+@contextlib.contextmanager
+def options(options):
+    old_opts = tf.config.optimizer.get_experimental_options()
+    tf.config.optimizer.set_experimental_options(options)
+    try:
+        yield
+    finally:
+        tf.config.optimizer.set_experimental_options(old_opts)

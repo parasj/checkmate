@@ -18,7 +18,7 @@ from checkmate.core.utils.solver_common import solve_r_opt
 from checkmate.core.utils.timer import Timer
 
 
-class ILPSolver:
+class ILPSolverGurobi:
     def __init__(
         self,
         g: DFGraph,
@@ -199,22 +199,22 @@ class ILPSolver:
                 for i in range(T):
                     try:
                         Rout[t][i] = solver_dtype_cast(self.R[t, i].X)
-                    except (AttributeError, TypeError) as e:
+                    except (AttributeError, TypeError):
                         Rout[t][i] = solver_dtype_cast(self.R[t, i])
 
                     try:
                         Sout[t][i] = solver_dtype_cast(self.S[t, i])
-                    except (AttributeError, TypeError) as e:
+                    except (AttributeError, TypeError):
                         Sout[t][i] = solver_dtype_cast(self.S[t, i].X)
 
                     try:
                         Uout[t][i] = self.U[t, i].X * self.ram_gcd
-                    except (AttributeError, TypeError) as e:
+                    except (AttributeError, TypeError):
                         Uout[t][i] = self.U[t, i] * self.ram_gcd
                 for e in range(len(self.g.edge_list)):
                     try:
                         Free_Eout[t][e] = solver_dtype_cast(self.Free_E[t, e].X)
-                    except (AttributeError, TypeError) as e:
+                    except (AttributeError, TypeError):
                         Free_Eout[t][e] = solver_dtype_cast(self.Free_E[t, e])
         except AttributeError as e:
             logging.exception(e)
@@ -266,7 +266,7 @@ def solve_ilp_gurobi(
         "Presolve": 2,
         "StartNodeLimit": 10000000,
     }
-    ilpsolver = ILPSolver(
+    ilpsolver = ILPSolverGurobi(
         g,
         budget,
         gurobi_params=param_dict,

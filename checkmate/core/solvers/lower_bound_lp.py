@@ -8,7 +8,7 @@ import numpy as np
 from checkmate.core.dfgraph import DFGraph
 from checkmate.core.enum_strategy import SolveStrategy, ImposedSchedule
 from checkmate.core.schedule import ILPAuxData, ScheduledResult, SchedulerAuxData
-from checkmate.core.solvers.strategy_optimal_ilp import ILPSolver
+from checkmate.core.solvers.gurobi_solver import ILPSolverGurobi
 from checkmate.core.utils.definitions import PathLike
 
 
@@ -35,7 +35,7 @@ def lower_bound_lp_relaxation(
         "Presolve": 2,
         "StartNodeLimit": 10000000,
     }
-    lpsolver = ILPSolver(
+    lpsolver = ILPSolverGurobi(
         g,
         budget,
         gurobi_params=param_dict,

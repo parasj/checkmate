@@ -1,3 +1,0 @@
-Collecting tensorflow-gpu
-  Downloading https://files.pythonhosted.org/packages/b3/37/cd37426ae682a8fcd74a6e752147ac73a69e3720e124dfc88171487836af/tensorflow_gpu-2.2.0rc2-cp38-cp38-manylinux2010_x86_64.whl (516.3MB)
-Requirement already satisfied: tqdm in /home/idiot/.local/lib/python3.8/site-packages (4.43.0)
