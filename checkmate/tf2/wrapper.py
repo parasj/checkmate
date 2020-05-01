@@ -32,8 +32,6 @@ def nvidiasmi_query(query="memory.total"):
     query_result_list = [int(x) for x in mem.strip().split("\n")]
     return dict(zip(range(len(query_result_list)), query_result_list))
 
-def get_profiles(fn):
-    pass
 
 def _get_gpu_memory_bytes():
     if _using_gpu_check():  # choose based on available GPU RAM
@@ -100,7 +98,6 @@ def compile_tf2(
         return predictions, loss_val, gradients
 
     fn = grads_check.get_concrete_function(input_spec, label_spec)
-    return fn
     g = dfgraph_from_tf_function(fn)
 
     # choose solver and calculate solver
