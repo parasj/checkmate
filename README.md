@@ -83,6 +83,4 @@ If you use Checkmate in your work, please cite us with:
  title = {Checkmate: Breaking the Memory Wall with Optimal Tensor Rematerialization},
  year = {2020}
 }
-
-
 ```
