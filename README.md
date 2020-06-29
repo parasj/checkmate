@@ -76,11 +76,13 @@ Checkmate enables real-world networks to be trained with up to 5.1× larger inpu
 If you use Checkmate in your work, please cite us with:
 
 ```text
-@article{jain2019checkmate,
-  title={Checkmate: Breaking the Memory Wall with Optimal Tensor Rematerialization},
-  author={Jain, Paras and Jain, Ajay and Nrusimha, Aniruddha and Gholami, Amir and
-          Abbeel, Pieter and Keutzer, Kurt and Stoica, Ion and Gonzalez, Joseph E},
-  journal={arXiv preprint arXiv:1910.02653},
-  year={2020}
+@incollection{mlsys2020_196,
+ author = {Jain, Paras and Jain, Ajay and Nrusimha, Aniruddha and Gholami, Amir and Abbeel, Pieter and Gonzalez, Joseph and Keutzer, Kurt and Stoica, Ion},
+ booktitle = {Proceedings of Machine Learning and Systems 2020},
+ pages = {497--511},
+ title = {Checkmate: Breaking the Memory Wall with Optimal Tensor Rematerialization},
+ year = {2020}
 }
+
+
 ```
