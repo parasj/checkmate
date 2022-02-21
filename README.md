@@ -6,6 +6,8 @@ _See the paper!_ [https://arxiv.org/abs/1910.02653](https://arxiv.org/abs/1910.0
 
 At the moment, Checkmate only supports TensorFlow 2.0. PyTorch support is coming soon!<!-- To follow updates on PyTorch support, please suscribe to our [Google Group](https://groups.google.com/forum/#!forum/checkmate-dev). -->
 
+**IF YOU ARE TRYING TO REPLICATE OUR MLSYS 2020 PAPER, USE THE `mlsys20_artifact` BRANCH!**
+
 ## Installation
 
 Checkmate depends on:
